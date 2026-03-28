@@ -152,59 +152,6 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
 
   <!-- MW-FORDELING -->
   <div id="panel-fordeling" class="panel">
-    <div class="info-box blue" style="margin-bottom:16px;">
-      <div class="ibtag">SÃÂÃÂÃÂÃÂ¥dan fungerer fordelingen</div>
-      <p>Du fordeler dine 18,3 MW mellem <strong>aFRR</strong> og <strong>mFRR</strong> time for time. Hvis du taber aFRR-auktionen i en given time, ryger de tabte MW automatisk til <strong>mFRR Extra</strong>-runden (hvis Energinet ÃÂÃÂÃÂÃÂ¥bner den). Du kan IKKE aktivt sende MW til Extra ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ det sker kun ved tab af aFRR. Brug derfor altid blokke af 4 MW i aFRR, sÃÂÃÂÃÂÃÂ¥ du kan vinde Extra med prÃÂÃÂÃÂÃÂ¦cise mÃÂÃÂÃÂÃÂ¦ngder.</p>
-    </div>
-
-    <div class="card">
-      <div class="ct">PlanlÃÂÃÂÃÂÃÂ¦g MW-fordeling time for time <span class="badge ba">Klik en time for at redigere</span></div>
-      <div class="hour-planner" id="hour-planner"></div>
-
-      <div class="hour-editor" id="hour-editor">
-        <div class="he-title" id="he-title">VÃÂÃÂÃÂÃÂ¦lg en time ovenfor for at redigere</div>
-        <div id="he-body"></div>
-      </div>
-
-      <div class="summary-grid" id="fordeling-summary"></div>
-      <div class="cw" style="height:220px;"><canvas id="fordelingChart"></canvas></div>
-    </div>
-  </div>
-
-  <!-- mFRR EXTRA -->
-  <div id="panel-extra" class="panel">
-    <div class="info-box amber" style="margin-bottom:16px;">
-      <div class="ibtag">mFRR Extra ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ forstÃÂÃÂÃÂÃÂ¥ mekanismen</div>
-      <p>Extra-runden ÃÂÃÂÃÂÃÂ¥bner kl. 15:00 dagen fÃÂÃÂÃÂÃÂ¸r, men <strong>kun hvis Energinet har behov</strong> og <strong>kun for aktÃÂÃÂÃÂÃÂ¸rer der tabte primÃÂÃÂÃÂÃÂ¦r mFRR-auktionen</strong>. Priser er historisk markant hÃÂÃÂÃÂÃÂ¸jere end primÃÂÃÂÃÂÃÂ¦r mFRR. AfgÃÂÃÂÃÂÃÂ¸rende: Brug blokke af max 4 MW ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Energinet tager kun det de mangler og afviser for store blokke.</p>
-    </div>
-    <div class="card">
-      <div class="ct">Extra aktiveringsfrekvens og priser pr. time <span class="badge bx">90 dage ÃÂÃÂÃÂÃÂ· DK1</span></div>
-      <div class="cw" style="height:220px;"><canvas id="extraChart"></canvas></div>
-      <div style="font-size:11px;color:var(--text3);margin-top:8px;">SÃÂÃÂÃÂÃÂ¸jle = % af dage Extra-markedet er aktivt ÃÂÃÂÃÂÃÂ· Linje = snit-clearing-pris nÃÂÃÂÃÂÃÂ¥r aktiv (kr./MW)</div>
-    </div>
-    <div class="card">
-      <div class="ct">Extra vs. aFRR sammenligning <span class="badge bx">HvornÃÂÃÂÃÂÃÂ¥r betaler det sig at satse pÃÂÃÂÃÂÃÂ¥ Extra?</span></div>
-      <table class="rt" id="extra-compare"></table>
-    </div>
-  </div>
-
-  <!-- INDSIGTER -->
-  <div id="panel-indsigt" class="panel">
-    <div id="insights"></div>
-  </div>
-  <div id="panel-resultater" class="panel">
-    <div class="info-box blue" style="margin-bottom:16px;">
-      <div class="ibtag">Centrica ÃÂ¢ÃÂÃÂ live data fra Neas Energy</div>
-      <p>IndsÃÂÃÂ¦t dit Centrica API-token nedenfor. Find det pÃÂÃÂ¥ <strong>direct.neasenergy.com</strong>: ÃÂÃÂ¥bn siden, tryk F12, gÃÂÃÂ¥ til Console og skriv: <code style="background:#f0f0f0;padding:2px 6px;border-radius:4px;font-size:12px;">localStorage.getItem('access_token')</code> ÃÂ¢ÃÂÃÂ kopier resultatet her.</p>
-    </div>
-    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:flex-end;">
-      <div style="flex:1;min-width:200px;">
-        <div style="font-size:11px;font-weight:600;color:var(--text3);margin-bottom:4px;">CENTRICA API TOKEN</div>
-        <input id="centrica-token-input" type="password" placeholder="IndsÃÂÃÂ¦t token her..." style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--rs);font-size:13px;background:var(--surface);">
-      </div>
-      <button class="btn" onclick="saveCentricaToken()" style="background:#2563EB;color:#fff;border-color:#2563EB;white-space:nowrap;">Gem token</button>
-      <button class="btn" onclick="clearCentricaToken()" style="white-space:nowrap;">Ryd</button>
-    </div>
     <div id="token-status" style="font-size:12px;color:var(--text3);margin-bottom:12px;"></div>
     <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
       <button class="btn centrica-period-btn active-period" id="cbtn-30" onclick="fetchCentricaWithActive(30,this)">Seneste 30 dage</button>
