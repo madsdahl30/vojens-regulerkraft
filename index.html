@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vojens Regulerkraft â Version 1.0</title>
+<title>Vojens Regulerkraft Ã¢ÂÂ Version 1.0</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 :root {
@@ -52,7 +52,7 @@ h1{font-size:20px;font-weight:600;letter-spacing:-.3px;}
 .rt tr:last-child td{border-bottom:none;}
 .rt tr:hover td{background:var(--surface2);}
 
-/* MW-fordeling: Time-for-time planlÃ¦gger */
+/* MW-fordeling: Time-for-time planlÃÂ¦gger */
 .hour-planner{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:16px;}
 .hpc{border:1px solid var(--border);border-radius:var(--rs);padding:10px 8px;background:var(--surface);cursor:pointer;transition:border-color .15s;}
 .hpc:hover{border-color:#2563EB;}
@@ -107,7 +107,7 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
   <header>
     <div>
       <h1>Vojens Regulerkraft</h1>
-      <div class="sub">DK1 Â· aFRR + mFRR + mFRR Extra Â· Version 1.0 Â· Henter seneste 90 dage automatisk</div>
+      <div class="sub">DK1 ÃÂ· aFRR + mFRR + mFRR Extra ÃÂ· Version 1.0 ÃÂ· Henter seneste 90 dage automatisk</div>
     </div>
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
       <div class="status"><div class="dot loading" id="sdot"></div><span id="stxt">Henter data...</span></div>
@@ -127,7 +127,7 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
   <!-- PRISKORT -->
   <div id="panel-heatmap" class="panel active">
     <div class="card">
-      <div class="ct">Gennemsnitlig clearing-pris pr. time Â· seneste 90 dage Â· DK1</div>
+      <div class="ct">Gennemsnitlig clearing-pris pr. time ÃÂ· seneste 90 dage ÃÂ· DK1</div>
       <div class="legend-row">
         <span class="leg"><span class="leg-sq" style="background:#2563EB"></span>aFRR kr./MW</span>
         <span class="leg"><span class="leg-sq" style="background:#059669"></span>mFRR kr./MW</span>
@@ -135,7 +135,7 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
       </div>
       <div class="hlrow" id="hlabels"></div>
       <div id="heatmap"></div>
-      <div style="margin-top:10px;font-size:11px;color:var(--text3);">MÃ¸rkere = hÃ¸jere snit Â· Hold musen over celle for detaljer</div>
+      <div style="margin-top:10px;font-size:11px;color:var(--text3);">MÃÂ¸rkere = hÃÂ¸jere snit ÃÂ· Hold musen over celle for detaljer</div>
     </div>
     <div class="metrics" id="heat-metrics"></div>
   </div>
@@ -151,16 +151,16 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
   <!-- MW-FORDELING -->
   <div id="panel-fordeling" class="panel">
     <div class="info-box blue" style="margin-bottom:16px;">
-      <div class="ibtag">SÃ¥dan fungerer fordelingen</div>
-      <p>Du fordeler dine 18,3 MW mellem <strong>aFRR</strong> og <strong>mFRR</strong> time for time. Hvis du taber aFRR-auktionen i en given time, ryger de tabte MW automatisk til <strong>mFRR Extra</strong>-runden (hvis Energinet Ã¥bner den). Du kan IKKE aktivt sende MW til Extra â det sker kun ved tab af aFRR. Brug derfor altid blokke af 4 MW i aFRR, sÃ¥ du kan vinde Extra med prÃ¦cise mÃ¦ngder.</p>
+      <div class="ibtag">SÃÂ¥dan fungerer fordelingen</div>
+      <p>Du fordeler dine 18,3 MW mellem <strong>aFRR</strong> og <strong>mFRR</strong> time for time. Hvis du taber aFRR-auktionen i en given time, ryger de tabte MW automatisk til <strong>mFRR Extra</strong>-runden (hvis Energinet ÃÂ¥bner den). Du kan IKKE aktivt sende MW til Extra Ã¢ÂÂ det sker kun ved tab af aFRR. Brug derfor altid blokke af 4 MW i aFRR, sÃÂ¥ du kan vinde Extra med prÃÂ¦cise mÃÂ¦ngder.</p>
     </div>
 
     <div class="card">
-      <div class="ct">PlanlÃ¦g MW-fordeling time for time <span class="badge ba">Klik en time for at redigere</span></div>
+      <div class="ct">PlanlÃÂ¦g MW-fordeling time for time <span class="badge ba">Klik en time for at redigere</span></div>
       <div class="hour-planner" id="hour-planner"></div>
 
       <div class="hour-editor" id="hour-editor">
-        <div class="he-title" id="he-title">VÃ¦lg en time ovenfor for at redigere</div>
+        <div class="he-title" id="he-title">VÃÂ¦lg en time ovenfor for at redigere</div>
         <div id="he-body"></div>
       </div>
 
@@ -172,16 +172,16 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
   <!-- mFRR EXTRA -->
   <div id="panel-extra" class="panel">
     <div class="info-box amber" style="margin-bottom:16px;">
-      <div class="ibtag">mFRR Extra â forstÃ¥ mekanismen</div>
-      <p>Extra-runden Ã¥bner kl. 15:00 dagen fÃ¸r, men <strong>kun hvis Energinet har behov</strong> og <strong>kun for aktÃ¸rer der tabte primÃ¦r mFRR-auktionen</strong>. Priser er historisk markant hÃ¸jere end primÃ¦r mFRR. AfgÃ¸rende: Brug blokke af max 4 MW â Energinet tager kun det de mangler og afviser for store blokke.</p>
+      <div class="ibtag">mFRR Extra Ã¢ÂÂ forstÃÂ¥ mekanismen</div>
+      <p>Extra-runden ÃÂ¥bner kl. 15:00 dagen fÃÂ¸r, men <strong>kun hvis Energinet har behov</strong> og <strong>kun for aktÃÂ¸rer der tabte primÃÂ¦r mFRR-auktionen</strong>. Priser er historisk markant hÃÂ¸jere end primÃÂ¦r mFRR. AfgÃÂ¸rende: Brug blokke af max 4 MW Ã¢ÂÂ Energinet tager kun det de mangler og afviser for store blokke.</p>
     </div>
     <div class="card">
-      <div class="ct">Extra aktiveringsfrekvens og priser pr. time <span class="badge bx">90 dage Â· DK1</span></div>
+      <div class="ct">Extra aktiveringsfrekvens og priser pr. time <span class="badge bx">90 dage ÃÂ· DK1</span></div>
       <div class="cw" style="height:220px;"><canvas id="extraChart"></canvas></div>
-      <div style="font-size:11px;color:var(--text3);margin-top:8px;">SÃ¸jle = % af dage Extra-markedet er aktivt Â· Linje = snit-clearing-pris nÃ¥r aktiv (kr./MW)</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:8px;">SÃÂ¸jle = % af dage Extra-markedet er aktivt ÃÂ· Linje = snit-clearing-pris nÃÂ¥r aktiv (kr./MW)</div>
     </div>
     <div class="card">
-      <div class="ct">Extra vs. aFRR sammenligning <span class="badge bx">HvornÃ¥r betaler det sig at satse pÃ¥ Extra?</span></div>
+      <div class="ct">Extra vs. aFRR sammenligning <span class="badge bx">HvornÃÂ¥r betaler det sig at satse pÃÂ¥ Extra?</span></div>
       <table class="rt" id="extra-compare"></table>
     </div>
   </div>
@@ -192,13 +192,13 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
   </div>
   <div id="panel-resultater" class="panel">
     <div class="info-box blue" style="margin-bottom:16px;">
-      <div class="ibtag">Centrica – live data fra Neas Energy</div>
-      <p>Indsæt dit Centrica API-token nedenfor. Find det på <strong>direct.neasenergy.com</strong>: åbn siden, tryk F12, gå til Console og skriv: <code style="background:#f0f0f0;padding:2px 6px;border-radius:4px;font-size:12px;">localStorage.getItem('access_token')</code> – kopier resultatet her.</p>
+      <div class="ibtag">Centrica â live data fra Neas Energy</div>
+      <p>IndsÃ¦t dit Centrica API-token nedenfor. Find det pÃ¥ <strong>direct.neasenergy.com</strong>: Ã¥bn siden, tryk F12, gÃ¥ til Console og skriv: <code style="background:#f0f0f0;padding:2px 6px;border-radius:4px;font-size:12px;">localStorage.getItem('access_token')</code> â kopier resultatet her.</p>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:flex-end;">
       <div style="flex:1;min-width:200px;">
         <div style="font-size:11px;font-weight:600;color:var(--text3);margin-bottom:4px;">CENTRICA API TOKEN</div>
-        <input id="centrica-token-input" type="password" placeholder="Indsæt token her..." style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--rs);font-size:13px;background:var(--surface);">
+        <input id="centrica-token-input" type="password" placeholder="IndsÃ¦t token her..." style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--rs);font-size:13px;background:var(--surface);">
       </div>
       <button class="btn" onclick="saveCentricaToken()" style="background:#2563EB;color:#fff;border-color:#2563EB;white-space:nowrap;">Gem token</button>
       <button class="btn" onclick="clearCentricaToken()" style="white-space:nowrap;">Ryd</button>
@@ -227,8 +227,8 @@ let plan = Array.from({length:24}, (_,h) => ({
   h,
   market: 'afrr',   // 'afrr' eller 'mfrr'
   mw: 12,
-  blocks: 3,        // antal blokke (Ã¡ 4 MW)
-  price: 0          // sÃ¦ttes efter data er hentet
+  blocks: 3,        // antal blokke (ÃÂ¡ 4 MW)
+  price: 0          // sÃÂ¦ttes efter data er hentet
 }));
 
 let selHour = 17; // default valgt time
@@ -254,13 +254,13 @@ async function fetchAll() {
       at: new Date().toLocaleString('da-DK')
     };
     try { localStorage.setItem('vs10', JSON.stringify(S)); } catch(e){}
-    // SÃ¦t standardpriser i plan fra historiske P75
+    // SÃÂ¦t standardpriser i plan fra historiske P75
     plan.forEach(p => {
       const st = S[p.market][p.h];
       p.price = st.p75 || st.avgPrice || 50;
     });
     renderAll();
-    setSt('ok', `Opdateret ${S.at} Â· 90 dages data`);
+    setSt('ok', `Opdateret ${S.at} ÃÂ· 90 dages data`);
   } catch(err) {
     try { const c=localStorage.getItem('vs10'); if(c){S=JSON.parse(c);renderAll();setSt('warn',`Cached data fra ${S.at}`);return;} } catch(e){}
     setSt('error','Fejl ved hentning');
@@ -343,16 +343,16 @@ function renderHeatmap(){
   document.getElementById('heat-metrics').innerHTML=`
     <div class="metric"><div class="ml">aFRR dagsnit</div><div class="mv" style="color:var(--afrr)">${afrrAvg} kr.</div><div class="ms">pr. MW pr. time</div></div>
     <div class="metric"><div class="ml">mFRR dagsnit</div><div class="mv" style="color:var(--mfrr)">${mfrrAvg} kr.</div><div class="ms">pr. MW pr. time</div></div>
-    <div class="metric"><div class="ml">Bedste aFRR time</div><div class="mv">Kl. ${bestH[0]}</div><div class="ms">Snit ${bestH[1].avgPrice} kr. Â· max ${bestH[1].maxPrice} kr.</div></div>
-    <div class="metric"><div class="ml">Extra aktiv (snit)</div><div class="mv" style="color:var(--extra)">${xAct}%</div><div class="ms">af dage har efterspÃ¸rgsel</div></div>`;
+    <div class="metric"><div class="ml">Bedste aFRR time</div><div class="mv">Kl. ${bestH[0]}</div><div class="ms">Snit ${bestH[1].avgPrice} kr. ÃÂ· max ${bestH[1].maxPrice} kr.</div></div>
+    <div class="metric"><div class="ml">Extra aktiv (snit)</div><div class="mv" style="color:var(--extra)">${xAct}%</div><div class="ms">af dage har efterspÃÂ¸rgsel</div></div>`;
 }
 
 function showTT(e,h,key,label){
   const s=S[key][h];
   const tt=document.getElementById('tt');
   let extra='';
-  if(key==='extra') extra=`<br>Typisk indkÃ¸bt: ${s.avgProcured} MW`;
-  tt.innerHTML=`<strong>Kl. ${h}:00 â ${label}</strong><br>Snit: ${s.avgPrice} kr./MW<br>Max: ${s.maxPrice} kr./MW<br>P25âP75: ${s.p25}â${s.p75} kr.<br>Aktiv: ${s.activePct}% af dage${extra}`;
+  if(key==='extra') extra=`<br>Typisk indkÃÂ¸bt: ${s.avgProcured} MW`;
+  tt.innerHTML=`<strong>Kl. ${h}:00 Ã¢ÂÂ ${label}</strong><br>Snit: ${s.avgPrice} kr./MW<br>Max: ${s.maxPrice} kr./MW<br>P25Ã¢ÂÂP75: ${s.p25}Ã¢ÂÂ${s.p75} kr.<br>Aktiv: ${s.activePct}% af dage${extra}`;
   tt.style.display='block'; tt.style.left=(e.clientX+14)+'px'; tt.style.top=(e.clientY-10)+'px';
 }
 
@@ -361,10 +361,10 @@ function renderRecTable(){
   const rows=Array.from({length:24},(_,h)=>{
     const a=S.afrr[h],m=S.mfrr[h],x=S.extra[h];
     let mkt,bid,col;
-    if(a.avgPrice>m.avgPrice*1.3){mkt='aFRR';col='#DBEAFE;color:#1D4ED8';bid=`${a.p25}â${a.p75} kr.`;}
-    else if(m.avgPrice>=a.avgPrice){mkt='mFRR';col='#D1FAE5;color:#065F46';bid='5 kr. (lad markedet sÃ¦tte)';}
-    else{mkt='Begge';col='#EDE9FE;color:#5B21B6';bid=`aFRR: ${a.p25}â${a.p75} kr.`;}
-    const xn=x.activePct>=20?` <span style="font-size:10px;padding:1px 5px;border-radius:10px;background:#FEF3C7;color:#92400E">Extra ${x.activePct}% Â· snit ${x.avgPrice} kr.</span>`:'';
+    if(a.avgPrice>m.avgPrice*1.3){mkt='aFRR';col='#DBEAFE;color:#1D4ED8';bid=`${a.p25}Ã¢ÂÂ${a.p75} kr.`;}
+    else if(m.avgPrice>=a.avgPrice){mkt='mFRR';col='#D1FAE5;color:#065F46';bid='5 kr. (lad markedet sÃÂ¦tte)';}
+    else{mkt='Begge';col='#EDE9FE;color:#5B21B6';bid=`aFRR: ${a.p25}Ã¢ÂÂ${a.p75} kr.`;}
+    const xn=x.activePct>=20?` <span style="font-size:10px;padding:1px 5px;border-radius:10px;background:#FEF3C7;color:#92400E">Extra ${x.activePct}% ÃÂ· snit ${x.avgPrice} kr.</span>`:'';
     return `<tr>
       <td style="color:var(--text3);font-weight:500;white-space:nowrap">Kl. ${String(h).padStart(2,'0')}</td>
       <td><span style="padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;background:${col}">${mkt}</span>${xn}</td>
@@ -392,8 +392,8 @@ function renderHourPlanner(){
     const extraNote=p.market==='afrr'&&extraPct>=20?`<div class="hp" style="color:#D97706">Extra ${extraPct}%</div>`:'';
     card.innerHTML=`
       <div class="hh">Kl. ${String(p.h).padStart(2,'0')}</div>
-      <div class="hm ${mktCls}">${p.mw}MW Â· ${mktLbl}</div>
-      <div class="hp">${p.blocks}Ã${Math.round(p.mw/p.blocks)}MW</div>
+      <div class="hm ${mktCls}">${p.mw}MW ÃÂ· ${mktLbl}</div>
+      <div class="hp">${p.blocks}ÃÂ${Math.round(p.mw/p.blocks)}MW</div>
       <div class="hp">${p.price} kr.</div>
       ${extraNote}`;
     card.onclick=()=>selectHour(p.h);
@@ -412,7 +412,7 @@ function renderHourEditor(){
   if(!S)return;
   const p=plan[selHour];
   const a=S.afrr[selHour], m=S.mfrr[selHour], x=S.extra[selHour];
-  document.getElementById('he-title').textContent=`Rediger kl. ${String(selHour).padStart(2,'0')}:00â${String(selHour+1).padStart(2,'0')}:00`;
+  document.getElementById('he-title').textContent=`Rediger kl. ${String(selHour).padStart(2,'0')}:00Ã¢ÂÂ${String(selHour+1).padStart(2,'0')}:00`;
 
   document.getElementById('he-body').innerHTML=`
     <div style="margin-bottom:12px;">
@@ -421,8 +421,8 @@ function renderHourEditor(){
         <button class="seg-btn a${p.market==='afrr'?' sel':''}" onclick="setMarket('afrr')">aFRR</button>
         <button class="seg-btn m${p.market==='mfrr'?' sel':''}" onclick="setMarket('mfrr')">mFRR direkte</button>
       </div>
-      ${p.market==='afrr'&&x.activePct>=20?`<div style="font-size:11px;color:#D97706;margin-top:4px;">â¡ Extra aktiv ${x.activePct}% af dage (snit ${x.avgPrice} kr./MW) â MW der taber aFRR ryger hertil automatisk</div>`:''}
-      ${p.market==='mfrr'?`<div style="font-size:11px;color:#059669;margin-top:4px;">mFRR direkte: Du deltager ikke i aFRR denne time. OpnÃ¥r du ikke clearing, er der ingen indtjening.</div>`:''}
+      ${p.market==='afrr'&&x.activePct>=20?`<div style="font-size:11px;color:#D97706;margin-top:4px;">Ã¢ÂÂ¡ Extra aktiv ${x.activePct}% af dage (snit ${x.avgPrice} kr./MW) Ã¢ÂÂ MW der taber aFRR ryger hertil automatisk</div>`:''}
+      ${p.market==='mfrr'?`<div style="font-size:11px;color:#059669;margin-top:4px;">mFRR direkte: Du deltager ikke i aFRR denne time. OpnÃÂ¥r du ikke clearing, er der ingen indtjening.</div>`:''}
     </div>
 
     <div class="he-row">
@@ -433,7 +433,7 @@ function renderHourEditor(){
     <div class="he-row">
       <span class="he-label">Blokke</span>
       <input type="range" id="sl-blk" min="1" max="4" step="1" value="${p.blocks}" oninput="updateBlocks(this.value)">
-      <span class="he-val" id="v-blk">${p.blocks}Ã${Math.round(p.mw/p.blocks)} MW</span>
+      <span class="he-val" id="v-blk">${p.blocks}ÃÂ${Math.round(p.mw/p.blocks)} MW</span>
     </div>
     <div class="he-row">
       <span class="he-label">Beredskabspris</span>
@@ -462,8 +462,8 @@ function renderHourEditor(){
         <div style="font-weight:600">Snit: ${x.avgPrice} kr.</div>
         <div style="font-weight:600">P75: ${x.p75} kr.</div>
         <div style="font-weight:600;color:var(--danger)">Max: ${x.maxPrice} kr.</div>
-        <div style="font-size:10px;color:#92400E;margin-top:2px;">Typisk indkÃ¸bt: ${x.avgProcured} MW</div>
-        `:`<div style="color:var(--text3);font-size:11px;margin-top:4px;">Ingen efterspÃ¸rgsel historisk denne time</div>`}
+        <div style="font-size:10px;color:#92400E;margin-top:2px;">Typisk indkÃÂ¸bt: ${x.avgProcured} MW</div>
+        `:`<div style="color:var(--text3);font-size:11px;margin-top:4px;">Ingen efterspÃÂ¸rgsel historisk denne time</div>`}
       </div>
     </div>`;
 }
@@ -478,13 +478,13 @@ function updateMW(v){
   plan[selHour].mw=+v;
   if(plan[selHour].blocks>Math.round(+v/4)) plan[selHour].blocks=Math.max(1,Math.round(+v/4));
   document.getElementById('v-mw').textContent=v+' MW';
-  document.getElementById('v-blk').textContent=plan[selHour].blocks+'Ã'+Math.round(+v/plan[selHour].blocks)+' MW';
+  document.getElementById('v-blk').textContent=plan[selHour].blocks+'ÃÂ'+Math.round(+v/plan[selHour].blocks)+' MW';
   renderFordelingSummary();
   updateFordelingChart();
 }
 function updateBlocks(v){
   plan[selHour].blocks=+v;
-  document.getElementById('v-blk').textContent=v+'Ã'+Math.round(plan[selHour].mw/+v)+' MW';
+  document.getElementById('v-blk').textContent=v+'ÃÂ'+Math.round(plan[selHour].mw/+v)+' MW';
 }
 function updatePrice(v){
   plan[selHour].price=+v;
@@ -514,7 +514,7 @@ function renderFordelingSummary(){
     <div class="sc x">
       <div class="sc-lbl">Extra (automatisk ved aFRR-tab)</div>
       <div class="sc-val" style="color:var(--extra)">${afrrHours.filter(p=>S.extra[p.h].activePct>=20).length} risikotimer</div>
-      <div class="sc-note">SandsynlighedsvÃ¦gtet extra: ${Math.round(extraEst/1000)}k kr./dag</div>
+      <div class="sc-note">SandsynlighedsvÃÂ¦gtet extra: ${Math.round(extraEst/1000)}k kr./dag</div>
     </div>`;
   updateFordelingChart();
 }
@@ -572,7 +572,7 @@ function renderExtraCompare(){
     if(x.activePct<10) return null;
     const gain=x.avgPrice-a.p75;
     const color=gain>0?'#059669':'#DC2626';
-    const strategi=x.activePct>=25&&gain>50?'Overvej at sÃ¦tte aFRR-pris hÃ¸jt (satse pÃ¥ Extra)':'Behold normal aFRR-pris';
+    const strategi=x.activePct>=25&&gain>50?'Overvej at sÃÂ¦tte aFRR-pris hÃÂ¸jt (satse pÃÂ¥ Extra)':'Behold normal aFRR-pris';
     return `<tr>
       <td style="color:var(--text3);white-space:nowrap">Kl. ${String(h).padStart(2,'0')}</td>
       <td>${x.activePct}%</td>
@@ -591,26 +591,26 @@ function renderExtraCompare(){
 
 function renderInsights(){
   if(!S)return;
-  const top5=Array.from({length:24},(_,h)=>({h,p:S.afrr[h].avgPrice})).sort((a,b)=>b.p-a.p).slice(0,5).map(x=>`kl. ${x.h} (${x.p} kr./MW)`).join(' Â· ');
-  const extraGood=Array.from({length:24},(_,h)=>({h,p:S.extra[h].activePct,pr:S.extra[h].avgPrice})).filter(x=>x.p>=25).map(x=>`kl. ${x.h} (${x.p}% Â· ${x.pr} kr.)`).join(' Â· ')||'Ingen timer stabilt over 25%';
+  const top5=Array.from({length:24},(_,h)=>({h,p:S.afrr[h].avgPrice})).sort((a,b)=>b.p-a.p).slice(0,5).map(x=>`kl. ${x.h} (${x.p} kr./MW)`).join(' ÃÂ· ');
+  const extraGood=Array.from({length:24},(_,h)=>({h,p:S.extra[h].activePct,pr:S.extra[h].avgPrice})).filter(x=>x.p>=25).map(x=>`kl. ${x.h} (${x.p}% ÃÂ· ${x.pr} kr.)`).join(' ÃÂ· ')||'Ingen timer stabilt over 25%';
   const afrrMax=Math.max(...Object.values(S.afrr).map(s=>s.maxPrice));
   document.getElementById('insights').innerHTML=`
-    <div class="info-box blue"><div class="ibtag">aFRR â Bedste 5 timer (90-dages snit)</div><p>${top5}</p></div>
+    <div class="info-box blue"><div class="ibtag">aFRR Ã¢ÂÂ Bedste 5 timer (90-dages snit)</div><p>${top5}</p></div>
     <div class="info-box amber">
-      <div class="ibtag">mFRR Extra â Timer med over 25% sandsynlighed for aktivering</div>
-      <p>${extraGood}<br><br>I disse timer kan det betale sig at sÃ¦tte aFRR-prisen bevidst hÃ¸jt, sÃ¥ du taber aFRR og ryger til Extra-runden med dine blokke af 4 MW.</p>
+      <div class="ibtag">mFRR Extra Ã¢ÂÂ Timer med over 25% sandsynlighed for aktivering</div>
+      <p>${extraGood}<br><br>I disse timer kan det betale sig at sÃÂ¦tte aFRR-prisen bevidst hÃÂ¸jt, sÃÂ¥ du taber aFRR og ryger til Extra-runden med dine blokke af 4 MW.</p>
     </div>
     <div class="info-box green">
-      <div class="ibtag">Blokstrategi â brug altid blokke af 4 MW i aFRR</div>
-      <p>Energinet kÃ¸ber kun det de mangler i Extra-runden. En blok pÃ¥ 12 MW risikerer at blive afvist hvis de kun mangler 4-8 MW. Tre blokke af 4 MW Ã¸ger chancen for at prÃ¦cis det rigtige antal vinder. Historisk indkÃ¸ber Energinet typisk ${Math.round(Object.values(S.extra).filter(v=>v.activePct>0).reduce((s,v)=>s+v.avgProcured,0)/Math.max(1,Object.values(S.extra).filter(v=>v.activePct>0).length))} MW i Extra pr. aktiv time.</p>
+      <div class="ibtag">Blokstrategi Ã¢ÂÂ brug altid blokke af 4 MW i aFRR</div>
+      <p>Energinet kÃÂ¸ber kun det de mangler i Extra-runden. En blok pÃÂ¥ 12 MW risikerer at blive afvist hvis de kun mangler 4-8 MW. Tre blokke af 4 MW ÃÂ¸ger chancen for at prÃÂ¦cis det rigtige antal vinder. Historisk indkÃÂ¸ber Energinet typisk ${Math.round(Object.values(S.extra).filter(v=>v.activePct>0).reduce((s,v)=>s+v.avgProcured,0)/Math.max(1,Object.values(S.extra).filter(v=>v.activePct>0).length))} MW i Extra pr. aktiv time.</p>
     </div>
     <div class="info-box blue">
       <div class="ibtag">Clearing-pris potentiale (max seneste 90 dage)</div>
-      <p>aFRR max: ${afrrMax} kr./MW Â· Extra max: ${Math.max(...Object.values(S.extra).map(s=>s.maxPrice))} kr./MW Â· Kl. 17-19 er konsistent de stÃ¦rkeste timer i begge markeder.</p>
+      <p>aFRR max: ${afrrMax} kr./MW ÃÂ· Extra max: ${Math.max(...Object.values(S.extra).map(s=>s.maxPrice))} kr./MW ÃÂ· Kl. 17-19 er konsistent de stÃÂ¦rkeste timer i begge markeder.</p>
     </div>
     <div class="info-box amber">
-      <div class="ibtag">mFRR direkte â hvornÃ¥r giver det mening?</div>
-      <p>Hvis du tror Extra ikke Ã¥bner og aFRR-prisen vil ligge lavt, kan du bevidst flytte MW til mFRR direkte. Men pas pÃ¥: tager Energinet ikke MW ind i mFRR den time, er der 0 kr. i indtjening. Historisk har mFRR altid haft efterspÃ¸rgsel i DK1 â men prisen varierer meget.</p>
+      <div class="ibtag">mFRR direkte Ã¢ÂÂ hvornÃÂ¥r giver det mening?</div>
+      <p>Hvis du tror Extra ikke ÃÂ¥bner og aFRR-prisen vil ligge lavt, kan du bevidst flytte MW til mFRR direkte. Men pas pÃÂ¥: tager Energinet ikke MW ind i mFRR den time, er der 0 kr. i indtjening. Historisk har mFRR altid haft efterspÃÂ¸rgsel i DK1 Ã¢ÂÂ men prisen varierer meget.</p>
     </div>`;
 }
 
@@ -628,9 +628,9 @@ let cChart=null;
 
 function saveCentricaToken(){
   const t=document.getElementById('centrica-token-input').value.trim();
-  if(!t){document.getElementById('token-status').textContent='Indsæt venligst et token.';return;}
+  if(!t){document.getElementById('token-status').textContent='IndsÃ¦t venligst et token.';return;}
   localStorage.setItem('centrica_token',t);
-  document.getElementById('token-status').innerHTML='<span style="color:#059669">✓ Token gemt – klik nu på Seneste 30 dage</span>';
+  document.getElementById('token-status').innerHTML='<span style="color:#059669">â Token gemt â klik nu pÃ¥ Seneste 30 dage</span>';
   document.getElementById('centrica-token-input').value='';
 }
 
@@ -642,18 +642,18 @@ function clearCentricaToken(){
 window.fetchCentrica=async function(days){
   const token=localStorage.getItem('centrica_token');
   if(!token){
-    document.getElementById('c-metrics').innerHTML='<div class="info-box amber" style="grid-column:1/-1"><div class="ibtag">Token mangler</div><p>Indsæt dit Centrica token i feltet ovenfor og klik Gem.</p></div>';
+    document.getElementById('c-metrics').innerHTML='<div class="info-box amber" style="grid-column:1/-1"><div class="ibtag">Token mangler</div><p>IndsÃ¦t dit Centrica token i feltet ovenfor og klik Gem.</p></div>';
     return;
   }
   setSt('loading','Henter Centrica data...');
   try{
     const today=new Date(),start=new Date(today);start.setDate(start.getDate()-days);
     const fmt=d=>d.toISOString().split('.')[0];
-    const resp=await fetch('https://api.neasenergy.com/v1/Chp/siteReport/revenue?siteId=844439ef-b88a-4859-9752-5f680c6d7317&from='+fmt(start)+'&to='+fmt(today),
+    const resp=await fetch('https://worker-spring-river-bd29.madsdahl30.workers.dev/v1/Chp/siteReport/revenue?siteId=844439ef-b88a-4859-9752-5f680c6d7317&from='+fmt(start)+'&to='+fmt(today),
       {headers:{'Authorization':'Bearer '+token,'Accept':'application/json'}});
     if(resp.status===401){
       localStorage.removeItem('centrica_token');
-      document.getElementById('c-metrics').innerHTML='<div class="info-box red" style="grid-column:1/-1"><div class="ibtag">Token udløbet</div><p>Dit token er udløbet. Hent et nyt fra Centrica og gem det ovenfor.</p></div>';
+      document.getElementById('c-metrics').innerHTML='<div class="info-box red" style="grid-column:1/-1"><div class="ibtag">Token udlÃ¸bet</div><p>Dit token er udlÃ¸bet. Hent et nyt fra Centrica og gem det ovenfor.</p></div>';
       setSt('ok','');return;
     }
     const data=await resp.json();
@@ -668,7 +668,7 @@ window.fetchCentrica=async function(days){
 // Vis gem-status ved load
 document.addEventListener('DOMContentLoaded',()=>{
   if(localStorage.getItem('centrica_token')){
-    document.getElementById('token-status').innerHTML='<span style="color:#059669">✓ Token gemt fra sidst – klik Seneste 30 dage for at hente</span>';
+    document.getElementById('token-status').innerHTML='<span style="color:#059669">â Token gemt fra sidst â klik Seneste 30 dage for at hente</span>';
   }
 });
 
@@ -681,8 +681,8 @@ window.renderCentrica=function(data,days){
   document.getElementById('c-metrics').innerHTML=
     '<div class="metric"><div class="ml">Total omsaetning</div><div class="mv">'+Math.round(total/1000)+'k kr.</div><div class="ms">alle markeder</div></div>'+
     '<div class="metric"><div class="ml">Dagligt snit</div><div class="mv">'+Math.round(total/days/1000)+'k kr.</div><div class="ms">pr. dag</div></div>'+
-    '<div class="metric"><div class="ml">aFRR beredskab</div><div class="mv" style="color:var(--afrr)">'+Math.round(rev('AFRRCapacity15')/1000)+'k kr.</div><div class="ms">'+cnt('AFRRCapacity15')+' timer · '+avg('AFRRCapacity15',r=>r.BidActivationPricePrMWh)+' kr./MW</div></div>'+
-    '<div class="metric"><div class="ml">mFRR beredskab</div><div class="mv" style="color:var(--mfrr)">'+Math.round(rev('ManualReserveAvailable')/1000)+'k kr.</div><div class="ms">'+cnt('ManualReserveAvailable')+' timer · '+avg('ManualReserveAvailable',r=>r.BidActivationPricePrMWh)+' kr./MW</div></div>'+
+    '<div class="metric"><div class="ml">aFRR beredskab</div><div class="mv" style="color:var(--afrr)">'+Math.round(rev('AFRRCapacity15')/1000)+'k kr.</div><div class="ms">'+cnt('AFRRCapacity15')+' timer Â· '+avg('AFRRCapacity15',r=>r.BidActivationPricePrMWh)+' kr./MW</div></div>'+
+    '<div class="metric"><div class="ml">mFRR beredskab</div><div class="mv" style="color:var(--mfrr)">'+Math.round(rev('ManualReserveAvailable')/1000)+'k kr.</div><div class="ms">'+cnt('ManualReserveAvailable')+' timer Â· '+avg('ManualReserveAvailable',r=>r.BidActivationPricePrMWh)+' kr./MW</div></div>'+
     '<div class="metric"><div class="ml">mFRR Extra</div><div class="mv" style="color:var(--extra)">'+Math.round(rev('ManualReserveExtra')/1000)+'k kr.</div><div class="ms">'+cnt('ManualReserveExtra')+' vundne timer</div></div>'+
     '<div class="metric"><div class="ml">Aktiveringer</div><div class="mv" style="color:#7C3AED">'+Math.round((rev('AFRREnergy15')+rev('MFRREnergy15'))/1000)+'k kr.</div><div class="ms">'+(cnt('AFRREnergy15')+cnt('MFRREnergy15'))+' aktiveringer</div></div>';
   const byDay={};
