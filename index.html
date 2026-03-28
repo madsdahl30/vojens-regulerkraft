@@ -191,7 +191,19 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
     <div id="insights"></div>
   </div>
   <div id="panel-resultater" class="panel">
-    <div class="info-box blue" style="margin-bottom:16px;"><div class="ibtag">Centrica – live data fra Neas Energy</div><p>Henter dine faktiske resultater direkte fra Centrica. Du skal være logget ind på <strong>direct.neasenergy.com</strong> i din browser.</p></div>
+    <div class="info-box blue" style="margin-bottom:16px;">
+      <div class="ibtag">Centrica – live data fra Neas Energy</div>
+      <p>Indsæt dit Centrica API-token nedenfor. Find det på <strong>direct.neasenergy.com</strong>: åbn siden, tryk F12, gå til Console og skriv: <code style="background:#f0f0f0;padding:2px 6px;border-radius:4px;font-size:12px;">localStorage.getItem('access_token')</code> – kopier resultatet her.</p>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:flex-end;">
+      <div style="flex:1;min-width:200px;">
+        <div style="font-size:11px;font-weight:600;color:var(--text3);margin-bottom:4px;">CENTRICA API TOKEN</div>
+        <input id="centrica-token-input" type="password" placeholder="Indsæt token her..." style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--rs);font-size:13px;background:var(--surface);">
+      </div>
+      <button class="btn" onclick="saveCentricaToken()" style="background:#2563EB;color:#fff;border-color:#2563EB;white-space:nowrap;">Gem token</button>
+      <button class="btn" onclick="clearCentricaToken()" style="white-space:nowrap;">Ryd</button>
+    </div>
+    <div id="token-status" style="font-size:12px;color:var(--text3);margin-bottom:12px;"></div>
     <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
       <button class="btn" onclick="window.fetchCentrica(30)" style="background:#2563EB;color:#fff;border-color:#2563EB;">Seneste 30 dage</button>
       <button class="btn" onclick="window.fetchCentrica(7)">Seneste 7 dage</button>
@@ -613,22 +625,53 @@ function sw(id,el){
 fetchAll();
 
 let cChart=null;
+
+function saveCentricaToken(){
+  const t=document.getElementById('centrica-token-input').value.trim();
+  if(!t){document.getElementById('token-status').textContent='Indsæt venligst et token.';return;}
+  localStorage.setItem('centrica_token',t);
+  document.getElementById('token-status').innerHTML='<span style="color:#059669">✓ Token gemt – klik nu på Seneste 30 dage</span>';
+  document.getElementById('centrica-token-input').value='';
+}
+
+function clearCentricaToken(){
+  localStorage.removeItem('centrica_token');
+  document.getElementById('token-status').textContent='Token slettet.';
+}
+
 window.fetchCentrica=async function(days){
+  const token=localStorage.getItem('centrica_token');
+  if(!token){
+    document.getElementById('c-metrics').innerHTML='<div class="info-box amber" style="grid-column:1/-1"><div class="ibtag">Token mangler</div><p>Indsæt dit Centrica token i feltet ovenfor og klik Gem.</p></div>';
+    return;
+  }
   setSt('loading','Henter Centrica data...');
   try{
-    const w=window.open('https://direct.neasenergy.com/CHP/da-DK/#/dashboard','_c','width=1,height=1,left=-100');
-    await new Promise(r=>setTimeout(r,2500));
-    let token=null;
-    try{token=w.localStorage.getItem('access_token');}catch(e){}
-    try{w.close();}catch(e){}
-    if(!token){document.getElementById('c-metrics').innerHTML='<div class="info-box red" style="grid-column:1/-1"><div class="ibtag">Fejl</div><p>Log ind på direct.neasenergy.com og prøv igen.</p></div>';setSt('ok','');return;}
     const today=new Date(),start=new Date(today);start.setDate(start.getDate()-days);
     const fmt=d=>d.toISOString().split('.')[0];
-    const data=await fetch('https://api.neasenergy.com/v1/Chp/siteReport/revenue?siteId=844439ef-b88a-4859-9752-5f680c6d7317&from='+fmt(start)+'&to='+fmt(today),
-      {headers:{'Authorization':'Bearer '+token,'Accept':'application/json'}}).then(r=>r.json());
-    window.renderCentrica(data,days);setSt('ok',S?'Opdateret '+S.at:'');
-  }catch(e){document.getElementById('c-metrics').innerHTML='<div class="info-box red" style="grid-column:1/-1"><div class="ibtag">Fejl</div><p>'+e.message+'</p></div>';setSt('ok','');}
+    const resp=await fetch('https://api.neasenergy.com/v1/Chp/siteReport/revenue?siteId=844439ef-b88a-4859-9752-5f680c6d7317&from='+fmt(start)+'&to='+fmt(today),
+      {headers:{'Authorization':'Bearer '+token,'Accept':'application/json'}});
+    if(resp.status===401){
+      localStorage.removeItem('centrica_token');
+      document.getElementById('c-metrics').innerHTML='<div class="info-box red" style="grid-column:1/-1"><div class="ibtag">Token udløbet</div><p>Dit token er udløbet. Hent et nyt fra Centrica og gem det ovenfor.</p></div>';
+      setSt('ok','');return;
+    }
+    const data=await resp.json();
+    window.renderCentrica(data,days);
+    setSt('ok',S?'Opdateret '+S.at:'');
+  }catch(e){
+    document.getElementById('c-metrics').innerHTML='<div class="info-box red" style="grid-column:1/-1"><div class="ibtag">Fejl</div><p>'+e.message+'</p></div>';
+    setSt('ok','');
+  }
 };
+
+// Vis gem-status ved load
+document.addEventListener('DOMContentLoaded',()=>{
+  if(localStorage.getItem('centrica_token')){
+    document.getElementById('token-status').innerHTML='<span style="color:#059669">✓ Token gemt fra sidst – klik Seneste 30 dage for at hente</span>';
+  }
+});
+
 window.renderCentrica=function(data,days){
   const rev=t=>data.filter(r=>r.Bidtype===t).reduce((s,r)=>s+r.BidMWh*r.BidActivationPricePrMWh,0);
   const cnt=t=>data.filter(r=>r.Bidtype===t).length;
