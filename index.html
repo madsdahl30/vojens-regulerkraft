@@ -609,7 +609,7 @@ function sw(id,el){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('panel-'+id).classList.add('active');
   el.classList.add('active');
-  if(id==='budstrategi'){renderBudstrategi(window._centricaData||[]);}
+  if(id==='budstrategi'){if(window._centricaData&&window._centricaData.length){renderBudstrategi(window._centricaData);}else{document.getElementById('bs-summary').innerHTML='<p style="color:var(--text3);grid-column:1/-1">Henter data...</p>';ensureValidToken().then(function(){var token=localStorage.getItem('centrica_token');var today=new Date(),start=new Date(today);start.setDate(start.getDate()-90);var fmt=function(d){return d.toISOString().split(".")[0];};fetch('https://worker-spring-river-bd29.madsdahl30.workers.dev/v1/Chp/siteReport/revenue?siteId=844439ef-b88a-4859-9752-5f680c6d7317&from='+fmt(start)+'&to='+fmt(today),{headers:{'Authorization':'Bearer '+token}}).then(function(r){return r.json();}).then(function(data){window._centricaData=data;renderBudstrategi(data);});});}}
     if(id==='resultater'&&!document.getElementById('c-chart-card').style.display.includes('block')) fetchCentricaWithActive(30,document.querySelector('.centrica-period-btn'));
     if(id==='fordeling') setTimeout(()=>{updateFordelingChart();},50);
 }
