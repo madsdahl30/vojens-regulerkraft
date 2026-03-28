@@ -676,87 +676,105 @@ function renderBudstrategi(data){
     });
     return;
   }
-  // Stats per markedstype
-  var typer=[
-    {key:'ManualReserveAvailable',label:'mFRR beredskab',color:'var(--mfrr)',enhed:'kr./MW'},
-    {key:'AFRRCapacity15',label:'aFRR beredskab',color:'var(--afrr)',enhed:'kr./MW'},
-    {key:'ManualReserveExtra',label:'mFRR Extra',color:'var(--extra)',enhed:'kr./MW'}
-  ];
-  var summary=[];
-  typer.forEach(function(t){
-    var rows=data.filter(function(r){return r.Bidtype===t.key;});
-    if(!rows.length)return;
-    var cl=rows.map(function(r){return r.BidActivationPricePrMWh;}).sort(function(a,b){return a-b;});
-    var avgBud=Math.round(rows.reduce(function(s,r){return s+r.BidPricePrMWh;},0)/rows.length*10)/10;
-    var totalMwh=rows.reduce(function(s,r){return s+r.BidMWh;},0);
-    var p25=Math.round(cl[Math.floor(cl.length*0.25)]*10)/10;
-    var p50=Math.round(cl[Math.floor(cl.length*0.5)]*10)/10;
-    var avgCl=Math.round(cl.reduce(function(a,b){return a+b;},0)/cl.length);
-    var pot=Math.max(0,Math.round((p25-avgBud)*totalMwh/1000));
-    var status=p25>avgBud+2?'hav':p25<avgBud-2?'lav':'ok';
-    summary.push({label:t.label,color:t.color,avgBud:avgBud,p25:p25,p50:p50,avgCl:avgCl,pot:pot,status:status,count:rows.length,totalMwh:Math.round(totalMwh)});
-  });
 
-  // Top-sektion: Handlingskort
-  var totalPot=summary.reduce(function(s,r){return s+r.pot;},0);
-  document.getElementById('bs-summary').innerHTML=
-    '<div style="grid-column:1/-1;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:16px;margin-bottom:4px">'+
-    '<div style="font-size:13px;font-weight:600;color:#166534;margin-bottom:4px">Hvad skal du gøre?</div>'+
-    '<div style="font-size:13px;color:#166534">'+
-    summary.filter(function(s){return s.status==='hav';}).map(function(s){
-      return '→ Hæv dit <strong>'+s.label+'</strong>-bud fra <strong>'+s.avgBud+' → '+s.p25+' kr./MW</strong> og tjen ~<strong>+'+s.pot+'k kr.</strong> ekstra de næste 90 dage';
-    }).join('<br>')+
-    summary.filter(function(s){return s.status==='lav';}).map(function(s){
-      return '→ Overvæj at sænke dit <strong>'+s.label+'</strong>-bud fra '+s.avgBud+' til '+s.p25+' kr./MW – du vinder sandsynligvis de samme timer';
-    }).join('<br>')+
-    '</div><div style="margin-top:8px;font-size:22px;font-weight:800;color:#166534">Samlet potentiale: +'+(totalPot>999?(totalPot/1000).toFixed(1)+' M':totalPot+'k')+' kr. / 90 dage</div>'+
-    '<div style="font-size:11px;color:#15803d;margin-top:2px">Baseret på P25 af historisk clearing – du vil stadig vinde 75% af de timer du vinder i dag</div>'+
-    '</div>'+
-    summary.map(function(s){
-      var icon=s.status==='hav'?'🟢':s.status==='lav'?'🔴':'✅';
-      var msg=s.status==='hav'?'Hæv til '+s.p25+' kr./MW':s.status==='lav'?'Sænk til '+s.p25+' kr./MW':'OK – budpris er god';
-      return '<div class="metric" style="border-left:3px solid '+s.color+'">'+
-        '<div style="display:flex;justify-content:space-between;align-items:center"><div class="ml">'+s.label+'</div><span style="font-size:18px">'+icon+'</span></div>'+
-        '<div class="mv" style="color:'+s.color+';font-size:18px;margin:4px 0">'+msg+'</div>'+
-        (s.pot>0?'<div style="font-size:12px;font-weight:600;color:#166534">+'+s.pot+'k kr. potentiale / 90 dage</div>':'')+
-        '<div style="font-size:11px;color:var(--text3);margin-top:6px">Dit bud: '+s.avgBud+' kr./MW<br>Clearing snit: '+s.avgCl+' kr./MW &nbsp;|&nbsp; P25: '+s.p25+' &nbsp;|&nbsp; P50: '+s.p50+'<br>'+s.count+' vundne timer, '+s.totalMwh+' MWh</div>'+
-        '</div>';
-    }).join('');
+  var afrr=data.filter(function(r){return r.Bidtype==='AFRRCapacity15';});
+  var extra=data.filter(function(r){return r.Bidtype==='ManualReserveExtra';});
+  var totalDays=90;
 
-  // Time-tabel
-  var typeKeys=['AFRRCapacity15','ManualReserveAvailable','ManualReserveExtra'];
-  var hourData={};
-  typeKeys.forEach(function(type){
-    hourData[type]={};
-    var rows=data.filter(function(r){return r.Bidtype===type;});
-    for(var h=0;h<24;h++){
-      var hr=rows.filter(function(r){return (new Date(r.FromUtc).getUTCHours()+1)%24===h;});
-      if(!hr.length){hourData[type][h]=null;continue;}
-      var cl=hr.map(function(r){return r.BidActivationPricePrMWh;}).sort(function(a,b){return a-b;});
-      var avgBud=hr.reduce(function(s,r){return s+r.BidPricePrMWh;},0)/hr.length;
-      var p25=cl[Math.floor(cl.length*0.25)];
-      var diff=p25-avgBud;
-      hourData[type][h]={bud:Math.round(avgBud*10)/10,p25:Math.round(p25*10)/10,diff:Math.round(diff*10)/10,count:hr.length};
-    }
-  });
-  function cellBg(d){return d>10?'#dcfce7':d>2?'#fef9c3':d<-2?'#fee2e2':'';}
-  function cellIcon(d){return d>10?'🟢':d>2?'🟡':d<-2?'🔴':'';}
-  var thead='<thead><tr style="font-size:11px"><th>Time</th><th style="color:var(--afrr)">aFRR dit bud</th><th style="color:var(--afrr)">aFRR anbefalet</th><th style="color:var(--mfrr)">mFRR dit bud</th><th style="color:var(--mfrr)">mFRR anbefalet</th><th style="color:var(--extra)">Extra dit bud</th><th style="color:var(--extra)">Extra anbefalet</th></tr></thead>';
+  // Beregn stats per time
+  var hs={};
+  for(var h=0;h<24;h++){
+    var aRows=afrr.filter(function(r){return (new Date(r.FromUtc).getUTCHours()+1)%24===h;});
+    var xRows=extra.filter(function(r){return (new Date(r.FromUtc).getUTCHours()+1)%24===h;});
+    if(!aRows.length){hs[h]=null;continue;}
+    var aCl=aRows.map(function(r){return r.BidActivationPricePrMWh;}).sort(function(a,b){return a-b;});
+    var p25=Math.round(aCl[Math.floor(aCl.length*.25)]);
+    var p50=Math.round(aCl[Math.floor(aCl.length*.5)]);
+    var p75=Math.round(aCl[Math.floor(aCl.length*.75)]);
+    var p90=Math.round(aCl[Math.floor(aCl.length*.9)]);
+    var xPct=Math.round(xRows.length/totalDays*100);
+    var xCl=xRows.map(function(r){return r.BidActivationPricePrMWh;}).sort(function(a,b){return a-b;});
+    var xP50=xCl.length?Math.round(xCl[Math.floor(xCl.length*.5)]):0;
+    var xP75=xCl.length?Math.round(xCl[Math.floor(xCl.length*.75)]):0;
+    // Extra-satsning: forventet gevinst = sandsynlighed * xP50 * 4MW
+    var extraExp=Math.round(xPct/100*xP50*4);
+    var afrrSafe=Math.round(p25*4);
+    hs[h]={p25:p25,p50:p50,p75:p75,p90:p90,xPct:xPct,xP50:xP50,xP75:xP75,extraExp:extraExp,afrrSafe:afrrSafe,n:aRows.length};
+  }
+
+  // TOP sektion: Dagens overblik
+  var topHours=Object.entries(hs).filter(function(e){return e[1]&&e[1].xPct>=15;})
+    .sort(function(a,b){return b[1].xPct-a[1].xPct;}).slice(0,4);
+  
+  var topHtml='<div style="grid-column:1/-1;margin-bottom:4px">';
+  topHtml+='<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px">Blokkestrategi kl. 07:30 i dag</div>';
+  topHtml+='<div style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.6">';
+  topHtml+='→ <strong>Blok 1 (laveste pris):</strong> byd til P25 – vinder 75% af gangene<br>';
+  topHtml+='→ <strong>Blok 2 (middel):</strong> byd til P50 – vinder ca. halvdelen<br>';
+  topHtml+='→ <strong>Blok 3 (højest):</strong> byd højt (P75+) – rækker mod Extra-runden ved tab';
+  topHtml+='</div></div>';
+
+  // Extra-risikovurdering
+  var h17=hs[17],h18=hs[18];
+  var avgExtraPct=Math.round(Object.values(hs).filter(function(s){return s;}).reduce(function(a,s){return a+s.xPct;},0)/24);
+  topHtml+='<div class="metric" style="border-left:3px solid var(--extra)">';
+  topHtml+='<div class="ml">Extra sandsynlighed (snit)</div>';
+  topHtml+='<div class="mv" style="color:var(--extra);font-size:20px">'+avgExtraPct+'% af dagene</div>';
+  topHtml+='<div class="ms">Extra råd: '+(avgExtraPct>=15?'Markedet er aktivt nok til at blok 3 må satse på Extra':'Extra sjeldent – vær forsigtig med satsning')+'</div>';
+  topHtml+='</div>';
+  topHtml+='<div class="metric" style="border-left:3px solid var(--afrr)">';
+  topHtml+='<div class="ml">aFRR kl. 17-18 (peak)</div>';
+  topHtml+=(h17?'<div class="mv" style="color:var(--afrr);font-size:20px">'+h17.p25+' / '+h17.p50+' / '+h17.p75+' kr.</div><div class="ms">P25 / P50 / P75 – Extra '+h17.xPct+'% aktiv</div>':'<div class="ms">Ingen data</div>');
+  topHtml+='</div>';
+  document.getElementById('bs-summary').innerHTML=topHtml;
+
+  // Timeoversigt med blokkestrategi
+  function xColor(pct){return pct>=25?'#dcfce7':pct>=15?'#fef9c3':pct>=10?'#fff7ed':'#f9fafb';}
+  function xIcon(pct){return pct>=25?'🟢':pct>=15?'🟡':pct>=10?'🟠':'⚪';}
+  
+  var thead='<thead><tr style="font-size:11px">'+
+    '<th>Time</th>'+
+    '<th style="color:var(--afrr)">Blok 1 – sikker<br><span style="font-weight:400;color:var(--text3)">P25 (vinder 75%)</span></th>'+
+    '<th style="color:var(--afrr)">Blok 2 – middel<br><span style="font-weight:400;color:var(--text3)">P50 (vinder 50%)</span></th>'+
+    '<th style="color:var(--extra)">Blok 3 – satsning<br><span style="font-weight:400;color:var(--text3)">P75 (sats på Extra)</span></th>'+
+    '<th style="color:var(--extra)">Extra<br><span style="font-weight:400;color:var(--text3)">sandsynlighed</span></th>'+
+    '<th>Forventet Extra<br><span style="font-weight:400;color:var(--text3)">pr. 4 MW blok</span></th>'+
+    '<th>vs. sikker aFRR<br><span style="font-weight:400;color:var(--text3)">pr. 4 MW blok</span></th>'+
+    '</tr></thead>';
+  
   var tbody='';
   for(var h=0;h<24;h++){
-    var row='<tr><td style="font-weight:600;font-size:12px">kl.'+(h===0?'00':String(h).padStart(2,'0'))+'</td>';
-    typeKeys.forEach(function(type){
-      var d=hourData[type][h];
-      if(!d){row+='<td style="color:var(--text3);font-size:11px">-</td><td style="color:var(--text3);font-size:11px">-</td>';return;}
-      row+='<td style="font-size:11px;color:var(--text3)">'+d.bud+'</td>';
-      row+='<td style="background:'+cellBg(d.diff)+';font-weight:600;font-size:12px">'+cellIcon(d.diff)+d.p25+'</td>';
-    });
-    row+='</tr>';tbody+=row;
+    var s=hs[h];
+    if(!s){tbody+='<tr><td style="font-weight:600">kl.'+(h===0?'00':String(h).padStart(2,'0'))+'</td><td colspan="6" style="color:var(--text3);font-size:11px">Ingen data</td></tr>';continue;}
+    var better=s.extraExp>s.afrrSafe;
+    tbody+='<tr style="background:'+xColor(s.xPct)+'">';
+    tbody+='<td style="font-weight:600;font-size:12px">kl.'+(h===0?'00':String(h).padStart(2,'0'))+'</td>';
+    tbody+='<td style="font-weight:600;color:var(--afrr)">'+s.p25+' kr./MW</td>';
+    tbody+='<td style="color:var(--afrr)">'+s.p50+' kr./MW</td>';
+    tbody+='<td style="font-weight:600;color:var(--extra)">'+s.p75+' kr./MW'+
+      (s.xPct>=15?'<br><span style="font-size:9px;color:#92400e">↑ hæv for Extra</span>':'')+'</td>';
+    tbody+='<td>'+xIcon(s.xPct)+' <strong>'+s.xPct+'%</strong><br><span style="font-size:10px;color:var(--text3)">'+s.xP50+' kr. snit</span></td>';
+    tbody+='<td style="color:var(--extra);font-weight:'+(better?'700':'400')+'">'+s.extraExp+' kr.</td>';
+    tbody+='<td style="color:var(--afrr);font-weight:'+(better?'400':'700')+'">'+s.afrrSafe+' kr.'+(better?'':' ← bedre')+'</td>';
+    tbody+='</tr>';
   }
   document.getElementById('bs-table').innerHTML=thead+'<tbody>'+tbody+'</tbody>';
-  document.getElementById('bs-gain').innerHTML='<p style="font-size:12px;color:#166534;margin:0">'+
-    'P25-prisen er den clearing-pris der blev overskredet 75% af gangene. Byder du til P25, vinder du stadig alle de timer du vinder i dag – men får mere i rådighedsbetaling.<br><br>'+
-    '<strong>Eksempel:</strong> mFRR beredskab – du byder 5 kr./MW. Clearing har været over 12,5 kr. i 75% af timerne. Hæver du til 12,5 kr. får du samme antal timer, men +7,5 kr./MW ekstra på alle dem.</p>';
+
+  // Forklaring i bunden
+  document.getElementById('bs-gain').innerHTML=
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">'+
+    '<div><div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px">Forstå tabellen</div>'+
+    '<div style="font-size:11px;color:var(--text2);line-height:1.7">'+
+    '🟢 <strong>Grøn:</strong> Extra aktiv 25%+ af dagene – sats på det<br>'+
+    '🟡 <strong>Gul:</strong> Extra aktiv 15-25% – overvæj satsning<br>'+
+    '🟠 <strong>Orange:</strong> Extra aktiv 10-15% – vær forsigtig<br>'+
+    '⚪ <strong>Grå:</strong> Extra sjeldent – byd sikkert i aFRR</div></div>'+
+    '<div><div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px">Aktiveringsbuddet</div>'+
+    '<div style="font-size:11px;color:var(--text2);line-height:1.7">'+
+    'Aktiveringsbuddet skal minimum dække driftsomkostninger:<br>'+
+    '<strong>Min. 7.000 kr./MW/time</strong><br>'+
+    'Clearing på aktiveringer er typisk højere end dit bud – her er der ikke meget at optimere, og du får clearing-prisen når du aktiveres.</div></div>'+
+    '</div>';
 }
 function fmtRev(v){
   if(v>=1000000) return (v/1000000).toFixed(1).replace('.0','')+' M kr.';
