@@ -749,7 +749,7 @@ function renderBudstrategi(data){
       var d=hourData[type][h];
       if(!d){row+='<td style="color:var(--text3);font-size:11px">-</td><td style="color:var(--text3);font-size:11px">-</td>';return;}
       row+='<td style="font-size:11px;color:var(--text3)">'+d.bud+'</td>';
-      row+='<td style="background:'+cellBg(d.diff)+';font-weight:600;font-size:12px">'+cellIcon(d.diff)+d.p25+'<span style="font-size:9px;color:var(--text3)"> ('+d.count+')</span></td>';
+      row+='<td style="background:'+cellBg(d.diff)+';font-weight:600;font-size:12px">'+cellIcon(d.diff)+d.p25+'</td>';
     });
     row+='</tr>';tbody+=row;
   }
