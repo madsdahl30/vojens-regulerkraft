@@ -608,7 +608,8 @@ function sw(id,el){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('panel-'+id).classList.add('active');
   el.classList.add('active');
-  if(id==='fordeling') setTimeout(()=>{updateFordelingChart();},50);
+  if(id==='resultater'&&!document.getElementById('c-chart-card').style.display.includes('block')) fetchCentricaWithActive(30,document.querySelector('.centrica-period-btn'));
+    if(id==='fordeling') setTimeout(()=>{updateFordelingChart();},50);
 }
 
 fetchAll();
