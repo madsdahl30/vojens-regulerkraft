@@ -609,7 +609,7 @@ function sw(id,el){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('panel-'+id).classList.add('active');
   el.classList.add('active');
-  if(id==='budstrategi'){if(window._centricaData&&window._centricaData.length){renderBudstrategi(window._centricaData);}else{document.getElementById('bs-summary').innerHTML='<p style="color:var(--text3);grid-column:1/-1">Henter data...</p>';ensureValidToken().then(function(){var token=localStorage.getItem('centrica_token');var today=new Date(),start=new Date(today);start.setDate(start.getDate()-90);var fmt=function(d){return d.toISOString().split(".")[0];};fetch('https://worker-spring-river-bd29.madsdahl30.workers.dev/v1/Chp/siteReport/revenue?siteId=844439ef-b88a-4859-9752-5f680c6d7317&from='+fmt(start)+'&to='+fmt(today),{headers:{'Authorization':'Bearer '+token}}).then(function(r){return r.json();}).then(function(data){window._centricaData=data;renderBudstrategi(data);});});}}
+  if(id==='budstrategi'){renderBudstrategi(window._centricaData||[]);}
     if(id==='resultater'&&!document.getElementById('c-chart-card').style.display.includes('block')) fetchCentricaWithActive(30,document.querySelector('.centrica-period-btn'));
     if(id==='fordeling') setTimeout(()=>{updateFordelingChart();},50);
 }
@@ -665,26 +665,66 @@ setInterval(async () => {
 }, 2 * 60 * 1000);
 
 function renderBudstrategi(data){
-  var types={'AFRRCapacity15':{label:'aFRR beredskab',color:'var(--afrr)'},'ManualReserveAvailable':{label:'mFRR beredskab',color:'var(--mfrr)'},'ManualReserveExtra':{label:'mFRR Extra',color:'var(--extra)'}};
+  if(!data||!data.length){
+    document.getElementById('bs-summary').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--text3)">Henter data fra Centrica...</div>';
+    ensureValidToken().then(function(){
+      var tok=localStorage.getItem('centrica_token');
+      var t=new Date(),s=new Date(t);s.setDate(s.getDate()-90);
+      var fmt=function(d){return d.toISOString().split('.')[0];};
+      fetch('https://worker-spring-river-bd29.madsdahl30.workers.dev/v1/Chp/siteReport/revenue?siteId=844439ef-b88a-4859-9752-5f680c6d7317&from='+fmt(s)+'&to='+fmt(t),
+        {headers:{'Authorization':'Bearer '+tok}}).then(function(r){return r.json();}).then(function(d){window._centricaData=d;renderBudstrategi(d);});
+    });
+    return;
+  }
+  // Stats per markedstype
+  var typer=[
+    {key:'ManualReserveAvailable',label:'mFRR beredskab',color:'var(--mfrr)',enhed:'kr./MW'},
+    {key:'AFRRCapacity15',label:'aFRR beredskab',color:'var(--afrr)',enhed:'kr./MW'},
+    {key:'ManualReserveExtra',label:'mFRR Extra',color:'var(--extra)',enhed:'kr./MW'}
+  ];
   var summary=[];
-  Object.keys(types).forEach(function(type){
-    var info=types[type];
-    var rows=data.filter(function(r){return r.Bidtype===type;});
+  typer.forEach(function(t){
+    var rows=data.filter(function(r){return r.Bidtype===t.key;});
     if(!rows.length)return;
     var cl=rows.map(function(r){return r.BidActivationPricePrMWh;}).sort(function(a,b){return a-b;});
-    var avgBud=rows.reduce(function(s,r){return s+r.BidPricePrMWh;},0)/rows.length;
+    var avgBud=Math.round(rows.reduce(function(s,r){return s+r.BidPricePrMWh;},0)/rows.length*10)/10;
     var totalMwh=rows.reduce(function(s,r){return s+r.BidMWh;},0);
-    var p25=cl[Math.floor(cl.length*0.25)];
-    var p50=cl[Math.floor(cl.length*0.5)];
-    var avgCl=cl.reduce(function(a,b){return a+b;},0)/cl.length;
-    var pot=Math.round((p25-avgBud)*totalMwh);
-    summary.push({type:type,label:info.label,color:info.color,avgBud:Math.round(avgBud*10)/10,avgCl:Math.round(avgCl),p25:Math.round(p25*10)/10,p50:Math.round(p50),pot:pot,count:rows.length});
+    var p25=Math.round(cl[Math.floor(cl.length*0.25)]*10)/10;
+    var p50=Math.round(cl[Math.floor(cl.length*0.5)]*10)/10;
+    var avgCl=Math.round(cl.reduce(function(a,b){return a+b;},0)/cl.length);
+    var pot=Math.max(0,Math.round((p25-avgBud)*totalMwh/1000));
+    var status=p25>avgBud+2?'hav':p25<avgBud-2?'lav':'ok';
+    summary.push({label:t.label,color:t.color,avgBud:avgBud,p25:p25,p50:p50,avgCl:avgCl,pot:pot,status:status,count:rows.length,totalMwh:Math.round(totalMwh)});
   });
-  if(!summary.length){document.getElementById('bs-summary').innerHTML='<p style="color:var(--text3);grid-column:1/-1">Ingen data – hent data i Mine resultater først</p>';return;}
-  document.getElementById('bs-summary').innerHTML=summary.map(function(s){
-    return '<div class="metric" style="border-left:3px solid '+s.color+'"><div class="ml">'+s.label+'</div><div class="mv" style="color:'+s.color+';font-size:20px">'+s.p25+' kr./MW</div><div class="ms">anbefalet bud (P25)</div><div style="margin-top:6px;font-size:11px;color:var(--text3)">Nuværende bud: <strong>'+s.avgBud+'</strong> kr./MW</div><div style="font-size:11px;color:var(--text3)">Clearing snit: <strong>'+s.avgCl+'</strong> kr./MW</div></div>';
-  }).join('');
-  var typeKeys=Object.keys(types);
+
+  // Top-sektion: Handlingskort
+  var totalPot=summary.reduce(function(s,r){return s+r.pot;},0);
+  document.getElementById('bs-summary').innerHTML=
+    '<div style="grid-column:1/-1;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:16px;margin-bottom:4px">'+
+    '<div style="font-size:13px;font-weight:600;color:#166534;margin-bottom:4px">Hvad skal du gøre?</div>'+
+    '<div style="font-size:13px;color:#166534">'+
+    summary.filter(function(s){return s.status==='hav';}).map(function(s){
+      return '→ Hæv dit <strong>'+s.label+'</strong>-bud fra <strong>'+s.avgBud+' → '+s.p25+' kr./MW</strong> og tjen ~<strong>+'+s.pot+'k kr.</strong> ekstra de næste 90 dage';
+    }).join('<br>')+
+    summary.filter(function(s){return s.status==='lav';}).map(function(s){
+      return '→ Overvæj at sænke dit <strong>'+s.label+'</strong>-bud fra '+s.avgBud+' til '+s.p25+' kr./MW – du vinder sandsynligvis de samme timer';
+    }).join('<br>')+
+    '</div><div style="margin-top:8px;font-size:22px;font-weight:800;color:#166534">Samlet potentiale: +'+(totalPot>999?(totalPot/1000).toFixed(1)+' M':totalPot+'k')+' kr. / 90 dage</div>'+
+    '<div style="font-size:11px;color:#15803d;margin-top:2px">Baseret på P25 af historisk clearing – du vil stadig vinde 75% af de timer du vinder i dag</div>'+
+    '</div>'+
+    summary.map(function(s){
+      var icon=s.status==='hav'?'🟢':s.status==='lav'?'🔴':'✅';
+      var msg=s.status==='hav'?'Hæv til '+s.p25+' kr./MW':s.status==='lav'?'Sænk til '+s.p25+' kr./MW':'OK – budpris er god';
+      return '<div class="metric" style="border-left:3px solid '+s.color+'">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center"><div class="ml">'+s.label+'</div><span style="font-size:18px">'+icon+'</span></div>'+
+        '<div class="mv" style="color:'+s.color+';font-size:18px;margin:4px 0">'+msg+'</div>'+
+        (s.pot>0?'<div style="font-size:12px;font-weight:600;color:#166534">+'+s.pot+'k kr. potentiale / 90 dage</div>':'')+
+        '<div style="font-size:11px;color:var(--text3);margin-top:6px">Dit bud: '+s.avgBud+' kr./MW<br>Clearing snit: '+s.avgCl+' kr./MW &nbsp;|&nbsp; P25: '+s.p25+' &nbsp;|&nbsp; P50: '+s.p50+'<br>'+s.count+' vundne timer, '+s.totalMwh+' MWh</div>'+
+        '</div>';
+    }).join('');
+
+  // Time-tabel
+  var typeKeys=['AFRRCapacity15','ManualReserveAvailable','ManualReserveExtra'];
   var hourData={};
   typeKeys.forEach(function(type){
     hourData[type]={};
@@ -695,27 +735,28 @@ function renderBudstrategi(data){
       var cl=hr.map(function(r){return r.BidActivationPricePrMWh;}).sort(function(a,b){return a-b;});
       var avgBud=hr.reduce(function(s,r){return s+r.BidPricePrMWh;},0)/hr.length;
       var p25=cl[Math.floor(cl.length*0.25)];
-      hourData[type][h]={bud:Math.round(avgBud*10)/10,p25:Math.round(p25*10)/10,diff:Math.round((p25-avgBud)*10)/10,count:hr.length};
+      var diff=p25-avgBud;
+      hourData[type][h]={bud:Math.round(avgBud*10)/10,p25:Math.round(p25*10)/10,diff:Math.round(diff*10)/10,count:hr.length};
     }
   });
-  function cellBg(diff){if(diff>10)return '#dcfce7';if(diff>2)return '#fef9c3';if(diff<-2)return '#fee2e2';return '';}
-  function cellIcon(diff){if(diff>10)return '🟢';if(diff>2)return '🟡';if(diff<-2)return '🔴';return '';}
-  var thead='<thead><tr><th>Time</th><th style="color:var(--afrr)">aFRR nuv.</th><th style="color:var(--afrr)">aFRR P25</th><th style="color:var(--mfrr)">mFRR nuv.</th><th style="color:var(--mfrr)">mFRR P25</th><th style="color:var(--extra)">Extra nuv.</th><th style="color:var(--extra)">Extra P25</th></tr></thead>';
+  function cellBg(d){return d>10?'#dcfce7':d>2?'#fef9c3':d<-2?'#fee2e2':'';}
+  function cellIcon(d){return d>10?'🟢':d>2?'🟡':d<-2?'🔴':'';}
+  var thead='<thead><tr style="font-size:11px"><th>Time</th><th style="color:var(--afrr)">aFRR bud</th><th style="color:var(--afrr)">aFRR P25 →</th><th style="color:var(--mfrr)">mFRR bud</th><th style="color:var(--mfrr)">mFRR P25 →</th><th style="color:var(--extra)">Extra bud</th><th style="color:var(--extra)">Extra P25 →</th></tr></thead>';
   var tbody='';
   for(var h=0;h<24;h++){
-    var row='<tr><td style="font-weight:600">kl. '+(h===0?'00':String(h).padStart(2,'0'))+'</td>';
-    ['AFRRCapacity15','ManualReserveAvailable','ManualReserveExtra'].forEach(function(type){
+    var row='<tr><td style="font-weight:600;font-size:12px">kl.'+(h===0?'00':String(h).padStart(2,'0'))+'</td>';
+    typeKeys.forEach(function(type){
       var d=hourData[type][h];
-      if(!d){row+='<td style="color:var(--text3)">-</td><td style="color:var(--text3)">-</td>';return;}
-      row+='<td style="font-size:11px;color:var(--text3)">'+d.bud+'</td><td style="background:'+cellBg(d.diff)+';font-weight:600">'+cellIcon(d.diff)+' '+d.p25+'<span style="font-size:9px;color:var(--text3)"> ('+d.count+')</span></td>';
+      if(!d){row+='<td style="color:var(--text3);font-size:11px">-</td><td style="color:var(--text3);font-size:11px">-</td>';return;}
+      row+='<td style="font-size:11px;color:var(--text3)">'+d.bud+'</td>';
+      row+='<td style="background:'+cellBg(d.diff)+';font-weight:600;font-size:12px">'+cellIcon(d.diff)+d.p25+'<span style="font-size:9px;color:var(--text3)"> ('+d.count+')</span></td>';
     });
     row+='</tr>';tbody+=row;
   }
   document.getElementById('bs-table').innerHTML=thead+'<tbody>'+tbody+'</tbody>';
-  var totalPot=summary.reduce(function(s,r){return s+Math.max(0,r.pot);},0);
-  document.getElementById('bs-gain').innerHTML=summary.filter(function(s){return s.pot>0;}).map(function(s){
-    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #bbf7d0"><span style="color:#166534;font-weight:500">'+s.label+'</span><span style="font-size:12px;color:#166534">hæv '+s.avgBud+' → '+s.p25+' kr./MW</span><span style="font-weight:700;color:#166534;font-size:18px">+'+Math.round(s.pot/1000)+'k kr. / 90 dage</span></div>';
-  }).join('')+'<div style="display:flex;justify-content:space-between;padding:12px 0"><span style="font-size:16px;font-weight:700;color:#166534">Samlet potentiale</span><span style="font-size:22px;font-weight:800;color:#166534">+'+Math.round(totalPot/1000)+'k kr. / 90 dage</span></div><p style="font-size:11px;color:#15803d">P25 = du vinder stadig 75% af gangene du vandt før. Ingen øget risiko.</p>';
+  document.getElementById('bs-gain').innerHTML='<p style="font-size:12px;color:#166534;margin:0">'+
+    'P25-prisen er den clearing-pris der blev overskredet 75% af gangene. Byder du til P25, vinder du stadig alle de timer du vinder i dag – men får mere i rådighedsbetaling.<br><br>'+
+    '<strong>Eksempel:</strong> mFRR beredskab – du byder 5 kr./MW. Clearing har været over 12,5 kr. i 75% af timerne. Hæver du til 12,5 kr. får du samme antal timer, men +7,5 kr./MW ekstra på alle dem.</p>';
 }
 function fmtRev(v){
   if(v>=1000000) return (v/1000000).toFixed(1).replace('.0','')+' M kr.';
