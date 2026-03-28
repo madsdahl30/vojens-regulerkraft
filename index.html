@@ -741,7 +741,7 @@ function renderBudstrategi(data){
   });
   function cellBg(d){return d>10?'#dcfce7':d>2?'#fef9c3':d<-2?'#fee2e2':'';}
   function cellIcon(d){return d>10?'🟢':d>2?'🟡':d<-2?'🔴':'';}
-  var thead='<thead><tr style="font-size:11px"><th>Time</th><th style="color:var(--afrr)">aFRR bud</th><th style="color:var(--afrr)">aFRR P25 →</th><th style="color:var(--mfrr)">mFRR bud</th><th style="color:var(--mfrr)">mFRR P25 →</th><th style="color:var(--extra)">Extra bud</th><th style="color:var(--extra)">Extra P25 →</th></tr></thead>';
+  var thead='<thead><tr style="font-size:11px"><th>Time</th><th style="color:var(--afrr)">aFRR dit bud</th><th style="color:var(--afrr)">aFRR anbefalet</th><th style="color:var(--mfrr)">mFRR dit bud</th><th style="color:var(--mfrr)">mFRR anbefalet</th><th style="color:var(--extra)">Extra dit bud</th><th style="color:var(--extra)">Extra anbefalet</th></tr></thead>';
   var tbody='';
   for(var h=0;h<24;h++){
     var row='<tr><td style="font-weight:600;font-size:12px">kl.'+(h===0?'00':String(h).padStart(2,'0'))+'</td>';
