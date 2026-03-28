@@ -121,6 +121,7 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
     <button class="tab" onclick="sw('fordeling',this)">MW-fordeling</button>
     <button class="tab" onclick="sw('extra',this)">mFRR Extra</button>
     <button class="tab" onclick="sw('indsigt',this)">Indsigter</button>
+    <button class="tab" onclick="sw('resultater',this)">Mine resultater</button>
   </div>
 
   <!-- PRISKORT -->
@@ -188,6 +189,27 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
   <!-- INDSIGTER -->
   <div id="panel-indsigt" class="panel">
     <div id="insights"></div>
+  </div>
+  <!-- MINE RESULTATER -->
+  <div id="panel-resultater" class="panel">
+    <div class="info-box blue" style="margin-bottom:16px;">
+      <div class="ibtag">Centrica – live data fra Neas Energy</div>
+      <p>Henter dine faktiske resultater direkte fra Centrica. Du skal være logget ind på <strong>direct.neasenergy.com</strong> i din browser.</p>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+      <button class="btn" onclick="fetchCentrica(30)" style="background:#2563EB;color:#fff;border-color:#2563EB;">Seneste 30 dage</button>
+      <button class="btn" onclick="fetchCentrica(7)">Seneste 7 dage</button>
+      <button class="btn" onclick="fetchCentrica(90)">Seneste 90 dage</button>
+    </div>
+    <div class="metrics" id="c-metrics" style="grid-template-columns:repeat(3,minmax(0,1fr));"></div>
+    <div class="card" id="c-chart-card" style="display:none;">
+      <div class="ct">Daglig omsætning <span class="badge ba" id="c-period"></span></div>
+      <div class="cw" style="height:240px;"><canvas id="cChart"></canvas></div>
+    </div>
+    <div class="card" id="c-perf-card" style="display:none;">
+      <div class="ct">Din budpris vs. clearing-pris</div>
+      <table class="rt" id="c-table"></table>
+    </div>
   </div>
 </div>
 
@@ -596,6 +618,92 @@ function sw(id,el){
   document.getElementById('panel-'+id).classList.add('active');
   el.classList.add('active');
   if(id==='fordeling') setTimeout(()=>{updateFordelingChart();},50);
+}
+
+
+// ---- CENTRICA ----
+let cChart = null;
+
+async function fetchCentrica(days) {
+  setSt('loading','Henter Centrica data...');
+  try {
+    const centWin = window.open('https://direct.neasenergy.com/CHP/da-DK/#/dashboard','_centrica','width=1,height=1,left=-100');
+    await new Promise(r=>setTimeout(r,2500));
+    let token = null;
+    try { token = centWin.localStorage.getItem('access_token'); } catch(e){}
+    try { centWin.close(); } catch(e){}
+    if(!token){ renderCErr('Ikke logget ind på Centrica. Åbn direct.neasenergy.com og log ind, prøv derefter igen.'); setSt('ok',''); return; }
+    const today=new Date(), start=new Date(today);
+    start.setDate(start.getDate()-days);
+    const fmt=d=>d.toISOString().split('.')[0];
+    const resp=await fetch(`https://api.neasenergy.com/v1/Chp/siteReport/revenue?siteId=844439ef-b88a-4859-9752-5f680c6d7317&from=${fmt(start)}&to=${fmt(today)}`,
+      {headers:{'Authorization':`Bearer ${token}`,'Accept':'application/json'}});
+    const data=await resp.json();
+    renderCentrica(data,days);
+    setSt('ok',S?`Opdateret ${S.at}`:'');
+  } catch(e){ renderCErr('Fejl: '+e.message); setSt('ok',''); }
+}
+
+function renderCErr(msg){
+  document.getElementById('c-metrics').innerHTML=`<div class="info-box red" style="grid-column:1/-1"><div class="ibtag">Fejl</div><p>${msg}</p></div>`;
+}
+
+function renderCentrica(data,days){
+  const rev=(t)=>data.filter(r=>r.Bidtype===t).reduce((s,r)=>s+r.BidMWh*r.BidActivationPricePrMWh,0);
+  const cnt=(t)=>data.filter(r=>r.Bidtype===t).length;
+  const clr=(t)=>{ const rs=data.filter(r=>r.Bidtype===t); return rs.length?Math.round(rs.reduce((s,r)=>s+r.BidActivationPricePrMWh,0)/rs.length):0; };
+  const bid=(t)=>{ const rs=data.filter(r=>r.Bidtype===t); return rs.length?Math.round(rs.reduce((s,r)=>s+r.BidPricePrMWh,0)/rs.length):0; };
+  const total=rev('ManualReserveAvailable')+rev('AFRRCapacity15')+rev('ManualReserveExtra')+rev('AFRREnergy15')+rev('MFRREnergy15');
+
+  document.getElementById('c-period').textContent=`Seneste ${days} dage`;
+  document.getElementById('c-metrics').innerHTML=`
+    <div class="metric"><div class="ml">Total omsætning</div><div class="mv">${Math.round(total/1000)}k kr.</div><div class="ms">alle markeder inkl. aktiveringer</div></div>
+    <div class="metric"><div class="ml">Dagligt snit</div><div class="mv">${Math.round(total/days/1000)}k kr.</div><div class="ms">pr. dag</div></div>
+    <div class="metric"><div class="ml">aFRR beredskab</div><div class="mv" style="color:var(--afrr)">${Math.round(rev('AFRRCapacity15')/1000)}k kr.</div><div class="ms">${cnt('AFRRCapacity15')} timer · clearing snit ${clr('AFRRCapacity15')} kr./MW</div></div>
+    <div class="metric"><div class="ml">mFRR beredskab</div><div class="mv" style="color:var(--mfrr)">${Math.round(rev('ManualReserveAvailable')/1000)}k kr.</div><div class="ms">${cnt('ManualReserveAvailable')} timer · clearing snit ${clr('ManualReserveAvailable')} kr./MW</div></div>
+    <div class="metric"><div class="ml">mFRR Extra</div><div class="mv" style="color:var(--extra)">${Math.round(rev('ManualReserveExtra')/1000)}k kr.</div><div class="ms">${cnt('ManualReserveExtra')} vundne timer · ${clr('ManualReserveExtra')} kr./MW</div></div>
+    <div class="metric"><div class="ml">Aktiveringer</div><div class="mv" style="color:#7C3AED">${Math.round((rev('AFRREnergy15')+rev('MFRREnergy15'))/1000)}k kr.</div><div class="ms">${cnt('AFRREnergy15')+cnt('MFRREnergy15')} aktiveringer</div></div>`;
+
+  // Daglig chart
+  const byDay={};
+  data.forEach(r=>{
+    const day=r.FromUtc.split('T')[0];
+    if(!byDay[day]) byDay[day]={afrr:0,mfrr:0,extra:0,energi:0};
+    const v=r.BidMWh*r.BidActivationPricePrMWh;
+    if(r.Bidtype==='AFRRCapacity15') byDay[day].afrr+=v;
+    else if(r.Bidtype==='ManualReserveAvailable') byDay[day].mfrr+=v;
+    else if(r.Bidtype==='ManualReserveExtra') byDay[day].extra+=v;
+    else byDay[day].energi+=v;
+  });
+  const days2=Object.keys(byDay).sort();
+  const labels=days2.map(d=>d.slice(5));
+  document.getElementById('c-chart-card').style.display='block';
+  document.getElementById('c-perf-card').style.display='block';
+  if(cChart) cChart.destroy();
+  cChart=new Chart(document.getElementById('cChart'),{type:'bar',data:{labels,datasets:[
+    {label:'aFRR',data:days2.map(d=>Math.round(byDay[d].afrr)),backgroundColor:'rgba(37,99,235,0.75)',stack:'s'},
+    {label:'mFRR',data:days2.map(d=>Math.round(byDay[d].mfrr)),backgroundColor:'rgba(5,150,105,0.75)',stack:'s'},
+    {label:'Extra',data:days2.map(d=>Math.round(byDay[d].extra)),backgroundColor:'rgba(217,119,6,0.75)',stack:'s'},
+    {label:'Aktiv.',data:days2.map(d=>Math.round(byDay[d].energi)),backgroundColor:'rgba(124,58,237,0.75)',stack:'s'}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+    scales:{x:{stacked:true,ticks:{font:{size:9},maxRotation:45,autoSkip:true,maxTicksLimit:20}},
+            y:{stacked:true,ticks:{font:{size:10},callback:v=>Math.round(v/1000)+'k'}}}}});
+
+  // Performance tabel
+  const types=['ManualReserveAvailable','AFRRCapacity15','ManualReserveExtra'];
+  const labels2={'ManualReserveAvailable':'mFRR beredskab','AFRRCapacity15':'aFRR beredskab','ManualReserveExtra':'mFRR Extra'};
+  const rows=types.filter(t=>cnt(t)>0).map(t=>{
+    const uplift=clr(t)-bid(t);
+    return `<tr>
+      <td style="font-weight:500">${labels2[t]}</td>
+      <td>${cnt(t)} timer</td>
+      <td style="color:var(--text3)">${bid(t)} kr./MW</td>
+      <td style="color:var(--text3)">${clr(t)} kr./MW</td>
+      <td style="font-weight:600;color:#059669">+${uplift} kr./MW</td>
+      <td style="color:var(--text3)">${Math.round(rev(t)/1000)}k kr.</td>
+    </tr>`;
+  });
+  document.getElementById('c-table').innerHTML=`<thead><tr><th>Marked</th><th>Timer</th><th>Din budpris</th><th>Clearing</th><th>Gevinst pr. MW</th><th>Total</th></tr></thead><tbody>${rows.join('')}</tbody>`;
 }
 
 fetchAll();
