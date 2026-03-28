@@ -660,7 +660,7 @@ function renderCErr(msg){
   document.getElementById('c-metrics').innerHTML=`<div class="info-box red" style="grid-column:1/-1"><div class="ibtag">Fejl</div><p>${msg}</p></div>`;
 }
 
-function renderCentrica(data,days){
+window.renderCentrica=function renderCentrica(data,days){
   const rev=(t)=>data.filter(r=>r.Bidtype===t).reduce((s,r)=>s+r.BidMWh*r.BidActivationPricePrMWh,0);
   const cnt=(t)=>data.filter(r=>r.Bidtype===t).length;
   const clr=(t)=>{ const rs=data.filter(r=>r.Bidtype===t); return rs.length?Math.round(rs.reduce((s,r)=>s+r.BidActivationPricePrMWh,0)/rs.length):0; };
@@ -720,7 +720,7 @@ function renderCentrica(data,days){
 
 
 let cChart=null;
-async function fetchCentrica(days){
+window.fetchCentrica=async function fetchCentrica(days){
   setSt('loading','Henter Centrica data...');
   try{
     const w=window.open('https://direct.neasenergy.com/CHP/da-DK/#/dashboard','_c','width=1,height=1,left=-100');
