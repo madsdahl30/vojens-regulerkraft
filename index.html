@@ -5,6 +5,209 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Vojens Regulerkraft – Version 1.0</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --bg:#f7f6f2; --surface:#fff; --surface2:#f0efe9;
+  --border:rgba(0,0,0,0.09); --text:#1a1a18; --text2:#6b6b66; --text3:#a0a099;
+  --afrr:#2563EB; --mfrr:#059669; --extra:#D97706; --danger:#DC2626;
+  --r:10px; --rs:6px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;}
+.app{max-width:1100px;margin:0 auto;padding:24px 16px;}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
+h1{font-size:20px;font-weight:600;letter-spacing:-.3px;}
+.sub{font-size:12px;color:var(--text3);margin-top:2px;}
+.status{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);}
+.dot{width:8px;height:8px;border-radius:50%;background:#10B981;}
+.dot.loading{background:var(--extra);animation:pulse 1s infinite;}
+.dot.error{background:var(--danger);}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.btn{padding:6px 14px;font-size:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);cursor:pointer;color:var(--text);font-weight:500;}
+.btn:hover{background:var(--surface2);}
+.tabs{display:flex;gap:2px;background:var(--surface2);padding:3px;border-radius:var(--r);margin-bottom:20px;flex-wrap:wrap;}
+.tab{flex:1;min-width:80px;padding:8px 10px;font-size:13px;font-weight:500;border:none;background:transparent;cursor:pointer;border-radius:8px;color:var(--text2);}
+.tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.08);}
+.panel{display:none;}.panel.active{display:block;}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:20px;}
+.metric{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;}
+.ml{font-size:11px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.mv{font-size:22px;font-weight:600;letter-spacing:-.5px;}
+.ms{font-size:11px;color:var(--text3);margin-top:4px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:16px;}
+.ct{font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.badge{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600;}
+.ba{background:#DBEAFE;color:#1D4ED8;}.bm{background:#D1FAE5;color:#065F46;}.bx{background:#FEF3C7;color:#92400E;}
+.cw{position:relative;width:100%;}
+.hg{display:grid;grid-template-columns:52px repeat(24,1fr);gap:2px;}
+.hg .lbl{font-size:11px;color:var(--text2);display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-weight:500;}
+.hcell{height:30px;border-radius:4px;cursor:pointer;transition:transform .1s;}
+.hcell:hover{transform:scale(1.08);z-index:1;}
+.hlrow{display:grid;grid-template-columns:52px repeat(24,1fr);gap:2px;margin-bottom:4px;}
+.hlrow span{font-size:10px;color:var(--text3);text-align:center;}
+.tt{position:fixed;background:#1a1a18;color:#fff;padding:8px 12px;border-radius:8px;font-size:12px;pointer-events:none;z-index:100;display:none;line-height:1.6;max-width:280px;}
+.rt{width:100%;border-collapse:collapse;}
+.rt th{font-size:11px;color:var(--text3);font-weight:600;text-align:left;padding:6px 10px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.4px;}
+.rt td{padding:7px 10px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:top;}
+.rt tr:last-child td{border-bottom:none;}
+.rt tr:hover td{background:var(--surface2);}
+
+/* MW-fordeling: Time-for-time planlægger */
+.hour-planner{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:16px;}
+.hpc{border:1px solid var(--border);border-radius:var(--rs);padding:10px 8px;background:var(--surface);cursor:pointer;transition:border-color .15s;}
+.hpc:hover{border-color:#2563EB;}
+.hpc.sel{border-color:#2563EB;background:#EFF6FF;}
+.hpc .hh{font-size:11px;color:var(--text3);font-weight:600;text-align:center;margin-bottom:4px;}
+.hpc .hm{font-size:10px;text-align:center;padding:2px 4px;border-radius:4px;font-weight:600;margin-bottom:2px;}
+.hpc .hp{font-size:10px;color:var(--text3);text-align:center;}
+.hm-afrr{background:#DBEAFE;color:#1D4ED8;}
+.hm-mfrr{background:#D1FAE5;color:#065F46;}
+.hm-extra{background:#FEF3C7;color:#92400E;}
+
+.hour-editor{background:var(--surface2);border-radius:var(--r);padding:16px;margin-bottom:16px;border:1px solid var(--border);}
+.he-title{font-size:13px;font-weight:600;margin-bottom:12px;color:var(--text);}
+.he-row{display:grid;grid-template-columns:100px 1fr 80px 80px;gap:10px;align-items:center;margin-bottom:10px;}
+.he-label{font-size:12px;font-weight:500;color:var(--text2);}
+input[type=range]{width:100%;accent-color:var(--afrr);}
+.he-val{font-size:15px;font-weight:700;text-align:right;}
+.seg-ctrl{display:flex;border:1px solid var(--border);border-radius:var(--rs);overflow:hidden;margin-bottom:12px;}
+.seg-btn{flex:1;padding:6px;font-size:12px;font-weight:600;border:none;cursor:pointer;transition:background .15s;}
+.seg-btn.a{background:transparent;color:var(--text2);}
+.seg-btn.a.sel{background:#2563EB;color:#fff;}
+.seg-btn.m{background:transparent;color:var(--text2);}
+.seg-btn.m.sel{background:#059669;color:#fff;}
+
+.summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:16px;}
+.sc{border-radius:var(--r);padding:14px;border:1px solid var(--border);}
+.sc.a{background:#EFF6FF;border-color:#BFDBFE;}
+.sc.m{background:#F0FDF4;border-color:#BBF7D0;}
+.sc.x{background:#FFFBEB;border-color:#FDE68A;}
+.sc-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.sc.a .sc-lbl{color:#1D4ED8;}.sc.m .sc-lbl{color:#065F46;}.sc.x .sc-lbl{color:#92400E;}
+.sc-val{font-size:24px;font-weight:700;letter-spacing:-.5px;}
+.sc-note{font-size:11px;color:var(--text2);margin-top:4px;}
+
+.info-box{border-left:3px solid;padding:10px 14px;border-radius:0 8px 8px 0;margin-bottom:10px;}
+.info-box.blue{border-color:var(--afrr);background:#EFF6FF;}
+.info-box.green{border-color:var(--mfrr);background:#F0FDF4;}
+.info-box.amber{border-color:var(--extra);background:#FFFBEB;}
+.info-box.red{border-color:var(--danger);background:#FEF2F2;}
+.ibtag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.info-box.blue .ibtag{color:var(--afrr);}.info-box.green .ibtag{color:var(--mfrr);}
+.info-box.amber .ibtag{color:var(--extra);}.info-box.red .ibtag{color:var(--danger);}
+.info-box p{font-size:13px;line-height:1.55;}
+
+.legend-row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;}
+.leg{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2);}
+.leg-sq{width:10px;height:10px;border-radius:2px;}
+.centrica-period-btn.active-period{background:#2563EB!important;color:#fff!important;border-color:#2563EB!important;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <h1>Vojens Regulerkraft</h1>
+      <div class="sub">DK1 · aFRR + mFRR + mFRR Extra · Version 1.0 · Henter seneste 90 dage automatisk</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <div class="status"><div class="dot loading" id="sdot"></div><span id="stxt">Henter data...</span></div>
+      <button class="btn" onclick="fetchAll()">Opdater nu</button>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="sw('heatmap',this)">Priskort</button>
+    <button class="tab" onclick="sw('anbefaling',this)">Anbefaling</button>
+    <button class="tab" onclick="sw('fordeling',this)">MW-fordeling</button>
+    <button class="tab" onclick="sw('extra',this)">mFRR Extra</button>
+    <button class="tab" onclick="sw('indsigt',this)">Indsigter</button><button class="tab" onclick="sw('budstrategi',this)">Budstrategi</button>
+    <button class="tab" onclick="sw('resultater',this)">Mine resultater</button>
+  </div>
+
+  <!-- PRISKORT -->
+  <div id="panel-heatmap" class="panel active">
+    <div class="card">
+      <div class="ct">Gennemsnitlig clearing-pris pr. time · seneste 90 dage · DK1</div>
+      <div class="legend-row">
+        <span class="leg"><span class="leg-sq" style="background:#2563EB"></span>aFRR kr./MW</span>
+        <span class="leg"><span class="leg-sq" style="background:#059669"></span>mFRR kr./MW</span>
+        <span class="leg"><span class="leg-sq" style="background:#D97706"></span>Extra kr./MW (aktive dage)</span>
+      </div>
+      <div class="hlrow" id="hlabels"></div>
+      <div id="heatmap"></div>
+      <div style="margin-top:10px;font-size:11px;color:var(--text3);">Mørkere = højere snit · Hold musen over celle for detaljer</div>
+    </div>
+    <div class="metrics" id="heat-metrics"></div>
+  </div>
+
+  <!-- ANBEFALING -->
+  <div id="panel-anbefaling" class="panel">
+    <div class="card">
+      <div class="ct">Anbefalet prisstrategi pr. time <span class="badge ba">90 dages data</span></div>
+      <table class="rt" id="rec-table"></table>
+    </div>
+  </div>
+
+  <!-- MW-FORDELING -->
+  <div id="panel-fordeling" class="panel">
+    <div class="info-box blue" style="margin-bottom:16px;">
+      <div class="ibtag">Sådan fungerer fordelingen</div>
+      <p>Du fordeler dine 18,3 MW mellem <strong>aFRR</strong> og <strong>mFRR</strong> time for time. Hvis du taber aFRR-auktionen i en given time, ryger de tabte MW automatisk til <strong>mFRR Extra</strong>-runden (hvis Energinet åbner den). Du kan IKKE aktivt sende MW til Extra – det sker kun ved tab af aFRR. Brug derfor altid blokke af 4 MW i aFRR, så du kan vinde Extra med præcise mængder.</p>
+    </div>
+
+    <div class="card">
+      <div class="ct">Planlæg MW-fordeling time for time <span class="badge ba">Klik en time for at redigere</span></div>
+      <div class="hour-planner" id="hour-planner"></div>
+
+      <div class="hour-editor" id="hour-editor">
+        <div class="he-title" id="he-title">Vælg en time ovenfor for at redigere</div>
+        <div id="he-body"></div>
+      </div>
+
+      <div class="summary-grid" id="fordeling-summary"></div>
+      <div class="cw" style="height:220px;"><canvas id="fordelingChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- mFRR EXTRA -->
+  <div id="panel-extra" class="panel">
+    <div class="info-box amber" style="margin-bottom:16px;">
+      <div class="ibtag">mFRR Extra – forstå mekanismen</div>
+      <p>Extra-runden åbner kl. 15:00 dagen før, men <strong>kun hvis Energinet har behov</strong> og <strong>kun for aktører der tabte primær mFRR-auktionen</strong>. Priser er historisk markant højere end primær mFRR. Afgørende: Brug blokke af max 4 MW – Energinet tager kun det de mangler og afviser for store blokke.</p>
+    </div>
+    <div class="card">
+      <div class="ct">Extra aktiveringsfrekvens og priser pr. time <span class="badge bx">90 dage · DK1</span></div>
+      <div class="cw" style="height:220px;"><canvas id="extraChart"></canvas></div>
+      <div style="font-size:11px;color:var(--text3);margin-top:8px;">Søjle = % af dage Extra-markedet er aktivt · Linje = snit-clearing-pris når aktiv (kr./MW)</div>
+    </div>
+    <div class="card">
+      <div class="ct">Extra vs. aFRR sammenligning <span class="badge bx">Hvornår betaler det sig at satse på Extra?</span></div>
+      <table class="rt" id="extra-compare"></table>
+    </div>
+  </div>
+
+  <!-- INDSIGTER -->
+  <div id="panel-indsigt" class="panel">
+    <div id="insights"></div>
+  </div>
+  <div id="panel-budstrategi" class="panel"><div class="card"><div class="ct">Budstrategi <span class="badge ba">Seneste 90 dage</span><span style="font-size:11px;color:var(--text3);margin-left:8px">Baseret på dine egne vundne bud</span></div><div id="bs-summary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px"></div></div><div class="card"><div class="ct">Anbefalet budpris pr. time <span style="font-size:11px;font-weight:400;color:var(--text3)">🟢 hæv budpris &nbsp;🟡 ok &nbsp;🔴 for højt</span></div><div style="overflow-x:auto"><table class="rt" id="bs-table"></table></div></div><div class="card" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-color:#86efac"><div class="ct" style="color:#166534">💰 Potentiel gevinst ved optimerede budpriser</div><div id="bs-gain"></div></div></div>
+  <div id="panel-resultater" class="panel">
+    <div id="token-status" style="font-size:12px;color:var(--text3);margin-bottom:12px;"></div>
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+      <button class="btn centrica-period-btn" onclick="fetchCentricaWithActive(30,this)" style="background:#2563EB;color:#fff;border-color:#2563EB;">Seneste 30 dage</button>
+      <button class="btn centrica-period-btn" onclick="fetchCentricaWithActive(7,this)">Seneste 7 dage</button>
+      <button class="btn centrica-period-btn" onclick="fetchCentricaWithActive(90,this)">Seneste 90 dage</button>
+    </div>
+    <div class="metrics" id="c-metrics" style="grid-template-columns:repeat(3,minmax(0,1fr));"></div>
+    <div class="card" id="c-chart-card" style="display:none;"><div class="ct">Daglig omsaetning <span class="badge ba" id="c-period"></span></div><div class="cw" style="height:240px;"><canvas id="cChart"></canvas></div></div>
+    <div class="card" id="c-perf-card" style="display:none;"><div class="ct">Din budpris vs. clearing-pris</div><table class="rt" id="c-table"></table></div>
+  </div>
+</div>
+
+<div class="tt" id="tt"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
 const API = 'https://api.energidataservice.dk/dataset';
 let S = null, fordelingC = null, extraC = null;
@@ -487,6 +690,26 @@ function blokPris(p50,p75,blok,total,extraSats){
   return Math.round(blokBase*(f[blok-1]||1.08));
 }
 
+
+function hentVindIndikator(targetDate,callback){
+  var dateStr=targetDate.toISOString().split('T')[0];
+  fetch('https://api.open-meteo.com/v1/forecast?latitude=55.47&longitude=8.45&hourly=wind_speed_100m&forecast_days=3&timezone=Europe%2FCopenhagen&wind_speed_unit=ms')
+  .then(function(r){return r.json();})
+  .then(function(d){
+    var times=d.hourly&&d.hourly.time||[];
+    var ws=d.hourly&&d.hourly.wind_speed_100m||[];
+    var idxs=times.map(function(t,i){return t.startsWith(dateStr)?i:-1;}).filter(function(i){return i>=0;});
+    if(!idxs.length){
+      var fb=new Date();fb.setDate(fb.getDate()+1);
+      var fbStr=fb.toISOString().split('T')[0];
+      idxs=times.map(function(t,i){return t.startsWith(fbStr)?i:-1;}).filter(function(i){return i>=0;});
+    }
+    var avg=idxs.length?Math.round(idxs.reduce(function(s,i){return s+ws[i];},0)/idxs.length*10)/10:0;
+    var niveau=avg<5?'lav':avg>12?'hoj':'normal';
+    callback({ms:avg,niveau:niveau,harData:idxs.length>0});
+  })
+  .catch(function(){callback({ms:0,niveau:'ukendt',harData:false});});
+}
 function renderBudstrategi(data){
   if(!data||!data.length){
     document.getElementById('bs-summary').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--text3)">Henter Centrica data...</div>';
@@ -647,7 +870,7 @@ function renderBudstrategi(data){
     topHtml+='<span style="font-size:10px;background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:10px">'+mLabel+'</span>';
     if(extraSæsonLabel) topHtml+='<span style="font-size:10px;background:#fef9c3;color:#92400e;padding:2px 8px;border-radius:10px">'+extraSæsonLabel+'</span>';
     topHtml+='<span style="font-size:10px;background:#f0fdf4;color:#065f46;padding:2px 8px;border-radius:10px">Prisjustering: '+Math.round(prisJustering*100)+'% af historisk snit</span>';
-    topHtml+='<span id="vind-badge" style="font-size:10px;background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:10px">Vind: henter...</span>';
+    topHtml+='<span id="vind-badge" style="font-size:10px;background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:10px">Vind: henter…</span>';
     topHtml+='</div>';
     topHtml+='<div style="font-size:11px;color:#3b82f6;margin-bottom:14px">18 MW · EDS DK1 90 dage · Ugedags- og sæsonfaktorer fra 365d historisk analyse</div>';
 
@@ -683,25 +906,13 @@ function renderBudstrategi(data){
     });
     topHtml+='</div></div>';
     document.getElementById('bs-summary').innerHTML=topHtml;
-    // Hent vind asynkront og opdater badge
     hentVindIndikator(targetDate,function(vind){
-      var badge=document.getElementById('vind-badge');
-      if(!badge)return;
-      if(vind.harData){
-        if(vind.niveau==='lav'){
-          badge.style.background='#fee2e2';badge.style.color='#991b1b';
-          badge.textContent='↓ Lav vind '+vind.ms+' m/s → priser hævet +10%';
-        }else if(vind.niveau==='hoj'){
-          badge.style.background='#dcfce7';badge.style.color='#065f46';
-          badge.textContent='↑ Høj vind '+vind.ms+' m/s → priser sænket -10%';
-        }else{
-          badge.style.background='#f0fdf4';badge.style.color='#065f46';
-          badge.textContent='≈ Normal vind '+vind.ms+' m/s → ingen justering';
-        }
-      }else{
-        badge.textContent='Vind: ingen prognose tilgængelig';
-        badge.style.color='#6b7280';
-      }
+      var b2=document.getElementById('vind-badge');
+      if(!b2)return;
+      if(!vind.harData){b2.textContent='Vind: ingen prognose';return;}
+      if(vind.niveau==='lav'){b2.style.background='#fee2e2';b2.style.color='#991b1b';b2.textContent='↓ Lav vind '+vind.ms+' m/s → +10%';}
+      else if(vind.niveau==='hoj'){b2.style.background='#dcfce7';b2.style.color='#065f46';b2.textContent='↑ Høj vind '+vind.ms+' m/s → -10%';}
+      else{b2.style.background='#f0fdf4';b2.style.color='#065f46';b2.textContent='≈ Normal vind '+vind.ms+' m/s';}
     });
 
     // TIMEOVERSIGT
@@ -740,7 +951,7 @@ function renderBudstrategi(data){
         tbody+='<td style="font-weight:'+(b===1?'700':'400')+';color:var(--afrr);padding:7px 6px">'+pr+' kr.<br><span style="font-size:9px;color:var(--text3);font-weight:400">'+tdMW+'</span></td>';
       }
       for(var b=1;b<=nMBlok;b++){
-        var pr=blokPris(m2.p50,m2.p75,b,nMBlok,false);
+        var pr=5; // mFRR fast 5 kr.
         tbody+='<td style="font-weight:'+(b===1?'700':'400')+';color:var(--mfrr);padding:7px 6px">'+pr+' kr.<br><span style="font-size:9px;color:var(--text3);font-weight:400">4 MW</span></td>';
       }
       tbody+='<td style="padding:7px 6px">'+xIcon(x.pct)+' <strong>'+x.pct+'%</strong><br><span style="font-size:9px;color:var(--text3)">90d: '+x.pct90+'%</span></td>';
@@ -757,7 +968,7 @@ function renderBudstrategi(data){
       '<strong>60%</strong> – 90 dages historik (seneste 7d + samme ugedag vægter ×3)<br>'+
       '<strong>25%</strong> – Ugedag-faktor (ons. er +55% over snit, søn. er −46%)<br>'+
       '<strong>15%</strong> – Sæson-faktor (sommer 3-4x dyrere end vinter)<br>'+
-      'Vind: Open-Meteo (Esbjerg/DK1, 100m) – vægt 10% • Lav <6 m/s • Normal 6-12 m/s • Høj >12 m/s</div></div>'+
+      'Vind/vejr: Ikke inkluderet endnu – kommer som separat indikator</div></div>'+
       '<div><div style="font-weight:700;color:var(--text);margin-bottom:8px">Blokkenes prisstrategi</div>'+
       '<div style="color:var(--text2);line-height:1.9">'+
       'Blok 1: P50 −5% – altid konservativt<br>'+
