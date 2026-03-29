@@ -1,0 +1,15 @@
+name: Deploy Worker
+on:
+  workflow_dispatch:
+  push:
+    paths: ['worker.js']
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: 72436339b7537666b36e21ed1d5557fa
+          command: deploy worker.js --name worker-spring-river-bd29 --compatibility-date 2024-01-01
