@@ -677,7 +677,7 @@ function renderBudstrategi(data){
     return;
   }
 
-  var TOTAL_MW = 18.3;
+  var TOTAL_MW = 18;
   var afrr=data.filter(function(r){return r.Bidtype==='AFRRCapacity15';});
   var mfrr=data.filter(function(r){return r.Bidtype==='ManualReserveAvailable';});
   var totalDays=90;
@@ -720,13 +720,19 @@ function renderBudstrategi(data){
     // Gyldige scenarier: aFRR = multiplum af 4 MW (0,4,8,12,16)
     // mFRR = TOTAL_MW - aFRR (kan godt være 6.3, 10.3 osv. - ingen blokkrav)
     // Regel: aFRR blokke må ikke have 1,2,3 MW -> kun 0 eller 4+
-    var aMwOptions = [0,4,8,12,16];
-    var scenarier = aMwOptions.map(function(a){
-      var m = Math.round((TOTAL_MW - a)*10)/10;
-      var blokke = a/4;
-      return {a:a, m:m, blokke:blokke,
-        label: a===0 ? '0 MW aFRR + 18,3 MW mFRR' :
-          a+'MW aFRR ('+blokke+' blok'+( blokke>1?'ke':'')+' à 4MW) + '+m+'MW mFRR'};
+    // Gyldige scenarier: aFRR i multiplum af 4 MW, mFRR = 18 - aFRR
+  // mFRR skal være 0 eller >=4 MW (1,2,3 MW er ugyldigt)
+  // 18+0 OK, 12+6 OK, 8+10 OK, 4+14 OK, 0+18 OK
+  // 16+2 UGYLDIG (2 MW mFRR), fjernes
+  var aMwOptions = [0,4,8,12,18];
+  var scenarier = aMwOptions.map(function(a){
+    var m = 18 - a;
+    var blokke = a/4;
+    return {a:a, m:m, blokke:blokke,
+      label: a===0 ? '0 MW aFRR + 18 MW mFRR' :
+        a===18 ? '18 MW aFRR + 0 MW mFRR' :
+        a+'MW aFRR ('+blokke+' blok'+( blokke>1?'ke':'')+' à 4MW) + '+m+'MW mFRR'};
+  });
     });
 
     // Forventet dagsomsætning pr. scenarie
@@ -761,7 +767,7 @@ function renderBudstrategi(data){
     // HEADER
     var topHtml='<div style="grid-column:1/-1;background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe;border-radius:10px;padding:18px;margin-bottom:8px">';
     topHtml+='<div style="font-size:15px;font-weight:800;color:#1d4ed8;margin-bottom:2px">📋 Budanbefaling til '+dagNavn+'. '+dato+'</div>';
-    topHtml+='<div style="font-size:11px;color:#3b82f6;margin-bottom:14px">Afgivelse kl. 07:30 · 18,3 MW i alt · aFRR i blokke à 4 MW · resten til mFRR</div>';
+    topHtml+='<div style="font-size:11px;color:#3b82f6;margin-bottom:14px">Afgivelse kl. 07:30 · 18 MW i alt (aFRR afrundes, 0,3 MW ignoreres) · aFRR i blokke à 4 MW · resten til mFRR</div>';
 
     topHtml+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">';
     // Anbefalet fordeling
