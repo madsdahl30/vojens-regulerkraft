@@ -678,21 +678,21 @@ function renderBudstrategi(data){
   }
 
   // DATO-LOGIK:
-  // Auktion lukker 07:30, resultater kl. 08:00-08:10 for næste driftsdøgn
-  // Fra kl. 09:00 er det relevant at forecaste for driftsdøgn +2 (næste næste)
-  var now=new Date();
-  var targetDate=new Date(now);
-  if(now.getHours()>=9){
-    targetDate.setDate(targetDate.getDate()+2); // Fra kl. 09: forecast til +2 dage
-  } else {
-    targetDate.setDate(targetDate.getDate()+1); // Før kl. 09: forecast til +1 dag
-  }
+  // Auktion lukker kl 07:30, resultater kl 08:00-08:10
+  // Før kl 09:00: forecast til i morgen (driftsdøgn +1)
+  // Fra kl 09:00: forecast til dagen efter i morgen (driftsdøgn +2)
+  var now = new Date();
+  var daysAhead = now.getHours() >= 9 ? 2 : 1;
+  var targetDate = new Date(now);
+  targetDate.setDate(targetDate.getDate() + daysAhead);
+  var targetWD = targetDate.getDay(); // 0=søn, 1=man, ...6=lør
   var dagNavne=['Søn','Man','Tirs','Ons','Tors','Fre','Lør'];
-  var targetDagNavn=dagNavne[targetDate.getDay()];
-  var targetDato=targetDate.getDate()+'.'+(targetDate.getMonth()+1)+'.'+(targetDate.getFullYear());
-  var targetUgedag=targetDate.getDay(); // 0=søndag, 1=mandag osv.
+  var dagNavn = dagNavne[targetDate.getDay()];
+  var dato = targetDate.getDate()+'.'+(targetDate.getMonth()+1)+'.'+targetDate.getFullYear();
+  var skiftNote = daysAhead===2 ?
+    '<span style="font-size:10px;background:#fef9c3;color:#92400e;padding:2px 8px;border-radius:10px;margin-left:8px">Auktion afgivet kl. 07:30 – nu forecaster vi +2 dage</span>' :
+    '<span style="font-size:10px;background:#dcfce7;color:#065f46;padding:2px 8px;border-radius:10px;margin-left:8px">Inden kl. 09:00 – forecaster til i morgen</span>';
 
-  // Hent EDS data
   var enc=encodeURIComponent;
   var today=new Date(), start90=new Date(today);
   start90.setDate(start90.getDate()-90);
@@ -704,76 +704,74 @@ function renderBudstrategi(data){
     fetch('https://api.energidataservice.dk/dataset/MfrrCapacityMarketExtra?limit=5000&filter='+enc('{"PriceArea":"DK1"}')+'&start='+fmt2(start90)+'&end='+fmt2(today)).then(function(r){return r.json();})
   ]).then(function(results){
     var afrrRecs=results[0].records, mfrrRecs=results[1].records, extraRecs=results[2].records;
+    var totalDays=90;
 
-    // VÆGTET HISTORIK pr. time:
-    // Vægt 1: samme ugedag som target de seneste 4 uger (høj vægt: x3)
-    // Vægt 2: seneste 7 dage uanset ugedag (mellem vægt: x2)  
-    // Vægt 3: alle 90 dage (lav vægt: x1)
-    var now7=new Date(today); now7.setDate(now7.getDate()-7);
-    var now28=new Date(today); now28.setDate(now28.getDate()-28);
-
-    function weightedStats(recs, priceField){
+    // VÆGTNING AF HISTORIK:
+    // Seneste 7 dage: vægt 3
+    // Samme ugedag (targetWD) de seneste 4 uger: vægt 3
+    // Alle 90 dage: vægt 1
+    // Kombineret vægtet P50
+    function calcWeightedStats(recs, priceField){
       var s={};
+      var cutoff7 = new Date(today); cutoff7.setDate(cutoff7.getDate()-7);
       for(var h=0;h<24;h++){
         var allRows=recs.filter(function(r){return new Date(r.TimeDK).getHours()===h && r[priceField]>0;});
         // Seneste 7 dage
-        var recent7=allRows.filter(function(r){return new Date(r.TimeDK)>=now7;});
+        var recent7=allRows.filter(function(r){return new Date(r.TimeDK)>=cutoff7;});
         // Samme ugedag seneste 4 uger
-        var sameDay=allRows.filter(function(r){
+        var sameWD=allRows.filter(function(r){
           var d=new Date(r.TimeDK);
-          return d.getDay()===targetUgedag && d>=now28;
+          var daysAgo=(today-d)/864e5;
+          return d.getDay()===targetWD && daysAgo<=28;
         });
-        // Kombinér med vægtning: sameDay x3, recent7 x2, alle x1
-        var weighted=sameDay.concat(sameDay).concat(sameDay)
-          .concat(recent7).concat(recent7)
-          .concat(allRows);
+        // Byg vægtet sample: recent7 x3, sameWD x3, alle x1
+        var weighted=allRows.concat(recent7,recent7,recent7,sameWD,sameWD,sameWD);
         var prices=weighted.map(function(r){return r[priceField];}).sort(function(a,b){return a-b;});
+        var allPrices=allRows.map(function(r){return r[priceField];}).sort(function(a,b){return a-b;});
         s[h]={
           p25:prices.length?Math.round(prices[Math.floor(prices.length*.25)]):0,
           p50:prices.length?Math.round(prices[Math.floor(prices.length*.5)]):0,
           p75:prices.length?Math.round(prices[Math.floor(prices.length*.75)]):0,
-          n90:allRows.length,
-          nRecent:recent7.length,
-          nSameDay:sameDay.length
+          p50raw:allPrices.length?Math.round(allPrices[Math.floor(allPrices.length*.5)]):0,
+          n90:allRows.length, n7:recent7.length, nWD:sameWD.length
         };
       }
       return s;
     }
 
-    var aStats=weightedStats(afrrRecs,'UpPriceDKK');
-    var mStats=weightedStats(mfrrRecs,'UpPriceDKK');
+    var aStats=calcWeightedStats(afrrRecs,'UpPriceDKK');
+    var mStats=calcWeightedStats(mfrrRecs,'UpPriceDKK');
 
     // Extra sandsynlighed - også vægtet
     var extraByHour={};
     for(var h=0;h<24;h++){
-      var hr90=extraRecs.filter(function(r){return new Date(r.TimeDK).getHours()===h;});
-      var hrRecent=hr90.filter(function(r){return new Date(r.TimeDK)>=now7;});
-      var hrSameDay=hr90.filter(function(r){
+      var hr=extraRecs.filter(function(r){return new Date(r.TimeDK).getHours()===h;});
+      var cutoff7=new Date(today); cutoff7.setDate(cutoff7.getDate()-7);
+      var aktive90=hr.filter(function(r){return r.UpDemandMW>0;});
+      var aktive7=aktive90.filter(function(r){return new Date(r.TimeDK)>=cutoff7;});
+      var aktiveWD=aktive90.filter(function(r){
         var d=new Date(r.TimeDK);
-        return d.getDay()===targetUgedag && d>=now28;
+        return d.getDay()===targetWD && (today-d)/864e5<=28;
       });
       // Vægtet sandsynlighed
-      var aktive90=hr90.filter(function(r){return r.UpDemandMW>0;}).length;
-      var aktiveRecent=hrRecent.filter(function(r){return r.UpDemandMW>0;}).length;
-      var aktiveSameDay=hrSameDay.filter(function(r){return r.UpDemandMW>0;}).length;
-      // Vægtet pct: sameDay x3, recent x2, 90d x1 / total vægte
-      var wTotal=hr90.length+hrRecent.length*2+hrSameDay.length*3;
-      var wAktive=aktive90+aktiveRecent*2+aktiveSameDay*3;
-      var pct=wTotal>0?Math.round(wAktive/wTotal*100):0;
-      var cl=hr90.filter(function(r){return r.UpPriceDKK>0;}).map(function(r){return r.UpPriceDKK;}).sort(function(a,b){return a-b;});
+      var nTotal90=hr.length||1, nTotal7=Math.max(aktive7.length+hr.filter(function(r){return new Date(r.TimeDK)>=cutoff7;}).length,1);
+      var pct90=Math.round(aktive90.length/totalDays*100);
+      var pct7=aktive7.length>0?Math.round(aktive7.length/7*100):pct90;
+      var pctWD=aktiveWD.length>0?Math.round(aktiveWD.length/4*100):pct90;
+      // Vægtet: seneste 7d + samme ugedag vægter mere
+      var pctVægtet=Math.round((pct90+pct7*3+pctWD*3)/7);
+      var cl=hr.filter(function(r){return r.UpPriceDKK>0;}).map(function(r){return r.UpPriceDKK;}).sort(function(a,b){return a-b;});
       extraByHour[h]={
-        pct:pct,
-        pct90:Math.round(aktive90/90*100),
-        aktive:aktive90,
+        pct:pctVægtet, pct90:pct90, aktive:aktive90.length,
         p50cl:cl.length?Math.round(cl[Math.floor(cl.length*.5)]):0,
         p75cl:cl.length?Math.round(cl[Math.floor(cl.length*.75)]):0
       };
     }
 
-    // MW-scenarier: 0+18, 4+14, 8+10, 12+6, 18+0
+    // Scenarier
     var aMwOptions=[0,4,8,12,18];
     var scenarier=aMwOptions.map(function(a){
-      var m=18-a; return {a:a,m:m,aBlok:a/4,mBlok:m/4};
+      return {a:a,m:18-a,aBlok:a/4,mBlok:(18-a)/4};
     });
     var scResults=scenarier.map(function(sc){
       var dagA=0,dagM=0,dagX=0;
@@ -789,47 +787,36 @@ function renderBudstrategi(data){
     });
     var bestSc=scResults.reduce(function(b,s){return s.dag>b.dag?s:b;},scResults[0]);
 
-    // Kontekst-label
-    var cutoff=now.getHours()>=9;
-    var kontekst=cutoff
-      ? 'Kl. 07:30 i morgen afleveres bud for '+targetDagNavn+' '+targetDato
-      : 'Kl. 07:30 i dag afleveres bud for '+targetDagNavn+' '+targetDato;
-    var vaegt='Vægtet historik: samme ugedag (4 uger) · seneste 7 dage · 90-dages baggrund';
-
     // HEADER
     var topHtml='<div style="grid-column:1/-1;background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe;border-radius:10px;padding:18px;margin-bottom:8px">';
-    topHtml+='<div style="font-size:15px;font-weight:800;color:#1d4ed8;margin-bottom:2px">📋 Budanbefaling for '+targetDagNavn+' '+targetDato+'</div>';
-    topHtml+='<div style="font-size:11px;color:#3b82f6;margin-bottom:4px">'+kontekst+'</div>';
-    topHtml+='<div style="font-size:10px;color:#93c5fd;margin-bottom:14px">'+vaegt+'</div>';
+    topHtml+='<div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:4px">';
+    topHtml+='<div style="font-size:15px;font-weight:800;color:#1d4ed8">📋 Budanbefaling til '+dagNavn+'. '+dato+'</div>';
+    topHtml+=skiftNote+'</div>';
+    topHtml+='<div style="font-size:11px;color:#3b82f6;margin-bottom:14px">18 MW i alt · Priser fra EDS DK1 · Vægtet: seneste 7 dage + '+dagNavn+'-historik vægter tungest</div>';
 
     topHtml+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">';
-    // Anbefalet fordeling
     topHtml+='<div style="background:#fff;border-radius:8px;padding:12px;border:2px solid #2563eb">';
     topHtml+='<div style="font-size:10px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Anbefalet fordeling</div>';
     topHtml+='<div style="font-size:17px;font-weight:800;color:#1d4ed8">'+bestSc.a+' MW aFRR</div>';
     topHtml+='<div style="font-size:10px;color:#64748b;margin-bottom:4px">'+(bestSc.aBlok>0?bestSc.aBlok+' blok'+(bestSc.aBlok>1?'ke':'')+' à 4 MW':'Ingen aFRR')+'</div>';
     topHtml+='<div style="font-size:15px;font-weight:700;color:#059669">'+bestSc.m+' MW mFRR</div>';
     topHtml+='<div style="font-size:10px;color:#64748b;margin-bottom:6px">'+(bestSc.mBlok>0?bestSc.mBlok+' blok'+(bestSc.mBlok>1?'ke':'')+' à 4 MW':'Ingen mFRR')+'</div>';
-    topHtml+='<div style="font-size:11px;color:#64748b;padding-top:6px;border-top:1px solid #e0e7ff">~'+bestSc.dag+'k kr./dag forventet</div>';
+    topHtml+='<div style="font-size:11px;color:#64748b;padding-top:6px;border-top:1px solid #e0e7ff">~'+bestSc.dag+'k kr./dag</div>';
     topHtml+='<div style="font-size:10px;color:#94a3b8">aFRR: '+bestSc.dagA+'k · mFRR: '+bestSc.dagM+'k · Extra: '+bestSc.dagX+'k</div>';
     topHtml+='</div>';
-    // Peak Extra
     var peakH=Object.entries(extraByHour).sort(function(a,b){return b[1].pct-a[1].pct;})[0];
     topHtml+='<div style="background:#fff;border-radius:8px;padding:12px;border:1px solid #fde68a">';
     topHtml+='<div style="font-size:10px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Peak Extra-time</div>';
     topHtml+='<div style="font-size:17px;font-weight:800;color:#d97706">Kl. '+String(peakH[0]).padStart(2,'0')+'</div>';
-    topHtml+='<div style="font-size:13px;font-weight:600;color:#d97706">'+peakH[1].pct+'% sandsynlighed</div>';
-    topHtml+='<div style="font-size:11px;color:#64748b;margin-top:4px">90d-snit: '+peakH[1].pct90+'% · P50: '+peakH[1].p50cl+' kr./MW</div>';
+    topHtml+='<div style="font-size:13px;font-weight:600;color:#d97706">'+peakH[1].pct+'% (vægtet)</div>';
+    topHtml+='<div style="font-size:10px;color:#64748b">90d: '+peakH[1].pct90+'% · P50: '+peakH[1].p50cl+' kr./MW</div>';
     topHtml+='</div>';
-    // Aktivering
     topHtml+='<div style="background:#fff;border-radius:8px;padding:12px;border:1px solid var(--border)">';
     topHtml+='<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Aktiveringsbuddet</div>';
     topHtml+='<div style="font-size:17px;font-weight:800">≥ 7.000 kr.</div>';
     topHtml+='<div style="font-size:11px;color:#64748b;margin-top:4px">Min. driftsomkostning pr. MW/time</div>';
     topHtml+='</div></div>';
-
-    // Scenarie-knapper
-    topHtml+='<div style="font-size:11px;font-weight:700;color:#1e40af;margin-bottom:6px">Scenarie-sammenligning (vægtet forecast):</div>';
+    topHtml+='<div style="font-size:11px;font-weight:700;color:#1e40af;margin-bottom:6px">Alle scenarier (vægtet forventet dagsomsætning):</div>';
     topHtml+='<div style="display:flex;gap:6px;flex-wrap:wrap">';
     scResults.forEach(function(s){
       var best=s.a===bestSc.a;
@@ -840,28 +827,26 @@ function renderBudstrategi(data){
     topHtml+='</div></div>';
     document.getElementById('bs-summary').innerHTML=topHtml;
 
-    // TIMEOVERSIGT - konkrete budpriser
+    // TIMEOVERSIGT
     function xCol(p){return p>=25?'#dcfce7':p>=18?'#fef9c3':p>=12?'#fff7ed':'#f9fafb';}
     function xIcon(p){return p>=25?'🟢':p>=18?'🟡':p>=12?'🟠':'⚪';}
     function blokPris(base,blok,total){
-      if(total<=0) return 0;
       if(total===1) return base;
-      var span=total===2?0.05:total===3?0.05:0.05;
-      var step=(blok-1)/(total-1);
-      return Math.round(base*(1-span+step*2*span));
+      if(total===2) return blok===1?Math.round(base*.95):Math.round(base*1.05);
+      if(total===3) return blok===1?Math.round(base*.95):blok===2?base:Math.round(base*1.05);
+      var f=[.93,.97,1.03,1.07]; return Math.round(base*(f[blok-1]||1.07));
     }
 
     var nABlok=bestSc.aBlok, nMBlok=bestSc.mBlok;
-
     var thead='<thead><tr style="font-size:10px;background:#f8fafc;border-bottom:2px solid #e2e8f0">';
     thead+='<th style="padding:8px;text-align:left;color:var(--text2)">TIME</th>';
     for(var b=1;b<=nABlok;b++){
-      var lbl=nABlok===1?'P50':b===1?'P50-5%':b===nABlok?'P50+5%':'P50';
-      thead+='<th style="color:var(--afrr);padding:8px 6px">aFRR BLK '+b+'<br><span style="font-weight:400;color:var(--text3)">'+lbl+' · 4MW</span></th>';
+      var pct=b===1?'−5%':b===nABlok?'+5%':'';
+      thead+='<th style="color:var(--afrr);padding:8px 6px">aFRR BLK '+b+'<br><span style="font-weight:400;color:var(--text3)">P50'+pct+' · 4MW</span></th>';
     }
     for(var b=1;b<=nMBlok;b++){
-      var lbl=nMBlok===1?'P50':b===1?'P50-5%':b===nMBlok?'P50+5%':'P50';
-      thead+='<th style="color:var(--mfrr);padding:8px 6px">mFRR BLK '+b+'<br><span style="font-weight:400;color:var(--text3)">'+lbl+' · 4MW</span></th>';
+      var pct=b===1?'−5%':b===nMBlok?'+5%':'';
+      thead+='<th style="color:var(--mfrr);padding:8px 6px">mFRR BLK '+b+'<br><span style="font-weight:400;color:var(--text3)">P50'+pct+' · 4MW</span></th>';
     }
     thead+='<th style="color:var(--extra);padding:8px 6px">EXTRA<br><span style="font-weight:400;color:var(--text3)">vægtet</span></th>';
     thead+='<th style="padding:8px 6px;color:var(--text2)">NOTE</th>';
@@ -874,9 +859,10 @@ function renderBudstrategi(data){
       var aBase=extraSats?a.p75:a.p50;
       var mBase=m.p50;
       var note=extraSats
-        ?'<span style="color:#d97706;font-weight:600">★ Sats på Extra ('+x.pct+'%)</span>'
-        :x.pct>=18?'<span style="color:#ca8a04">Extra mulig ('+x.pct+'%)</span>'
+        ?'<span style="color:#d97706;font-weight:600">★ Sats på Extra</span>'
+        :x.pct>=18?'<span style="color:#ca8a04">Extra mulig</span>'
         :'<span style="color:var(--text3)">Normal</span>';
+
       tbody+='<tr style="background:'+xCol(x.pct)+';border-bottom:1px solid rgba(0,0,0,.04)">';
       tbody+='<td style="font-weight:700;font-size:12px;padding:7px 8px;white-space:nowrap">kl. '+String(h).padStart(2,'0')+'</td>';
       for(var b=1;b<=nABlok;b++){
@@ -895,19 +881,19 @@ function renderBudstrategi(data){
 
     document.getElementById('bs-gain').innerHTML=
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;font-size:12px;margin-top:4px">'+
-      '<div><div style="font-weight:700;color:var(--text);margin-bottom:8px">Dato-logik</div>'+
+      '<div><div style="font-weight:700;color:var(--text);margin-bottom:8px">Dato- og tidslogik</div>'+
       '<div style="color:var(--text2);line-height:1.9">'+
-      'Auktion lukker kl. 07:30 for næste driftsdøgn.<br>'+
-      'Resultater offentliggøres kl. 08:00-08:10.<br>'+
-      '<strong>Før kl. 09:00:</strong> Forecast til i morgen<br>'+
-      '<strong>Fra kl. 09:00:</strong> Forecast skifter automatisk til dagen efter i morgen<br>'+
-      'Så du altid forbereder det næste uafgjorte marked.</div></div>'+
-      '<div><div style="font-weight:700;color:var(--text);margin-bottom:8px">Vægtet historik</div>'+
+      'Auktion lukker kl. 07:30 – bud for næste driftsdøgn afleveres<br>'+
+      'Resultater offentliggøres kl. 08:00–08:10<br>'+
+      '<strong>Før kl. 09:00:</strong> Forecast til i morgen (+1 dag)<br>'+
+      '<strong>Fra kl. 09:00:</strong> Forecast til dagen efter i morgen (+2 dage)<br>'+
+      'Siden skifter automatisk når du åbner Budstrategi</div></div>'+
+      '<div><div style="font-weight:700;color:var(--text);margin-bottom:8px">Vægtning af historik</div>'+
       '<div style="color:var(--text2);line-height:1.9">'+
-      '<strong>Højeste vægt (x3):</strong> Samme ugedag de seneste 4 uger<br>'+
-      '<strong>Mellem vægt (x2):</strong> Seneste 7 dage uanset ugedag<br>'+
-      '<strong>Lav vægt (x1):</strong> Alle 90 dage som baggrundsperspektiv<br>'+
-      'Priser der er tæt på target-dagen vejer dermed tungest i forecasten.</div></div>'+
+      '<strong>Seneste 7 dage:</strong> Vægt ×3 – afspejler aktuelle markedsforhold<br>'+
+      '<strong>Samme ugedag 4 uger:</strong> Vægt ×3 – ugedags-mønstre tæller<br>'+
+      '<strong>90 dages historik:</strong> Vægt ×1 – langsigtet baggrund<br>'+
+      'Extra-sandsynlighed vises både vægtet og som 90d-snit</div></div>'+
       '</div>';
   });
 }
