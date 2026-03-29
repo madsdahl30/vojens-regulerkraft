@@ -1060,7 +1060,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 // Esbjerg/DK1 koordinater: 55.47N, 8.45E - repræsentativ for DK1 vindforhold
 function hentVindIndikator(targetDate, callback){
   var dateStr=targetDate.toISOString().split('T')[0];
-  fetch('https://api.open-meteo.com/v1/forecast?latitude=55.47&longitude=8.45&hourly=wind_speed_100m&forecast_days=3&timezone=Europe%2FCopenhagen')
+  fetch('https://api.open-meteo.com/v1/forecast?latitude=55.47&longitude=8.45&hourly=wind_speed_100m&forecast_days=3&timezone=Europe%2FCopenhagen&wind_speed_unit=ms')
   .then(function(r){return r.json();})
   .then(function(d){
     var times=d.hourly&&d.hourly.time||[];
@@ -1075,7 +1075,7 @@ function hentVindIndikator(targetDate, callback){
     }
     var avg=idxs.length?Math.round(idxs.reduce(function(s,i){return s+ws[i];},0)/idxs.length*10)/10:0;
     // Tærskler: Lav <6 m/s, Normal 6-12 m/s, Høj >12 m/s
-    var niveau=avg<6?'lav':avg>12?'hoj':'normal';
+    var niveau=avg<5?'lav':avg>12?'hoj':'normal';
     callback({ms:avg, niveau:niveau, harData:idxs.length>0, dato:dateStr});
   })
   .catch(function(){callback({ms:0,niveau:'ukendt',harData:false,dato:dateStr});});
