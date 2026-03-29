@@ -854,7 +854,7 @@ function renderBudstrategi(data){
     thead+='<th style="padding:8px;text-align:left;color:var(--text2)">TIME</th>';
     for(var b=1;b<=nABlok;b++){
       var pct=b===1?'−5%':b===nABlok?'+5%':'';
-      theavar thMW=(b===nABlok&&nABlok>3&&bestSc.a===18)?'6MW':'4MW';
+      var thMW=(b===nABlok&&nABlok>3&&bestSc.a===18)?'6MW':'4MW';
       thead+='<th style="color:var(--afrr);padding:8px 6px">aFRR BLK '+b+'<br><span style="font-weight:400;color:var(--text3)">P50'+pct+' · '+thMW+'</span></th>';
     }
     for(var b=1;b<=nMBlok;b++){
