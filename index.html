@@ -664,6 +664,15 @@ setInterval(async () => {
   }
 }, 2 * 60 * 1000);
 
+
+function blokLabel(mw){
+  if(mw===0) return 'Ingen deltagelse';
+  var full=Math.floor(mw/4);
+  var rest=mw%4;
+  if(rest===0) return full+' blok'+(full>1?'ke':'')+' \xe0 4 MW';
+  if(full===0) return '1 blok \xe0 '+mw+' MW';
+  return full+' blok'+(full>1?'ke':'')+' \xe0 4 MW + 1 blok \xe0 '+rest+' MW';
+}
 function renderBudstrategi(data){
   if(!data||!data.length){
     document.getElementById('bs-summary').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--text3)">Henter Centrica data...</div>';
