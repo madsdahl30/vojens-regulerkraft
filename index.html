@@ -676,6 +676,20 @@ function blokLabel(mw){
   // Fallback: vis bare MW
   return mw+' MW';
 }
+function blokPris(p50,p75,blok,total,extraSats){
+  // Blok 1+2: altid P50-baseret (sikre blokke)
+  // Blok 3+4: P75-baseret ved Extra-satsning, ellers P50
+  var satsBlok=extraSats&&blok>=Math.max(3,total-1);
+  var base=satsBlok?p75:p50;
+  if(total===1) return base;
+  if(total===2) return blok===1?Math.round(p50*.95):Math.round(base*1.05);
+  if(total===3) return blok===1?Math.round(p50*.95):blok===2?p50:Math.round(base*1.05);
+  // 4 blokke: blok1=P50-7%, blok2=P50, blok3=base+5%, blok4=base+8%
+  var blokBase=blok<=2?p50:base;
+  var f=[.93,1.0,1.05,1.08];
+  return Math.round(blokBase*(f[blok-1]||1.08));
+}
+
 function renderBudstrategi(data){
   if(!data||!data.length){
     document.getElementById('bs-summary').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--text3)">Henter Centrica data...</div>';
