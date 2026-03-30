@@ -1074,7 +1074,15 @@ window.fetchCentrica=async function(days){
       document.getElementById('c-metrics').innerHTML='<div class="info-box red" style="grid-column:1/-1"><div class="ibtag">Token udloebet</div><p>Kontakt administrator for nyt token.</p></div>';
       setSt('ok','');return;
     }
-    const data=await resp.json();
+    const xml=await resp.text();
+    let data;
+    try{data=JSON.parse(xml);}catch(e){
+      const p=new DOMParser(),doc=p.parseFromString(xml,'text/xml');
+      data=Array.from(doc.querySelectorAll('RevenueData,Revenue,Item,Record,*:not(*>*)'))
+        .map(el=>{const o={};Array.from(el.attributes).forEach(a=>o[a.name]=a.value);if(el.textContent.trim()&&!el.children.length)o._text=el.textContent.trim();return o;})
+        .filter(o=>Object.keys(o).length>0);
+      if(!data.length) data=[{_xml:xml.slice(0,500)}];
+    }
     window.renderCentrica(data,days);
     setSt('ok',S?'Opdateret '+S.at:'');
   }catch(e){
