@@ -665,6 +665,42 @@ setInterval(async () => {
 }, 2 * 60 * 1000);
 
 
+
+function doLogin(){
+  var user=document.getElementById('login-user')?.value;
+  var pass=document.getElementById('login-pass')?.value;
+  var msg=document.getElementById('login-msg');
+  if(msg) msg.textContent='Logger ind...';
+  fetch('https://identity.neasenergy.com/auth/realms/neas/protocol/openid-connect/token',{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:new URLSearchParams({grant_type:'password',client_id:'neas-chp-webapp',username:user,password:pass}).toString()
+  }).then(function(r){return r.json();}).then(function(d){
+    if(d.access_token){
+      localStorage.setItem('centrica_token',d.access_token);
+      if(d.refresh_token) localStorage.setItem('centrica_refresh_token',d.refresh_token);
+      if(msg) msg.textContent='Login OK! Henter data...';
+      setTimeout(function(){fetchAll();sw('resultater',document.querySelectorAll('.tab')[6]);},500);
+    }else{
+      if(msg) msg.textContent='Fejl: '+(d.error_description||d.error||'Ukendt fejl');
+    }
+  }).catch(function(e){
+    // CORS blokerer direkte - prøv via Worker
+    fetch('https://vojens-regulerkraft.madsdahl30.workers.dev/login',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({username:user,password:pass})
+    }).then(function(r){return r.json();}).then(function(d){
+      if(d.access_token){
+        localStorage.setItem('centrica_token',d.access_token);
+        if(d.refresh_token) localStorage.setItem('centrica_refresh_token',d.refresh_token);
+        if(msg) msg.textContent='Login OK!';
+        setTimeout(function(){fetchAll();},500);
+      }else{
+        if(msg) msg.textContent='Login fejlede - tjek credentials';
+      }
+    }).catch(function(){if(msg) msg.textContent='Netværksfejl';});
+  });
+}
 function blokLabel(mw){
   if(mw===0) return 'Ingen deltagelse';
   // Særtilfælde: 18 MW = 3 blokke à 4 MW + 1 blok à 6 MW
