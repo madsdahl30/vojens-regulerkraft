@@ -1077,11 +1077,16 @@ window.fetchCentrica=async function(days){
     const xml=await resp.text();
     let data;
     try{data=JSON.parse(xml);}catch(e){
+      // Centrica svarer XML: ArrayOfRevenueReportData > RevenueReportData
       const p=new DOMParser(),doc=p.parseFromString(xml,'text/xml');
-      data=Array.from(doc.querySelectorAll('RevenueData,Revenue,Item,Record,*:not(*>*)'))
-        .map(el=>{const o={};Array.from(el.attributes).forEach(a=>o[a.name]=a.value);if(el.textContent.trim()&&!el.children.length)o._text=el.textContent.trim();return o;})
-        .filter(o=>Object.keys(o).length>0);
-      if(!data.length) data=[{_xml:xml.slice(0,500)}];
+      const ns='http://schemas.datacontract.org/2004/07/Neas.ReportApi.Models.Report';
+      const items=doc.getElementsByTagNameNS(ns,'RevenueReportData');
+      data=Array.from(items).map(function(el){
+        const o={};
+        Array.from(el.children).forEach(function(c){o[c.localName]=c.textContent;});
+        return o;
+      });
+      if(!data.length) data=[{_xml:xml.slice(0,200)}];
     }
     window.renderCentrica(data,days);
     setSt('ok',S?'Opdateret '+S.at:'');
