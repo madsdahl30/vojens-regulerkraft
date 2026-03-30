@@ -754,7 +754,28 @@ function renderBudstrategi(data){
       var t=new Date(),s=new Date(t);s.setDate(s.getDate()-90);
       var fmt=function(d){return d.toISOString().split('.')[0];};
       fetch('https://vojens-regulerkraft.madsdahl30.workers.dev/v1/Chp/siteReport/revenue?siteId=844439ef-b88a-4859-9752-5f680c6d7317&from='+fmt(s)+'&to='+fmt(t),
-        {headers:{'Authorization':'Bearer '+tok}}).then(function(r){return r.json();}).then(function(d){window._centricaData=d;renderBudstrategi(d);});
+        {headers:{'Authorization':'Bearer '+tok}}).then(function(r){return r.text();}).then(function(xml){
+        // Parse XML til array af objekter
+        var parser=new DOMParser();
+        var doc=parser.parseFromString(xml,'text/xml');
+        var items=doc.querySelectorAll('RevenueData,RevenueEntry,Revenue,*');
+        var d=[];
+        if(items.length>0){
+          items.forEach(function(el){
+            var obj={};
+            el.getAttributeNames().forEach(function(a){obj[a]=el.getAttribute(a);});
+            Array.from(el.children).forEach(function(c){obj[c.tagName]=c.textContent;});
+            if(Object.keys(obj).length>0) d.push(obj);
+          });
+        }
+        if(d.length===0){
+          // Prøv direkte JSON parse (i tilfælde af at API format ændres)
+          try{d=JSON.parse(xml);}catch(e){d=[{raw:xml.slice(0,200)}];}
+        }
+        window._centricaData=d;
+        window._centricaXml=xml;
+        renderBudstrategi(d);
+      });
     });
     return;
   }
