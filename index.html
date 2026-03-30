@@ -1040,7 +1040,7 @@ window.fetchCentrica=async function(days){
     await ensureValidToken();
     const token=localStorage.getItem('centrica_token');
     if(!token){
-      document.getElementById('c-metrics').innerHTML='<div class="info-box amber" style="grid-column:1/-1"><div class="ibtag">Token mangler</div><p>Token er ikke sat - kontakt administrator.</p></div>';
+      document.getElementById('c-metrics').innerHTML='<div class="info-box amber" style="grid-column:1/-1"><div class="ibtag">Log ind på Centrica</div><div style="margin-top:10px"><label style="font-size:12px;display:block;margin-bottom:4px">Email</label><input id="li-u" type="email" value="vojens@energi-data.dk" style="padding:7px;border:1px solid #fcd34d;border-radius:4px;font-size:13px;width:280px;margin-bottom:8px;display:block"><label style="font-size:12px;display:block;margin-bottom:4px">Adgangskode</label><input id="li-p" type="password" style="padding:7px;border:1px solid #fcd34d;border-radius:4px;font-size:13px;width:280px;margin-bottom:10px;display:block"><button onclick="doLogin()" style="background:#f59e0b;color:#fff;border:none;padding:8px 20px;border-radius:4px;cursor:pointer;font-weight:600">Log ind</button><span id="li-msg" style="margin-left:10px;font-size:12px;color:#92400e"></span></div></div>';
       setSt('ok','');return;
     }
     const PROXY='https://vojens-regulerkraft.madsdahl30.workers.dev';
