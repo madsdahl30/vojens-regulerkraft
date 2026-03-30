@@ -701,6 +701,50 @@ function doLogin(){
     }).catch(function(){if(msg) msg.textContent='Netværksfejl';});
   });
 }
+
+function autoHentToken(){
+  // Prøv at hente token fra Centrica localStorage via postMessage
+  // Åbn Centrica i baggrund og lyt på token
+  var CENTRICA='https://direct.neasenergy.com/CHP/da-DK/#/dashboard';
+  var msg=document.getElementById('c-metrics');
+  if(msg) msg.innerHTML='<div class="info-box amber" style="grid-column:1/-1">'+
+    '<div class="ibtag" style="color:#92400e">Token udløbet</div>'+
+    '<p style="margin:8px 0">Din Centrica session er udløbet. For at fortsætte:</p>'+
+    '<ol style="margin:8px 0 12px 16px;font-size:13px;line-height:1.8">'+
+    '<li>Gå til <a href="'+CENTRICA+'" target="_blank" style="color:#1d4ed8;font-weight:600">direct.neasenergy.com</a> (åbner i ny fane)</li>'+
+    '<li>Siden henter automatisk din token indenfor 5 sekunder</li>'+
+    '</ol>'+
+    '<button onclick="manueltHentToken()" style="background:#f59e0b;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-weight:600;font-size:13px">Hent token nu</button>'+
+    '<span id="token-status" style="margin-left:10px;font-size:12px;color:#92400e"></span>'+
+    '</div>';
+}
+
+function manueltHentToken(){
+  var status=document.getElementById('token-status');
+  if(status) status.textContent='Henter...';
+  // Åbn Centrica og injicér script der sender token tilbage
+  var w=window.open('https://direct.neasenergy.com/CHP/da-DK/#/dashboard','centrica-sync','width=400,height=300');
+  var attempts=0;
+  var poll=setInterval(function(){
+    attempts++;
+    try{
+      var tok=w.localStorage&&w.localStorage.getItem('access_token');
+      if(tok){
+        localStorage.setItem('centrica_token',tok);
+        var ref=w.localStorage.getItem('refresh_token');
+        if(ref) localStorage.setItem('centrica_refresh_token',ref);
+        clearInterval(poll);
+        w.close();
+        if(status) status.textContent='Token hentet! Indlæser data...';
+        setTimeout(function(){fetchAll();},500);
+      }
+    }catch(e){}
+    if(attempts>30){
+      clearInterval(poll);
+      if(status) status.textContent='Kunne ikke hente automatisk. Er du logget ind på Centrica?';
+    }
+  },1000);
+}
 function blokLabel(mw){
   if(mw===0) return 'Ingen deltagelse';
   // Særtilfælde: 18 MW = 3 blokke à 4 MW + 1 blok à 6 MW
@@ -1071,8 +1115,11 @@ window.fetchCentrica=async function(days){
       {headers:{'Authorization':'Bearer '+token,'Accept':'application/json'}});
     if(resp.status===401){
       localStorage.removeItem('centrica_token');
-      document.getElementById('c-metrics').innerHTML='<div class="info-box red" style="grid-column:1/-1"><div class="ibtag">Token udloebet</div><p>Kontakt administrator for nyt token.</p></div>';
-      setSt('ok','');return;
+      // Auto-forsøg: hent token fra Centrica-tab via extension
+    document.getElementById('c-metrics').innerHTML='<div class="info-box amber" style="grid-column:1/-1"><div class="ibtag">Henter token...</div><p>Forsøger automatisk login...</p></div>';
+    setSt('ok','');
+    autoHentToken();
+    return;
     }
     const xml=await resp.text();
     let data;
