@@ -156,33 +156,10 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
   </div>
 
   <!-- ANBEFALING -->
-  <div id="panel-anbefaling" class="panel">
-    <div class="card">
-      <div class="ct">Anbefalet prisstrategi pr. time <span class="badge ba">90 dages data</span></div>
-      <table class="rt" id="rec-table"></table>
-    </div>
-  </div>
+  
 
   <!-- MW-FORDELING -->
-  <div id="panel-fordeling" class="panel">
-    <div class="info-box blue" style="margin-bottom:16px;">
-      <div class="ibtag">Sådan fungerer fordelingen</div>
-      <p>Du fordeler dine 18,3 MW mellem <strong>aFRR</strong> og <strong>mFRR</strong> time for time. Hvis du taber aFRR-auktionen i en given time, ryger de tabte MW automatisk til <strong>mFRR Extra</strong>-runden (hvis Energinet åbner den). Du kan IKKE aktivt sende MW til Extra – det sker kun ved tab af aFRR. Brug derfor altid blokke af 4 MW i aFRR, så du kan vinde Extra med præcise mængder.</p>
-    </div>
-
-    <div class="card">
-      <div class="ct">Planlæg MW-fordeling time for time <span class="badge ba">Klik en time for at redigere</span></div>
-      <div class="hour-planner" id="hour-planner"></div>
-
-      <div class="hour-editor" id="hour-editor">
-        <div class="he-title" id="he-title">Vælg en time ovenfor for at redigere</div>
-        <div id="he-body"></div>
-      </div>
-
-      <div class="summary-grid" id="fordeling-summary"></div>
-      <div class="cw" style="height:220px;"><canvas id="fordelingChart"></canvas></div>
-    </div>
-  </div>
+  
 
   <!-- mFRR EXTRA -->
   <div id="panel-extra" class="panel">
@@ -734,58 +711,30 @@ function autoHentToken(){
 }
 
 function manueltHentToken(){
-  var statusEl=document.getElementById('token-status');
-  // Åbn Centrica i et nyt vindue
-  var popup=window.open('https://direct.neasenergy.com/CHP/da-DK/#/dashboard','centrica-token','width=900,height=600');
-  if(!popup){
-    if(statusEl) statusEl.innerHTML='<span style="color:#dc2626">Pop-up blokeret. Tillad pop-ups og prøv igen.</span>';
-    return;
-  }
-  if(statusEl) statusEl.innerHTML='<span style="color:#92400e">Venter på Centrica login…</span>';
+  var status=document.getElementById('token-status');
+  if(status) status.textContent='Henter...';
+  // Åbn Centrica og injicér script der sender token tilbage
+  var w=window.open('https://direct.neasenergy.com/CHP/da-DK/#/dashboard','centrica-sync','width=400,height=300');
   var attempts=0;
   var poll=setInterval(function(){
     attempts++;
     try{
-      // Forsøg cross-origin læsning (virker kun hvis same-origin)
-      var tok=popup.localStorage&&popup.localStorage.getItem('access_token');
+      var tok=w.localStorage&&w.localStorage.getItem('access_token');
       if(tok){
         localStorage.setItem('centrica_token',tok);
-        var ref=popup.localStorage.getItem('refresh_token');
+        var ref=w.localStorage.getItem('refresh_token');
         if(ref) localStorage.setItem('centrica_refresh_token',ref);
         clearInterval(poll);
-        popup.close();
-        if(statusEl) statusEl.innerHTML='<span style="color:#16a34a">✓ Token hentet!</span>';
+        w.close();
+        if(status) status.textContent='Token hentet! Indlæser data...';
         setTimeout(function(){fetchAll();},500);
-        return;
       }
-    }catch(e){
-      // Cross-origin blokeret - vis script-guide
+    }catch(e){}
+    if(attempts>30){
       clearInterval(poll);
-      if(statusEl) statusEl.innerHTML='';
-      var metricsEl=document.getElementById('c-metrics');
-      if(metricsEl){
-        var script='const t=localStorage.getItem(\'access_token\'),r=localStorage.getItem(\'refresh_token\');window.opener&&window.opener.postMessage({centrica_token:t,centrica_refresh_token:r},\'*\');';
-        metricsEl.innerHTML+='<div style="margin-top:10px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;font-size:12px">'
-          +'<strong>I Centrica-vinduet der åbnede:</strong><br>'
-          +'1. Tryk <kbd>F12</kbd> (eller Højreklik → Inspéktér)<br>'
-          +'2. Gå til <strong>Konsol</strong>-fanen<br>'
-          +'3. Kopier og kør dette:<br>'
-          +'<code style="display:block;margin:6px 0;padding:6px;background:#1e293b;color:#e2e8f0;border-radius:4px;font-size:11px;word-break:break-all">'+script+'</code>'
-          +'<button onclick="void(0)" style="background:#f59e0b;color:#fff;border:none;padding:4px 10px;border-radius:3px;cursor:pointer;font-size:11px" onclick="navigator.clipboard.writeText(\''+script+'\')">Kopiér script</button></div>';
-      }
-      // Lyt på postMessage fra Centrica-vinduet
-      window.addEventListener('message',function handler(e){
-        if(e.data&&e.data.centrica_token){
-          localStorage.setItem('centrica_token',e.data.centrica_token);
-          if(e.data.centrica_refresh_token) localStorage.setItem('centrica_refresh_token',e.data.centrica_refresh_token);
-          window.removeEventListener('message',handler);
-          try{popup.close();}catch(e2){}
-          fetchAll();
-        }
-      });
+      if(status) status.textContent='Kunne ikke hente automatisk. Er du logget ind på Centrica?';
     }
-    if(attempts>3) clearInterval(poll);
-  },2000);
+  },1000);
 }
 
 function genindlaesENTSOE(){
