@@ -129,6 +129,20 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
   <div id="panel-heatmap" class="panel active">
     <div class="card">
       <div class="ct">Gennemsnitlig clearing-pris pr. time · seneste 90 dage · DK1</div>
+<div class="card" style="margin-top:16px">
+  <div class="ct" style="display:flex;align-items:center">
+    <span>&#9889; ENTSO-E Outages DK1</span>
+    <span style="font-size:11px;color:var(--text3);margin-left:8px">Planlagte & aktive kraftværksudfald</span>
+    <button onclick="genindlaesENTSOE()" style="margin-left:auto;background:var(--primary);color:#fff;border:none;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600">&#8635; Opdater</button>
+  </div>
+  <div id="entsoe-panel" style="padding:8px 0">
+    <div style="text-align:center;padding:16px;color:var(--text3);font-size:13px">
+      Klik <strong>Opdater</strong> for at hente aktuelle outages fra ENTSO-E<br>
+      <span style="font-size:11px">(Kræver at du er logget ind på ENTSO-E i browseren)</span>
+    </div>
+  </div>
+</div>
+
       <div class="legend-row">
         <span class="leg"><span class="leg-sq" style="background:#2563EB"></span>aFRR kr./MW</span>
         <span class="leg"><span class="leg-sq" style="background:#059669"></span>mFRR kr./MW</span>
@@ -745,6 +759,102 @@ function manueltHentToken(){
     }
   },1000);
 }
+
+function genindlaesENTSOE(){
+  var el=document.getElementById('entsoe-panel');
+  if(el) el.innerHTML='<div style="text-align:center;padding:16px;color:var(--text3)">Henter fra ENTSO-E…</div>';
+  hentENTSOEOutages(function(data,url){renderENTSOEPanel(data,url);});
+}
+
+function hentENTSOEOutages(callback){
+  var today=new Date();
+  var ds=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  var url='https://transparency.entsoe.eu/outages/productionAndGeneration?appState='+
+    encodeURIComponent(JSON.stringify({sa:['BZN|10YDK-1--------W'],st:'BZN',mm:true,ma:false,sp:'HALF',dt:'TABLE',df:[ds,ds],tz:'CET'}));
+  var iframe=document.createElement('iframe');
+  iframe.style.cssText='position:fixed;top:-9999px;left:-9999px;width:1400px;height:900px;opacity:0';
+  iframe.src=url;
+  document.body.appendChild(iframe);
+  var attempts=0;
+  var poll=setInterval(function(){
+    attempts++;
+    try{
+      var doc=iframe.contentDocument;
+      var cells=doc&&doc.querySelectorAll('td,th');
+      if(cells&&cells.length>8){
+        var data=Array.from(cells).map(function(c){return c.textContent.trim();}).filter(function(t){return t.length>0;});
+        clearInterval(poll);
+        document.body.removeChild(iframe);
+        // Parse rows - header er 8 kolonner: Unit Name|Unit Code|Status|Type|Area|Installed(MW)|Available(MW)|Start & End Time
+        var results=[];
+        var hi=data.indexOf('Unit Name');
+        if(hi>=0){
+          var i=hi+8;
+          while(i+7<data.length&&!data[i].includes('Transparency')&&!data[i].includes('Terms')){
+            var name=data[i];
+            var code=data[i+1];
+            var type=data[i+3];
+            var area=data[i+4];
+            var installed=parseFloat(data[i+5])||0;
+            var avail=parseFloat(data[i+7])||0;
+            var period=data[i+8]||'';
+            if(name&&name.length>2&&name.length<60&&installed>0){
+              results.push({name:name,code:code,type:type,area:area,installed:installed,available:avail,ude:installed-avail,period:period});
+            }
+            i+=9;
+          }
+        }
+        callback(results,url);
+      }
+    }catch(e){}
+    if(attempts>25){clearInterval(poll);try{document.body.removeChild(iframe);}catch(e2){}callback(null,url);}
+  },1000);
+}
+
+function renderENTSOEPanel(data,url){
+  var el=document.getElementById('entsoe-panel');
+  if(!el)return;
+  if(!data||!data.length){
+    el.innerHTML='<div style="padding:12px;color:var(--text3);font-size:13px">'+
+      (data===null?'Kunne ikke hente (ikke logget ind på ENTSO-E). ':data.length===0?'Ingen aktive outages i DK1 i dag. ':'')+
+      '<a href="'+url+'" target="_blank" style="color:#1d4ed8">Se på ENTSO-E ↗</a></div>';
+    return;
+  }
+  var totalUde=data.reduce(function(s,r){return s+r.ude;},0);
+  var totalInst=data.reduce(function(s,r){return s+r.installed;},0);
+  var pct=totalInst>0?Math.round(totalUde/totalInst*100):0;
+  var rc=pct>50?'#dc2626':pct>20?'#d97706':'#16a34a';
+
+  var h='<div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">';
+  h+='<div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 16px;min-width:130px">';
+  h+='<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:2px">Enheder ude</div>';
+  h+='<div style="font-size:24px;font-weight:800;color:'+rc+'">'+data.length+'</div></div>';
+  h+='<div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 16px;min-width:130px">';
+  h+='<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:2px">MW ude</div>';
+  h+='<div style="font-size:24px;font-weight:800;color:'+rc+'">'+Math.round(totalUde)+' MW</div>';
+  h+='<div style="font-size:11px;color:var(--text3)">af '+Math.round(totalInst)+' MW ('+pct+'%)</div></div></div>';
+
+  h+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">';
+  h+='<thead><tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0">';
+  ['Enhed','Installeret (MW)','Tilgængelig (MW)','Ude (MW)','Periode'].forEach(function(col){
+    h+='<th style="padding:8px;text-align:left;font-size:11px;font-weight:700;color:var(--text2);white-space:nowrap">'+col+'</th>';
+  });
+  h+='</tr></thead><tbody>';
+  data.forEach(function(r){
+    var bg=r.available===0?'#fef2f2':r.ude>0?'#fffbeb':'#f0fdf4';
+    var ac=r.available===0?'#dc2626':r.ude>0?'#d97706':'#16a34a';
+    h+='<tr style="background:'+bg+';border-bottom:1px solid rgba(0,0,0,.05)">';
+    h+='<td style="padding:8px;font-weight:600">'+r.name+'</td>';
+    h+='<td style="padding:8px">'+r.installed+' MW</td>';
+    h+='<td style="padding:8px;color:'+ac+';font-weight:700">'+r.available+' MW</td>';
+    h+='<td style="padding:8px;font-weight:700;color:#dc2626">'+Math.round(r.ude)+' MW</td>';
+    h+='<td style="padding:8px;color:var(--text3);font-size:11px">'+r.period+'</td>';
+    h+='</tr>';
+  });
+  h+='</tbody></table></div>';
+  h+='<div style="margin-top:6px;font-size:11px;color:var(--text3)">Kilde: <a href="'+url+'" target="_blank" style="color:#1d4ed8">ENTSO-E Transparency Platform ↗</a> · Sidst opdateret '+new Date().toLocaleTimeString('da-DK')+'</div>';
+  el.innerHTML=h;
+}
 function blokLabel(mw){
   if(mw===0) return 'Ingen deltagelse';
   // Særtilfælde: 18 MW = 3 blokke à 4 MW + 1 blok à 6 MW
@@ -1105,7 +1215,7 @@ window.fetchCentrica=async function(days){
     await ensureValidToken();
     const token=localStorage.getItem('centrica_token');
     if(!token){
-      document.getElementById('c-metrics').innerHTML='<div class="info-box amber" style="grid-column:1/-1"><div class="ibtag">Log ind på Centrica</div><div style="margin-top:10px"><label style="font-size:12px;display:block;margin-bottom:4px">Email</label><input id="li-u" type="email" value="vojens@energi-data.dk" style="padding:7px;border:1px solid #fcd34d;border-radius:4px;font-size:13px;width:280px;margin-bottom:8px;display:block"><label style="font-size:12px;display:block;margin-bottom:4px">Adgangskode</label><input id="li-p" type="password" style="padding:7px;border:1px solid #fcd34d;border-radius:4px;font-size:13px;width:280px;margin-bottom:10px;display:block"><button onclick="doLogin()" style="background:#f59e0b;color:#fff;border:none;padding:8px 20px;border-radius:4px;cursor:pointer;font-weight:600">Log ind</button><span id="li-msg" style="margin-left:10px;font-size:12px;color:#92400e"></span></div></div>';
+      document.getElementById('c-metrics').innerHTML='<div class="info-box amber" style="grid-column:1/-1"><div class="ibtag">Token udløbet</div><p style="margin:8px 0">Gå til <a href="https://direct.neasenergy.com/CHP/da-DK/#/dashboard" target="_blank" style="color:#1d4ed8;font-weight:600">direct.neasenergy.com</a>, klik derefter <strong>Hent token nu</strong> herunder.</p><button onclick="manueltHentToken()" style="background:#f59e0b;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-weight:600;font-size:13px">Hent token nu</button><span id="token-status" style="margin-left:10px;font-size:12px;color:#92400e"></span></div>';
       setSt('ok','');return;
     }
     const PROXY='https://vojens-regulerkraft.madsdahl30.workers.dev';
