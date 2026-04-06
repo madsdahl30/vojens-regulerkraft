@@ -15,7 +15,7 @@ async function handleRequest(request) {
   if (request.method === 'OPTIONS') return new Response(null, {status:204, headers:CORS});
   const url = new URL(request.url);
 
-  // /refresh-token - fornyer token via Centrica API
+  // /refresh-token
   if (url.pathname === '/refresh-token' && request.method === 'POST') {
     const body = await request.json().catch(()=>({}));
     const params = new URLSearchParams({
@@ -31,13 +31,19 @@ async function handleRequest(request) {
     return new Response(data, {status: resp.status, headers: {...CORS, 'Content-Type': resp.headers.get('Content-Type')||'application/json'}});
   }
 
-  // /v1/ proxy - videresend som-det-er
-  if (url.pathname.startsWith('/v1/')) {
+  // Proxy /v1/* og /BidApi/* direkte til api.neasenergy.com
+  if (url.pathname.startsWith('/v1/') || url.pathname.startsWith('/BidApi/')) {
     const target = TARGET + url.pathname + url.search;
     const reqHeaders = new Headers();
     const auth = request.headers.get('Authorization');
     if (auth) reqHeaders.set('Authorization', auth);
-    const resp = await fetch(target, {method: request.method, headers: reqHeaders, body: request.method !== 'GET' ? request.body : undefined});
+    const ct = request.headers.get('Content-Type');
+    if (ct) reqHeaders.set('Content-Type', ct);
+    const resp = await fetch(target, {
+      method: request.method,
+      headers: reqHeaders,
+      body: request.method !== 'GET' ? request.body : undefined
+    });
     const rh = new Headers(resp.headers);
     Object.entries(CORS).forEach(([k,v]) => rh.set(k,v));
     return new Response(resp.body, {status: resp.status, headers: rh});
