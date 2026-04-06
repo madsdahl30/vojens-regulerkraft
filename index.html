@@ -867,11 +867,11 @@ function renderENTSOEPanel(data,url){
 }
 
 function renderIndsigter(){
-  var el=document.getElementById('panel-indsigt');
-  if(!el||el.style.display==='none') return;
-
-  // Hent vind fra Open-Meteo
-  fetch('https://api.open-meteo.com/v1/forecast?latitude=55.47&longitude=8.45&current=wind_speed_10m,wind_speed_80m,wind_gusts_10m,temperature_2m,weather_code&hourly=wind_speed_100m&wind_speed_unit=ms&forecast_days=1')
+  var panel=document.getElementById('panel-indsigt');
+  if(!panel||panel.style.display==='none') return;
+  var v=document.getElementById('indsigt-vind');
+  if(v) v.innerHTML='<div style="padding:16px;color:var(--text3)">Henter vejrdata...</div>';
+  fetch('https://api.open-meteo.com/v1/forecast?latitude=55.47&longitude=8.45&current=wind_speed_10m,wind_speed_80m,wind_gusts_10m,temperature_2m,weather_code&wind_speed_unit=ms&forecast_days=1')
   .then(function(r){return r.json();})
   .then(function(d){
     var ws=d.current.wind_speed_10m;
@@ -879,61 +879,47 @@ function renderIndsigter(){
     var gust=d.current.wind_gusts_10m;
     var temp=d.current.temperature_2m;
     var wc=d.current.weather_code;
-    // Vindstyrke vurdering
-    var vindStatus,vindFarve,vindIkon;
-    if(ws<5){vindStatus='Lav';vindFarve='#16a34a';vindIkon='&#x2193;';}
-    else if(ws<12){vindStatus='Normal';vindFarve='#2563eb';vindIkon='&#x2192;';}
-    else if(ws<20){vindStatus='Hj';vindFarve='#d97706';vindIkon='&#x2191;';}
-    else if(ws<25){vindStatus='Meget hj';vindFarve='#dc2626';vindIkon='&#x26A0;';}
-    else{vindStatus='STORM >25m/s';vindFarve='#7c3aed';vindIkon='&#x26A1;';}
-    // Vejrkode til ikon
-    var vejrTekst=wc<=1?' Klart':wc<=3?' Delvist skyet':wc<=49?' Tge':wc<=69?' Regn':wc<=79?' Sne':' Tordenvejr';
-    // Budstrategi-implikation
-    var implikation,impFarve;
-    if(ws<5){implikation='+10% p aFRR-priser (lav vind = hjere behov)';impFarve='#16a34a';}
-    else if(ws<12){implikation='Normal prisstning';impFarve='#6b7280';}
-    else if(ws<25){implikation='-10% p aFRR-priser (meget vind = lavere priser)';impFarve='#d97706';}
-    else{implikation='EKSTREMT: Vindmller kan slukke automatisk  pludselig mangel p MW';impFarve='#7c3aed';}
-
-    var vindHTML='<div class="card" style="margin-bottom:12px">'
-      +'<div class="ct"> Vindforhold  Esbjerg (55.47N, 8.45E)</div>'
-      +'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">'
-      +'<div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 16px;min-width:110px;text-align:center">'
-      +'<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase">10m vind</div>'
-      +'<div style="font-size:26px;font-weight:800;color:'+vindFarve+'">'+ws.toFixed(1)+'</div>'
-      +'<div style="font-size:11px;color:var(--text3)">m/s</div></div>'
-      +'<div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 16px;min-width:110px;text-align:center">'
-      +'<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase">80m vind</div>'
-      +'<div style="font-size:26px;font-weight:800;color:'+vindFarve+'">'+ws80.toFixed(1)+'</div>'
-      +'<div style="font-size:11px;color:var(--text3)">m/s</div></div>'
-      +'<div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 16px;min-width:110px;text-align:center">'
-      +'<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase">Vindstd</div>'
-      +'<div style="font-size:26px;font-weight:800;color:'+(gust>25?'#7c3aed':gust>20?'#dc2626':vindFarve)+'">'+gust.toFixed(1)+'</div>'
-      +'<div style="font-size:11px;color:var(--text3)">m/s</div></div>'
-      +'<div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 16px;min-width:110px;text-align:center">'
-      +'<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase">Temperatur</div>'
-      +'<div style="font-size:26px;font-weight:800;color:var(--text1)">'+temp.toFixed(1)+'</div>'
-      +'<div style="font-size:11px;color:var(--text3)">C</div></div>'
-      +'<div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 16px;min-width:110px;text-align:center">'
-      +'<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase">Vejr</div>'
-      +'<div style="font-size:18px;font-weight:600;color:var(--text1)">'+vejrTekst+'</div></div>'
-      +'</div>'
-      +'<div style="background:'+(ws>=25?'#faf5ff':'ws>=20'?'#fef2f2':ws>=12?'#fffbeb':'#f0fdf4')+';border:1px solid '+(ws>=25?'#c4b5fd':ws>=20?'#fca5a5':ws>=12?'#fde68a':'#86efac')+';border-radius:6px;padding:8px 12px;font-size:12px">'
-      +'<strong style="color:'+vindFarve+'">'+vindIkon+' '+vindStatus+' vind ('+ws.toFixed(1)+' m/s)</strong>'
-      +'<span style="margin-left:8px;color:'+impFarve+'">'+implikation+'</span>'
-      +'</div>'
-      +'<div style="margin-top:6px;font-size:11px;color:var(--text3)">Kilde: Open-Meteo  Opdateret '+new Date().toLocaleTimeString('da-DK')+'</div>'
-      +'</div>';
-
-    var existingVind=document.getElementById('indsigt-vind');
-    if(existingVind) existingVind.outerHTML=vindHTML;
-    else {
-      var panel=document.getElementById('panel-indsigt');
-      if(panel) panel.insertAdjacentHTML('afterbegin','<div id="indsigt-vind">'+vindHTML+'</div>');
-    }
+    var farve,niveau,effekt,budAdj;
+    if(ws<5){farve='#16a34a';niveau='Lav vind';effekt='+10% paa aFRR';budAdj='+10%';}
+    else if(ws<12){farve='#2563eb';niveau='Normal vind';effekt='Ingen justering';budAdj='0%';}
+    else if(ws<25){farve='#d97706';niveau='Hoj vind';effekt='-10% paa aFRR';budAdj='-10%';}
+    else{farve='#7c3aed';niveau='STORM >25 m/s';effekt='Vindmoeller kan slukke!';budAdj='Ekstremt';}
+    var vejr=wc<=1?'Sol':wc<=3?'Delvist skyet':wc<=49?'Taage':wc<=69?'Regn':'Sne/Storm';
+    var el=document.getElementById('indsigt-vind');
+    if(!el) return;
+    el.innerHTML=
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">'+
+        '<div style="background:#fff;border:2px solid '+farve+';border-radius:10px;padding:12px 16px;min-width:100px;text-align:center;flex:1">'+
+          '<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase">Vind 10m</div>'+
+          '<div style="font-size:28px;font-weight:800;color:'+farve+'">'+ws.toFixed(1)+'</div>'+
+          '<div style="font-size:11px;color:var(--text3)">m/s</div>'+
+        '</div>'+
+        '<div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 16px;min-width:100px;text-align:center;flex:1">'+
+          '<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase">Vind 80m</div>'+
+          '<div style="font-size:28px;font-weight:800;color:'+farve+'">'+ws80.toFixed(1)+'</div>'+
+          '<div style="font-size:11px;color:var(--text3)">m/s</div>'+
+        '</div>'+
+        '<div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 16px;min-width:100px;text-align:center;flex:1">'+
+          '<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase">Vindstod</div>'+
+          '<div style="font-size:28px;font-weight:800;color:'+farve+'">'+gust.toFixed(1)+'</div>'+
+          '<div style="font-size:11px;color:var(--text3)">m/s</div>'+
+        '</div>'+
+        '<div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 16px;min-width:100px;text-align:center;flex:1">'+
+          '<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase">Temp</div>'+
+          '<div style="font-size:28px;font-weight:800;color:var(--text1)">'+temp.toFixed(1)+'</div>'+
+          '<div style="font-size:11px;color:var(--text3)">grader C</div>'+
+        '</div>'+
+        '<div style="background:#fff;border:2px solid '+farve+';border-radius:10px;padding:12px 16px;min-width:160px;flex:2">'+
+          '<div style="font-size:11px;font-weight:700;color:'+farve+';text-transform:uppercase;margin-bottom:4px">'+niveau+'</div>'+
+          '<div style="font-size:13px;color:var(--text1);margin-bottom:4px">'+vejr+' - '+ws.toFixed(1)+' m/s</div>'+
+          '<div style="font-size:12px;color:var(--text2);margin-bottom:6px">'+effekt+'</div>'+
+          '<span style="background:'+farve+';color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700">Budjustering: '+budAdj+'</span>'+
+        '</div>'+
+      '</div>'+
+      '<div style="font-size:11px;color:var(--text3)">Kilde: Open-Meteo Esbjerg (55.47N, 8.45E) opdateret '+new Date().toLocaleTimeString('da-DK')+'</div>';
   }).catch(function(){
-    var panel=document.getElementById('panel-indsigt');
-    if(panel) panel.insertAdjacentHTML('afterbegin','<div id="indsigt-vind"><div class="card"><div class="ct"> Vind</div><p style="color:var(--text3)">Kunne ikke hente vinddata</p></div></div>');
+    var el=document.getElementById('indsigt-vind');
+    if(el) el.innerHTML='<div style="color:var(--text3)">Kunne ikke hente vejrdata</div>';
   });
 }
 
