@@ -865,19 +865,17 @@ function blokLabel(mw){
   return mw+' MW';
 }
 function blokPris(p50,p75,blok,total,extraSats){
-  var AFRR_GULV=4.99; // Min. budpris kr/MWh - break-even aktivering ~5.000 kr
+  // Blok 1+2: altid P50-baseret (sikre blokke)
+  // Blok 3+4: P75-baseret ved Extra-satsning, ellers P50
   var satsBlok=extraSats&&blok>=Math.max(3,total-1);
   var base=satsBlok?p75:p50;
-  var pris;
-  if(total===1) pris=base;
-  else if(total===2) pris=blok===1?Math.round(p50*.95):Math.round(base*1.05);
-  else if(total===3) pris=blok===1?Math.round(p50*.95):blok===2?p50:Math.round(base*1.05);
-  else {
-    var blokBase=blok<=2?p50:base;
-    var f=[.93,1.0,1.05,1.08];
-    pris=Math.round(blokBase*(f[blok-1]||1.08));
-  }
-  return Math.max(AFRR_GULV, pris); // Aldrig under 4.99 kr/MWh
+  if(total===1) return base;
+  if(total===2) return blok===1?Math.round(p50*.95):Math.round(base*1.05);
+  if(total===3) return blok===1?Math.round(p50*.95):blok===2?p50:Math.round(base*1.05);
+  // 4 blokke: blok1=P50-7%, blok2=P50, blok3=base+5%, blok4=base+8%
+  var blokBase=blok<=2?p50:base;
+  var f=[.93,1.0,1.05,1.08];
+  return Math.round(blokBase*(f[blok-1]||1.08));
 }
 
 
@@ -1082,7 +1080,7 @@ function renderBudstrategi(data){
     if(extraSæsonLabel) topHtml+='<span style="font-size:10px;background:#fef9c3;color:#92400e;padding:2px 8px;border-radius:10px">'+extraSæsonLabel+'</span>';
     topHtml+='<span style="font-size:10px;background:#f0fdf4;color:#065f46;padding:2px 8px;border-radius:10px">Prisjustering: '+Math.round(prisJustering*100)+'% af historisk snit</span>';
     topHtml+='<span id="vind-badge" style="font-size:10px;background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:10px">Vind: henter…</span>';
-    topHtml+='</div>';
+    topHtml+='</div><div style="font-size:11px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:4px;padding:5px 10px;margin-top:6px" id="bs-breakeven">⚠️ Break-even aktivering: <strong>~5.000 kr</strong> &nbsp;|&nbsp; aFRR-gulv: <strong>4,99 kr/MWh</strong> &nbsp;|&nbsp; mFRR: <strong>5 kr fast</strong></div>';
     topHtml+='<div style="font-size:11px;color:#3b82f6;margin-bottom:14px">18 MW · EDS DK1 90 dage · Ugedags- og sæsonfaktorer fra 365d historisk analyse</div>';
 
     topHtml+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">';
@@ -1119,9 +1117,6 @@ function renderBudstrategi(data){
     document.getElementById('bs-summary').innerHTML=topHtml;
     hentVindIndikator(targetDate,function(vind){
       var b2=document.getElementById('vind-badge');
-  // Vis break-even info
-  var beEl=document.getElementById('bs-breakeven');
-  if(beEl) beEl.innerHTML='&#9888; Break-even aktivering: <strong>~5.000 kr</strong> &nbsp;|&nbsp; aFRR-gulv: <strong>4,99 kr/MWh</strong> &nbsp;|&nbsp; mFRR: <strong>5 kr fast</strong>';
       if(!b2)return;
       if(!vind.harData){b2.textContent='Vind: ingen prognose';return;}
       if(vind.niveau==='lav'){b2.style.background='#fee2e2';b2.style.color='#991b1b';b2.textContent='↓ Lav vind '+vind.ms+' m/s → +10%';}
