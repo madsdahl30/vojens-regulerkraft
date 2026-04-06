@@ -1,3 +1,4 @@
+// Deployed: 2026-04-06T12:45:11.967Z
 addEventListener('fetch', event => {
   event.respondWith(handleRequest(event.request));
 });
