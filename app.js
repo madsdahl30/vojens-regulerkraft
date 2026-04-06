@@ -1,0 +1,1264 @@
+
+const API = 'https://api.energidataservice.dk/dataset';
+let S = null, fordelingC = null, extraC = null;
+
+// Standard time-plan: 12 MW aFRR alle timer, pris fra historik
+let plan = Array.from({length:24}, (_,h) => ({
+  h,
+  market: 'afrr',   // 'afrr' eller 'mfrr'
+  mw: 12,
+  blocks: 3,        // antal blokke ( 4 MW)
+  price: 0          // sttes efter data er hentet
+}));
+
+let selHour = 17; // default valgt time
+
+async function fetchAll() {
+  setSt('loading','Henter 90 dages data...');
+  try {
+    const today = new Date();
+    const start = new Date(today); start.setDate(start.getDate()-90);
+    const fmt = d => d.toISOString().split('T')[0];
+    const enc = encodeURIComponent;
+    const [a,m,x] = await Promise.all([
+      fetch(`${API}/AfrrReservesNordic?limit=5000&filter=${enc('{"PriceArea":"DK1"}')}&start=${fmt(start)}&end=${fmt(today)}`).then(r=>r.json()),
+      fetch(`${API}/mFRRCapacityMarket?limit=5000&filter=${enc('{"PriceArea":"DK1"}')}&start=${fmt(start)}&end=${fmt(today)}`).then(r=>r.json()),
+      fetch(`${API}/MfrrCapacityMarketExtra?limit=5000&filter=${enc('{"PriceArea":"DK1"}')}&start=${fmt(start)}&end=${fmt(today)}`).then(r=>r.json())
+    ]);
+    S = {
+      afrr: cStats(a.records),
+      mfrr: cStats(m.records),
+      extra: cStats(x.records),
+      afrrWD: cWD(a.records),
+      mfrrWD: cWD(m.records),
+      at: new Date().toLocaleString('da-DK')
+    };
+    try { localStorage.setItem('vs10', JSON.stringify(S)); } catch(e){}
+    // St standardpriser i plan fra historiske P75
+    plan.forEach(p => {
+      const st = S[p.market][p.h];
+      p.price = st.p75 || st.avgPrice || 50;
+    });
+    renderAll();
+    setSt('ok', `Opdateret ${S.at}  90 dages data`);
+  } catch(err) {
+    try { const c=localStorage.getItem('vs10'); if(c){S=JSON.parse(c);renderAll();setSt('warn',`Cached data fra ${S.at}`);return;} } catch(e){}
+    setSt('error','Fejl ved hentning');
+  }
+}
+
+function setSt(t,tx) {
+  const d=document.getElementById('sdot');
+  d.className='dot'+(t==='loading'?' loading':t==='error'?' error':'');
+  document.getElementById('stxt').textContent=tx;
+}
+
+function cStats(recs) {
+  const s={};
+  for(let h=0;h<24;h++){
+    const rows=recs.filter(r=>new Date(r.TimeDK).getHours()===h);
+    const act=rows.filter(r=>r.UpDemandMW>0&&r.UpPriceDKK>0);
+    const zd=rows.filter(r=>r.UpDemandMW===0).length;
+    const sorted=act.map(r=>r.UpPriceDKK).sort((a,b)=>a-b);
+    s[h]={
+      total:rows.length, zeroPct:Math.round(zd/rows.length*100),
+      activePct:Math.round((1-zd/rows.length)*100),
+      avgPrice:act.length?Math.round(act.reduce((t,r)=>t+r.UpPriceDKK,0)/act.length):0,
+      maxPrice:act.length?Math.round(Math.max(...act.map(r=>r.UpPriceDKK))):0,
+      p25:sorted.length?Math.round(sorted[Math.floor(sorted.length*.25)]):0,
+      p75:sorted.length?Math.round(sorted[Math.floor(sorted.length*.75)]):0,
+      avgDemand:act.length?Math.round(act.reduce((t,r)=>t+r.UpDemandMW,0)/act.length):0,
+      avgProcured:act.length?Math.round(act.reduce((t,r)=>t+r.UpProcuredMW,0)/act.length):0,
+    };
+  }
+  return s;
+}
+
+function cWD(recs) {
+  const s={};
+  for(let wd=0;wd<7;wd++){
+    const rows=recs.filter(r=>new Date(r.TimeDK).getDay()===wd);
+    const act=rows.filter(r=>r.UpDemandMW>0&&r.UpPriceDKK>0);
+    s[wd]={avgPrice:act.length?Math.round(act.reduce((t,r)=>t+r.UpPriceDKK,0)/act.length):0,
+           activePct:Math.round(act.length/Math.max(rows.length,1)*100)};
+  }
+  return s;
+}
+
+function heatCol(val,max,r,g,b){return `rgba(${r},${g},${b},${0.07+Math.min(val/max,1)*.88})`;}
+
+function renderAll(){
+  renderHeatmap();
+  renderRecTable();
+  renderHourPlanner();
+  renderExtraChart();
+  renderExtraCompare();
+  renderInsights();
+}
+
+function renderHeatmap(){
+  if(!S)return;
+  const hl=document.getElementById('hlabels');
+  hl.innerHTML='<span></span>'+Array.from({length:24},(_,i)=>`<span>${i}</span>`).join('');
+  const con=document.getElementById('heatmap'); con.innerHTML='';
+  const mkts=[{k:'afrr',l:'aFRR',r:37,g:99,b:235},{k:'mfrr',l:'mFRR',r:5,g:150,b:105},{k:'extra',l:'Extra',r:217,g:119,b:6}];
+  mkts.forEach(m=>{
+    const maxP=Math.max(...Object.values(S[m.k]).map(s=>s.avgPrice));
+    const row=document.createElement('div'); row.className='hg'; row.style.marginBottom='3px';
+    const lbl=document.createElement('div'); lbl.className='lbl'; lbl.textContent=m.l; row.appendChild(lbl);
+    for(let h=0;h<24;h++){
+      const cell=document.createElement('div'); cell.className='hcell';
+      const v=S[m.k][h].avgPrice;
+      cell.style.background=v===0?'rgba(0,0,0,0.05)':heatCol(v,maxP,m.r,m.g,m.b);
+      cell.onmouseenter=e=>showTT(e,h,m.k,m.l);
+      cell.onmouseleave=()=>{document.getElementById('tt').style.display='none';};
+      row.appendChild(cell);
+    }
+    con.appendChild(row);
+  });
+  const bestH=Object.entries(S.afrr).sort((a,b)=>b[1].avgPrice-a[1].avgPrice)[0];
+  const afrrAvg=Math.round(Object.values(S.afrr).reduce((s,v)=>s+v.avgPrice,0)/24);
+  const mfrrAvg=Math.round(Object.values(S.mfrr).reduce((s,v)=>s+v.avgPrice,0)/24);
+  const xAct=Math.round(Object.values(S.extra).reduce((s,v)=>s+v.activePct,0)/24);
+  document.getElementById('heat-metrics').innerHTML=`
+    <div class="metric"><div class="ml">aFRR dagsnit</div><div class="mv" style="color:var(--afrr)">${afrrAvg} kr.</div><div class="ms">pr. MW pr. time</div></div>
+    <div class="metric"><div class="ml">mFRR dagsnit</div><div class="mv" style="color:var(--mfrr)">${mfrrAvg} kr.</div><div class="ms">pr. MW pr. time</div></div>
+    <div class="metric"><div class="ml">Bedste aFRR time</div><div class="mv">Kl. ${bestH[0]}</div><div class="ms">Snit ${bestH[1].avgPrice} kr.  max ${bestH[1].maxPrice} kr.</div></div>
+    <div class="metric"><div class="ml">Extra aktiv (snit)</div><div class="mv" style="color:var(--extra)">${xAct}%</div><div class="ms">af dage har eftersprgsel</div></div>`;
+}
+
+function showTT(e,h,key,label){
+  const s=S[key][h];
+  const tt=document.getElementById('tt');
+  let extra='';
+  if(key==='extra') extra=`<br>Typisk indkbt: ${s.avgProcured} MW`;
+  tt.innerHTML=`<strong>Kl. ${h}:00  ${label}</strong><br>Snit: ${s.avgPrice} kr./MW<br>Max: ${s.maxPrice} kr./MW<br>P25P75: ${s.p25}${s.p75} kr.<br>Aktiv: ${s.activePct}% af dage${extra}`;
+  tt.style.display='block'; tt.style.left=(e.clientX+14)+'px'; tt.style.top=(e.clientY-10)+'px';
+}
+
+function renderRecTable(){
+  if(!S)return;
+  const rows=Array.from({length:24},(_,h)=>{
+    const a=S.afrr[h],m=S.mfrr[h],x=S.extra[h];
+    let mkt,bid,col;
+    if(a.avgPrice>m.avgPrice*1.3){mkt='aFRR';col='#DBEAFE;color:#1D4ED8';bid=`${a.p25}${a.p75} kr.`;}
+    else if(m.avgPrice>=a.avgPrice){mkt='mFRR';col='#D1FAE5;color:#065F46';bid='5 kr. (lad markedet stte)';}
+    else{mkt='Begge';col='#EDE9FE;color:#5B21B6';bid=`aFRR: ${a.p25}${a.p75} kr.`;}
+    const xn=x.activePct>=20?` <span style="font-size:10px;padding:1px 5px;border-radius:10px;background:#FEF3C7;color:#92400E">Extra ${x.activePct}%  snit ${x.avgPrice} kr.</span>`:'';
+    return `<tr>
+      <td style="color:var(--text3);font-weight:500;white-space:nowrap">Kl. ${String(h).padStart(2,'0')}</td>
+      <td><span style="padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;background:${col}">${mkt}</span>${xn}</td>
+      <td>${bid}</td>
+      <td style="color:var(--text3)">aFRR ${a.avgPrice} / mFRR ${m.avgPrice}</td>
+      <td style="color:var(--text3)">max ${a.maxPrice} kr.</td>
+    </tr>`;
+  });
+  document.getElementById('rec-table').innerHTML=`
+    <thead><tr><th>Time</th><th>Anbefalet marked</th><th>Beredskabspris</th><th>Hist. snit</th><th>aFRR max</th></tr></thead>
+    <tbody>${rows.join('')}</tbody>`;
+}
+
+// ---- MW-FORDELING ----
+function renderHourPlanner(){
+  if(!S)return;
+  const con=document.getElementById('hour-planner');
+  con.innerHTML='';
+  plan.forEach(p=>{
+    const card=document.createElement('div');
+    card.className='hpc'+(p.h===selHour?' sel':'');
+    const mktLbl=p.market==='afrr'?'aFRR':'mFRR';
+    const mktCls=p.market==='afrr'?'hm-afrr':'hm-mfrr';
+    const extraPct=S.extra[p.h].activePct;
+    const extraNote=p.market==='afrr'&&extraPct>=20?`<div class="hp" style="color:#D97706">Extra ${extraPct}%</div>`:'';
+    card.innerHTML=`
+      <div class="hh">Kl. ${String(p.h).padStart(2,'0')}</div>
+      <div class="hm ${mktCls}">${p.mw}MW  ${mktLbl}</div>
+      <div class="hp">${p.blocks}${Math.round(p.mw/p.blocks)}MW</div>
+      <div class="hp">${p.price} kr.</div>
+      ${extraNote}`;
+    card.onclick=()=>selectHour(p.h);
+    con.appendChild(card);
+  });
+  renderHourEditor();
+  renderFordelingSummary();
+}
+
+function selectHour(h){
+  selHour=h;
+  renderHourPlanner();
+}
+
+function renderHourEditor(){
+  if(!S)return;
+  const p=plan[selHour];
+  const a=S.afrr[selHour], m=S.mfrr[selHour], x=S.extra[selHour];
+  document.getElementById('he-title').textContent=`Rediger kl. ${String(selHour).padStart(2,'0')}:00${String(selHour+1).padStart(2,'0')}:00`;
+
+  document.getElementById('he-body').innerHTML=`
+    <div style="margin-bottom:12px;">
+      <div style="font-size:12px;font-weight:500;color:var(--text2);margin-bottom:6px;">Marked denne time</div>
+      <div class="seg-ctrl">
+        <button class="seg-btn a${p.market==='afrr'?' sel':''}" onclick="setMarket('afrr')">aFRR</button>
+        <button class="seg-btn m${p.market==='mfrr'?' sel':''}" onclick="setMarket('mfrr')">mFRR direkte</button>
+      </div>
+      ${p.market==='afrr'&&x.activePct>=20?`<div style="font-size:11px;color:#D97706;margin-top:4px;"> Extra aktiv ${x.activePct}% af dage (snit ${x.avgPrice} kr./MW)  MW der taber aFRR ryger hertil automatisk</div>`:''}
+      ${p.market==='mfrr'?`<div style="font-size:11px;color:#059669;margin-top:4px;">mFRR direkte: Du deltager ikke i aFRR denne time. Opnr du ikke clearing, er der ingen indtjening.</div>`:''}
+    </div>
+
+    <div class="he-row">
+      <span class="he-label" style="color:${p.market==='afrr'?'var(--afrr)':'var(--mfrr)'}">MW i alt</span>
+      <input type="range" id="sl-mw" min="4" max="18" step="4" value="${p.mw}" oninput="updateMW(this.value)">
+      <span class="he-val" id="v-mw" style="color:${p.market==='afrr'?'var(--afrr)':'var(--mfrr)'}">${p.mw} MW</span>
+    </div>
+    <div class="he-row">
+      <span class="he-label">Blokke</span>
+      <input type="range" id="sl-blk" min="1" max="4" step="1" value="${p.blocks}" oninput="updateBlocks(this.value)">
+      <span class="he-val" id="v-blk">${p.blocks}${Math.round(p.mw/p.blocks)} MW</span>
+    </div>
+    <div class="he-row">
+      <span class="he-label">Beredskabspris</span>
+      <input type="range" id="sl-price" min="1" max="500" step="1" value="${p.price}" oninput="updatePrice(this.value)">
+      <span class="he-val" id="v-price">${p.price} kr.</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px;font-size:12px;">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px;">
+        <div style="color:var(--text3);margin-bottom:2px;">aFRR historisk</div>
+        <div style="font-weight:600">P25: ${a.p25} kr.</div>
+        <div style="font-weight:600">Snit: ${a.avgPrice} kr.</div>
+        <div style="font-weight:600">P75: ${a.p75} kr.</div>
+        <div style="font-weight:600;color:var(--danger)">Max: ${a.maxPrice} kr.</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px;">
+        <div style="color:var(--text3);margin-bottom:2px;">mFRR historisk</div>
+        <div style="font-weight:600">P25: ${m.p25} kr.</div>
+        <div style="font-weight:600">Snit: ${m.avgPrice} kr.</div>
+        <div style="font-weight:600">P75: ${m.p75} kr.</div>
+        <div style="font-weight:600;color:var(--danger)">Max: ${m.maxPrice} kr.</div>
+      </div>
+      <div style="background:var(--surface);background:${x.activePct>0?'#FFFBEB':'var(--surface)'};border:1px solid ${x.activePct>0?'#FDE68A':'rgba(0,0,0,0.09)'};border-radius:6px;padding:8px;">
+        <div style="color:var(--text3);margin-bottom:2px;">Extra (${x.activePct}% aktiv)</div>
+        ${x.activePct>0?`
+        <div style="font-weight:600">Snit: ${x.avgPrice} kr.</div>
+        <div style="font-weight:600">P75: ${x.p75} kr.</div>
+        <div style="font-weight:600;color:var(--danger)">Max: ${x.maxPrice} kr.</div>
+        <div style="font-size:10px;color:#92400E;margin-top:2px;">Typisk indkbt: ${x.avgProcured} MW</div>
+        `:`<div style="color:var(--text3);font-size:11px;margin-top:4px;">Ingen eftersprgsel historisk denne time</div>`}
+      </div>
+    </div>`;
+}
+
+function setMarket(mkt){
+  plan[selHour].market=mkt;
+  const st=S[mkt][selHour];
+  plan[selHour].price=st.p75||st.avgPrice||50;
+  renderHourPlanner();
+}
+function updateMW(v){
+  plan[selHour].mw=+v;
+  if(plan[selHour].blocks>Math.round(+v/4)) plan[selHour].blocks=Math.max(1,Math.round(+v/4));
+  document.getElementById('v-mw').textContent=v+' MW';
+  document.getElementById('v-blk').textContent=plan[selHour].blocks+''+Math.round(+v/plan[selHour].blocks)+' MW';
+  renderFordelingSummary();
+  updateFordelingChart();
+}
+function updateBlocks(v){
+  plan[selHour].blocks=+v;
+  document.getElementById('v-blk').textContent=v+''+Math.round(plan[selHour].mw/+v)+' MW';
+}
+function updatePrice(v){
+  plan[selHour].price=+v;
+  document.getElementById('v-price').textContent=v+' kr.';
+  renderFordelingSummary();
+  updateFordelingChart();
+}
+
+function renderFordelingSummary(){
+  if(!S)return;
+  const afrrHours=plan.filter(p=>p.market==='afrr');
+  const mfrrHours=plan.filter(p=>p.market==='mfrr');
+  const afrrEst=afrrHours.reduce((s,p)=>s+S.afrr[p.h].avgPrice*p.mw,0);
+  const mfrrEst=mfrrHours.reduce((s,p)=>s+S.mfrr[p.h].avgPrice*p.mw,0);
+  const extraEst=afrrHours.reduce((s,p)=>s+S.extra[p.h].avgPrice*(S.extra[p.h].activePct/100)*p.mw,0);
+  document.getElementById('fordeling-summary').innerHTML=`
+    <div class="sc a">
+      <div class="sc-lbl">aFRR</div>
+      <div class="sc-val" style="color:var(--afrr)">${afrrHours.length} timer</div>
+      <div class="sc-note">Est. ${Math.round(afrrEst/1000)}k kr./dag beredskab</div>
+    </div>
+    <div class="sc m">
+      <div class="sc-lbl">mFRR direkte</div>
+      <div class="sc-val" style="color:var(--mfrr)">${mfrrHours.length} timer</div>
+      <div class="sc-note">Est. ${Math.round(mfrrEst/1000)}k kr./dag beredskab</div>
+    </div>
+    <div class="sc x">
+      <div class="sc-lbl">Extra (automatisk ved aFRR-tab)</div>
+      <div class="sc-val" style="color:var(--extra)">${afrrHours.filter(p=>S.extra[p.h].activePct>=20).length} risikotimer</div>
+      <div class="sc-note">Sandsynlighedsvgtet extra: ${Math.round(extraEst/1000)}k kr./dag</div>
+    </div>`;
+  updateFordelingChart();
+}
+
+function updateFordelingChart(){
+  if(!S)return;
+  const labels=plan.map(p=>p.h+':00');
+  const afrrData=plan.map(p=>p.market==='afrr'?Math.round(S.afrr[p.h].avgPrice*p.mw):0);
+  const mfrrData=plan.map(p=>p.market==='mfrr'?Math.round(S.mfrr[p.h].avgPrice*p.mw):0);
+  const extraData=plan.map(p=>p.market==='afrr'?Math.round(S.extra[p.h].avgPrice*(S.extra[p.h].activePct/100)*p.mw):0);
+  if(fordelingC){
+    fordelingC.data.datasets[0].data=afrrData;
+    fordelingC.data.datasets[1].data=mfrrData;
+    fordelingC.data.datasets[2].data=extraData;
+    fordelingC.update();
+    return;
+  }
+  fordelingC=new Chart(document.getElementById('fordelingChart'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'aFRR beredskab',data:afrrData,backgroundColor:'rgba(37,99,235,0.75)',stack:'s'},
+      {label:'mFRR beredskab',data:mfrrData,backgroundColor:'rgba(5,150,105,0.75)',stack:'s'},
+      {label:'Extra (sandsynl.)',data:extraData,backgroundColor:'rgba(217,119,6,0.5)',stack:'s'}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{x:{stacked:true,ticks:{font:{size:10},maxRotation:0,autoSkip:false}},
+              y:{stacked:true,ticks:{font:{size:10},callback:v=>v+'kr'}}}}
+  });
+}
+
+function renderExtraChart(){
+  if(!S)return;
+  const labels=Array.from({length:24},(_,h)=>h+':00');
+  const pcts=Array.from({length:24},(_,h)=>S.extra[h].activePct);
+  const prices=Array.from({length:24},(_,h)=>S.extra[h].avgPrice);
+  if(extraC)extraC.destroy();
+  extraC=new Chart(document.getElementById('extraChart'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Aktiv %',data:pcts,backgroundColor:'rgba(217,119,6,0.55)',yAxisID:'y'},
+      {label:'Snit kr./MW',data:prices,type:'line',borderColor:'#D97706',backgroundColor:'transparent',pointRadius:3,yAxisID:'y2'}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{font:{size:10},maxRotation:0,autoSkip:false}},
+              y:{ticks:{font:{size:10},callback:v=>v+'%'},max:100},
+              y2:{position:'right',ticks:{font:{size:10},callback:v=>v+' kr.'},grid:{drawOnChartArea:false}}}}
+  });
+}
+
+function renderExtraCompare(){
+  if(!S)return;
+  const rows=Array.from({length:24},(_,h)=>{
+    const a=S.afrr[h], x=S.extra[h];
+    if(x.activePct<10) return null;
+    const gain=x.avgPrice-a.p75;
+    const color=gain>0?'#059669':'#DC2626';
+    const strategi=x.activePct>=25&&gain>50?'Overvej at stte aFRR-pris hjt (satse p Extra)':'Behold normal aFRR-pris';
+    return `<tr>
+      <td style="color:var(--text3);white-space:nowrap">Kl. ${String(h).padStart(2,'0')}</td>
+      <td>${x.activePct}%</td>
+      <td>${a.p75} kr.</td>
+      <td>${x.avgPrice} kr.</td>
+      <td style="font-weight:600;color:${color}">${gain>0?'+':''}${gain} kr.</td>
+      <td style="font-size:12px;color:var(--text2)">${strategi}</td>
+    </tr>`;
+  }).filter(Boolean);
+  document.getElementById('extra-compare').innerHTML=`
+    <thead><tr>
+      <th>Time</th><th>Extra aktiv</th><th>aFRR P75</th><th>Extra snit</th><th>Forskel</th><th>Anbefaling</th>
+    </tr></thead>
+    <tbody>${rows.join('')}</tbody>`;
+}
+
+function renderInsights(){
+  if(!S)return;
+  const top5=Array.from({length:24},(_,h)=>({h,p:S.afrr[h].avgPrice})).sort((a,b)=>b.p-a.p).slice(0,5).map(x=>`kl. ${x.h} (${x.p} kr./MW)`).join('  ');
+  const extraGood=Array.from({length:24},(_,h)=>({h,p:S.extra[h].activePct,pr:S.extra[h].avgPrice})).filter(x=>x.p>=25).map(x=>`kl. ${x.h} (${x.p}%  ${x.pr} kr.)`).join('  ')||'Ingen timer stabilt over 25%';
+  const afrrMax=Math.max(...Object.values(S.afrr).map(s=>s.maxPrice));
+  document.getElementById('insights').innerHTML=`
+    <div class="info-box blue"><div class="ibtag">aFRR  Bedste 5 timer (90-dages snit)</div><p>${top5}</p></div>
+    <div class="info-box amber">
+      <div class="ibtag">mFRR Extra  Timer med over 25% sandsynlighed for aktivering</div>
+      <p>${extraGood}<br><br>I disse timer kan det betale sig at stte aFRR-prisen bevidst hjt, s du taber aFRR og ryger til Extra-runden med dine blokke af 4 MW.</p>
+    </div>
+    <div class="info-box green">
+      <div class="ibtag">Blokstrategi  brug altid blokke af 4 MW i aFRR</div>
+      <p>Energinet kber kun det de mangler i Extra-runden. En blok p 12 MW risikerer at blive afvist hvis de kun mangler 4-8 MW. Tre blokke af 4 MW ger chancen for at prcis det rigtige antal vinder. Historisk indkber Energinet typisk ${Math.round(Object.values(S.extra).filter(v=>v.activePct>0).reduce((s,v)=>s+v.avgProcured,0)/Math.max(1,Object.values(S.extra).filter(v=>v.activePct>0).length))} MW i Extra pr. aktiv time.</p>
+    </div>
+    <div class="info-box blue">
+      <div class="ibtag">Clearing-pris potentiale (max seneste 90 dage)</div>
+      <p>aFRR max: ${afrrMax} kr./MW  Extra max: ${Math.max(...Object.values(S.extra).map(s=>s.maxPrice))} kr./MW  Kl. 17-19 er konsistent de strkeste timer i begge markeder.</p>
+    </div>
+    <div class="info-box amber">
+      <div class="ibtag">mFRR direkte  hvornr giver det mening?</div>
+      <p>Hvis du tror Extra ikke bner og aFRR-prisen vil ligge lavt, kan du bevidst flytte MW til mFRR direkte. Men pas p: tager Energinet ikke MW ind i mFRR den time, er der 0 kr. i indtjening. Historisk har mFRR altid haft eftersprgsel i DK1  men prisen varierer meget.</p>
+    </div>`;
+}
+
+function sw(id,el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  el.classList.add('active');
+  if(id==='budstrategi'){renderBudstrategi(window._centricaData||[]);}
+    if(id==='resultater'&&!document.getElementById('c-chart-card').style.display.includes('block')) fetchCentricaWithActive(30,document.querySelector('.centrica-period-btn'));
+    if(id==='fordeling') setTimeout(()=>{updateFordelingChart();},50);
+}
+
+fetchAll();
+
+
+// Auto token refresh
+const PROXY = 'https://vojens-regulerkraft.madsdahl30.workers.dev';
+
+async function refreshCentricaToken() {
+  const rt = localStorage.getItem('centrica_refresh_token');
+  if (!rt) return false;
+  try {
+    const resp = await fetch('https://api.neasenergy.com/token', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: 'grant_type=refresh_token&refresh_token=' + encodeURIComponent(rt)
+    });
+    if (!resp.ok) return false;
+    const d = await resp.json();
+    if (d.access_token) {
+      localStorage.setItem('centrica_token', d.access_token);
+      localStorage.setItem('centrica_token_expiry', Date.now() + (d.expires_in * 1000));
+      if (d.refresh_token) localStorage.setItem('centrica_refresh_token', d.refresh_token);
+      console.log('Token auto-fornyet OK');
+      const el = document.getElementById('token-status');
+      if (el) el.innerHTML = '<span style="color:#059669">&#10003; Centrica klar (auto-fornyet)</span>';
+      return true;
+    }
+  } catch(e) { console.log('Token refresh fejl:', e.message); }
+  return false;
+}
+
+async function ensureValidToken() {
+  const expiry = parseInt(localStorage.getItem('centrica_token_expiry') || '0');
+  const remaining = expiry - Date.now();
+  // Forny hvis mindre end 3 minutter tilbage
+  if (remaining < 3 * 60 * 1000) {
+    console.log('Token udloeber snart (' + Math.round(remaining/1000) + 's) - fornyer...');
+    return await refreshCentricaToken();
+  }
+  return true;
+}
+
+// Tjek token hvert 2. minut
+setInterval(async () => {
+  const expiry = parseInt(localStorage.getItem('centrica_token_expiry') || '0');
+  const remaining = expiry - Date.now();
+  if (remaining < 3 * 60 * 1000 && localStorage.getItem('centrica_refresh_token')) {
+    await refreshCentricaToken();
+  }
+}, 2 * 60 * 1000);
+
+
+
+function doLogin(){
+  var user=document.getElementById('login-user')?.value;
+  var pass=document.getElementById('login-pass')?.value;
+  var msg=document.getElementById('login-msg');
+  if(msg) msg.textContent='Logger ind...';
+  fetch('https://identity.neasenergy.com/auth/realms/neas/protocol/openid-connect/token',{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:new URLSearchParams({grant_type:'password',client_id:'neas-chp-webapp',username:user,password:pass}).toString()
+  }).then(function(r){return r.json();}).then(function(d){
+    if(d.access_token){
+      localStorage.setItem('centrica_token',d.access_token);
+      if(d.refresh_token) localStorage.setItem('centrica_refresh_token',d.refresh_token);
+      if(msg) msg.textContent='Login OK! Henter data...';
+      setTimeout(function(){fetchAll();sw('resultater',document.querySelectorAll('.tab')[6]);},500);
+    }else{
+      if(msg) msg.textContent='Fejl: '+(d.error_description||d.error||'Ukendt fejl');
+    }
+  }).catch(function(e){
+    // CORS blokerer direkte - prv via Worker
+    fetch('https://vojens-regulerkraft.madsdahl30.workers.dev/login',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({username:user,password:pass})
+    }).then(function(r){return r.json();}).then(function(d){
+      if(d.access_token){
+        localStorage.setItem('centrica_token',d.access_token);
+        if(d.refresh_token) localStorage.setItem('centrica_refresh_token',d.refresh_token);
+        if(msg) msg.textContent='Login OK!';
+        setTimeout(function(){fetchAll();},500);
+      }else{
+        if(msg) msg.textContent='Login fejlede - tjek credentials';
+      }
+    }).catch(function(){if(msg) msg.textContent='Netvrksfejl';});
+  });
+}
+
+function autoHentToken(){
+  // Prv at hente token fra Centrica localStorage via postMessage
+  // bn Centrica i baggrund og lyt p token
+  var CENTRICA='https://direct.neasenergy.com/CHP/da-DK/#/dashboard';
+  var msg=document.getElementById('c-metrics');
+  if(msg) msg.innerHTML='<div class="info-box amber" style="grid-column:1/-1">'+
+    '<div class="ibtag" style="color:#92400e">Token udlbet</div>'+
+    '<p style="margin:8px 0">Din Centrica session er udlbet. For at fortstte:</p>'+
+    '<ol style="margin:8px 0 12px 16px;font-size:13px;line-height:1.8">'+
+    '<li>G til <a href="'+CENTRICA+'" target="_blank" style="color:#1d4ed8;font-weight:600">direct.neasenergy.com</a> (bner i ny fane)</li>'+
+    '<li>Siden henter automatisk din token indenfor 5 sekunder</li>'+
+    '</ol>'+
+    '<button onclick="manueltHentToken()" style="background:#f59e0b;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-weight:600;font-size:13px">Hent token nu</button>'+
+    '<span id="token-status" style="margin-left:10px;font-size:12px;color:#92400e"></span>'+
+    '</div>';
+}
+
+function manueltHentToken(){
+  var status=document.getElementById('token-status');
+  if(status) status.textContent='Henter...';
+  // bn Centrica og injicr script der sender token tilbage
+  var w=window.open('https://direct.neasenergy.com/CHP/da-DK/#/dashboard','centrica-sync','width=400,height=300');
+  var attempts=0;
+  var poll=setInterval(function(){
+    attempts++;
+    try{
+      var tok=w.localStorage&&w.localStorage.getItem('access_token');
+      if(tok){
+        localStorage.setItem('centrica_token',tok);
+        var ref=w.localStorage.getItem('refresh_token');
+        if(ref) localStorage.setItem('centrica_refresh_token',ref);
+        clearInterval(poll);
+        w.close();
+        if(status) status.textContent='Token hentet! Indlser data...';
+        setTimeout(function(){fetchAll();},500);
+      }
+    }catch(e){}
+    if(attempts>30){
+      clearInterval(poll);
+      if(status) status.textContent='Kunne ikke hente automatisk. Er du logget ind p Centrica?';
+    }
+  },1000);
+}
+
+function genindlaesENTSOE(){
+  var el=document.getElementById('entsoe-panel');
+  if(el) el.innerHTML='<div style="text-align:center;padding:16px;color:var(--text3)">Henter fra ENTSO-E</div>';
+  hentENTSOEOutages(function(data,url){renderENTSOEPanel(data,url);});
+}
+
+function hentENTSOEOutages(callback){
+  var today=new Date();
+  var ds=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  var url='https://transparency.entsoe.eu/outages/productionAndGeneration?appState='+
+    encodeURIComponent(JSON.stringify({sa:['BZN|10YDK-1--------W'],st:'BZN',mm:true,ma:false,sp:'HALF',dt:'TABLE',df:[ds,ds],tz:'CET'}));
+  var iframe=document.createElement('iframe');
+  iframe.style.cssText='position:fixed;top:-9999px;left:-9999px;width:1400px;height:900px;opacity:0';
+  iframe.src=url;
+  document.body.appendChild(iframe);
+  var attempts=0;
+  var poll=setInterval(function(){
+    attempts++;
+    try{
+      var doc=iframe.contentDocument;
+      var cells=doc&&doc.querySelectorAll('td,th');
+      if(cells&&cells.length>8){
+        var data=Array.from(cells).map(function(c){return c.textContent.trim();}).filter(function(t){return t.length>0;});
+        clearInterval(poll);
+        document.body.removeChild(iframe);
+        // Parse rows - header er 8 kolonner: Unit Name|Unit Code|Status|Type|Area|Installed(MW)|Available(MW)|Start & End Time
+        var results=[];
+        var hi=data.indexOf('Unit Name');
+        if(hi>=0){
+          var i=hi+8;
+          while(i+7<data.length&&!data[i].includes('Transparency')&&!data[i].includes('Terms')){
+            var name=data[i];
+            var code=data[i+1];
+            var type=data[i+3];
+            var area=data[i+4];
+            var installed=parseFloat(data[i+5])||0;
+            var avail=parseFloat(data[i+7])||0;
+            var period=data[i+8]||'';
+            if(name&&name.length>2&&name.length<60&&installed>0){
+              results.push({name:name,code:code,type:type,area:area,installed:installed,available:avail,ude:installed-avail,period:period});
+            }
+            i+=9;
+          }
+        }
+        callback(results,url);
+      }
+    }catch(e){}
+    if(attempts>25){clearInterval(poll);try{document.body.removeChild(iframe);}catch(e2){}callback(null,url);}
+  },1000);
+}
+
+function renderENTSOEPanel(data,url){
+  var el=document.getElementById('entsoe-panel');
+  if(!el)return;
+  if(!data||!data.length){
+    el.innerHTML='<div style="padding:12px;color:var(--text3);font-size:13px">'+
+      (data===null?'Kunne ikke hente (ikke logget ind p ENTSO-E). ':data.length===0?'Ingen aktive outages i DK1 i dag. ':'')+
+      '<a href="'+url+'" target="_blank" style="color:#1d4ed8">Se p ENTSO-E </a></div>';
+    return;
+  }
+  var totalUde=data.reduce(function(s,r){return s+r.ude;},0);
+  var totalInst=data.reduce(function(s,r){return s+r.installed;},0);
+  var pct=totalInst>0?Math.round(totalUde/totalInst*100):0;
+  var rc=pct>50?'#dc2626':pct>20?'#d97706':'#16a34a';
+
+  var h='<div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">';
+  h+='<div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 16px;min-width:130px">';
+  h+='<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:2px">Enheder ude</div>';
+  h+='<div style="font-size:24px;font-weight:800;color:'+rc+'">'+data.length+'</div></div>';
+  h+='<div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 16px;min-width:130px">';
+  h+='<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:2px">MW ude</div>';
+  h+='<div style="font-size:24px;font-weight:800;color:'+rc+'">'+Math.round(totalUde)+' MW</div>';
+  h+='<div style="font-size:11px;color:var(--text3)">af '+Math.round(totalInst)+' MW ('+pct+'%)</div></div></div>';
+
+  h+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">';
+  h+='<thead><tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0">';
+  ['Enhed','Installeret (MW)','Tilgngelig (MW)','Ude (MW)','Periode'].forEach(function(col){
+    h+='<th style="padding:8px;text-align:left;font-size:11px;font-weight:700;color:var(--text2);white-space:nowrap">'+col+'</th>';
+  });
+  h+='</tr></thead><tbody>';
+  data.forEach(function(r){
+    var bg=r.available===0?'#fef2f2':r.ude>0?'#fffbeb':'#f0fdf4';
+    var ac=r.available===0?'#dc2626':r.ude>0?'#d97706':'#16a34a';
+    h+='<tr style="background:'+bg+';border-bottom:1px solid rgba(0,0,0,.05)">';
+    h+='<td style="padding:8px;font-weight:600">'+r.name+'</td>';
+    h+='<td style="padding:8px">'+r.installed+' MW</td>';
+    h+='<td style="padding:8px;color:'+ac+';font-weight:700">'+r.available+' MW</td>';
+    h+='<td style="padding:8px;font-weight:700;color:#dc2626">'+Math.round(r.ude)+' MW</td>';
+    h+='<td style="padding:8px;color:var(--text3);font-size:11px">'+r.period+'</td>';
+    h+='</tr>';
+  });
+  h+='</tbody></table></div>';
+  h+='<div style="margin-top:6px;font-size:11px;color:var(--text3)">Kilde: <a href="'+url+'" target="_blank" style="color:#1d4ed8">ENTSO-E Transparency Platform </a>  Sidst opdateret '+new Date().toLocaleTimeString('da-DK')+'</div>';
+  el.innerHTML=h;
+}
+
+function renderIndsigter(){
+  var el=document.getElementById('panel-indsigt');
+  if(!el||el.style.display==='none') return;
+
+  // Hent vind fra Open-Meteo
+  fetch('https://api.open-meteo.com/v1/forecast?latitude=55.47&longitude=8.45&current=wind_speed_10m,wind_speed_80m,wind_gusts_10m,temperature_2m,weather_code&hourly=wind_speed_100m&wind_speed_unit=ms&forecast_days=1')
+  .then(function(r){return r.json();})
+  .then(function(d){
+    var ws=d.current.wind_speed_10m;
+    var ws80=d.current.wind_speed_80m;
+    var gust=d.current.wind_gusts_10m;
+    var temp=d.current.temperature_2m;
+    var wc=d.current.weather_code;
+    // Vindstyrke vurdering
+    var vindStatus,vindFarve,vindIkon;
+    if(ws<5){vindStatus='Lav';vindFarve='#16a34a';vindIkon='&#x2193;';}
+    else if(ws<12){vindStatus='Normal';vindFarve='#2563eb';vindIkon='&#x2192;';}
+    else if(ws<20){vindStatus='Hj';vindFarve='#d97706';vindIkon='&#x2191;';}
+    else if(ws<25){vindStatus='Meget hj';vindFarve='#dc2626';vindIkon='&#x26A0;';}
+    else{vindStatus='STORM >25m/s';vindFarve='#7c3aed';vindIkon='&#x26A1;';}
+    // Vejrkode til ikon
+    var vejrTekst=wc<=1?' Klart':wc<=3?' Delvist skyet':wc<=49?' Tge':wc<=69?' Regn':wc<=79?' Sne':' Tordenvejr';
+    // Budstrategi-implikation
+    var implikation,impFarve;
+    if(ws<5){implikation='+10% p aFRR-priser (lav vind = hjere behov)';impFarve='#16a34a';}
+    else if(ws<12){implikation='Normal prisstning';impFarve='#6b7280';}
+    else if(ws<25){implikation='-10% p aFRR-priser (meget vind = lavere priser)';impFarve='#d97706';}
+    else{implikation='EKSTREMT: Vindmller kan slukke automatisk  pludselig mangel p MW';impFarve='#7c3aed';}
+
+    var vindHTML='<div class="card" style="margin-bottom:12px">'
+      +'<div class="ct"> Vindforhold  Esbjerg (55.47N, 8.45E)</div>'
+      +'<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">'
+      +'<div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 16px;min-width:110px;text-align:center">'
+      +'<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase">10m vind</div>'
+      +'<div style="font-size:26px;font-weight:800;color:'+vindFarve+'">'+ws.toFixed(1)+'</div>'
+      +'<div style="font-size:11px;color:var(--text3)">m/s</div></div>'
+      +'<div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 16px;min-width:110px;text-align:center">'
+      +'<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase">80m vind</div>'
+      +'<div style="font-size:26px;font-weight:800;color:'+vindFarve+'">'+ws80.toFixed(1)+'</div>'
+      +'<div style="font-size:11px;color:var(--text3)">m/s</div></div>'
+      +'<div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 16px;min-width:110px;text-align:center">'
+      +'<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase">Vindstd</div>'
+      +'<div style="font-size:26px;font-weight:800;color:'+(gust>25?'#7c3aed':gust>20?'#dc2626':vindFarve)+'">'+gust.toFixed(1)+'</div>'
+      +'<div style="font-size:11px;color:var(--text3)">m/s</div></div>'
+      +'<div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 16px;min-width:110px;text-align:center">'
+      +'<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase">Temperatur</div>'
+      +'<div style="font-size:26px;font-weight:800;color:var(--text1)">'+temp.toFixed(1)+'</div>'
+      +'<div style="font-size:11px;color:var(--text3)">C</div></div>'
+      +'<div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 16px;min-width:110px;text-align:center">'
+      +'<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase">Vejr</div>'
+      +'<div style="font-size:18px;font-weight:600;color:var(--text1)">'+vejrTekst+'</div></div>'
+      +'</div>'
+      +'<div style="background:'+(ws>=25?'#faf5ff':'ws>=20'?'#fef2f2':ws>=12?'#fffbeb':'#f0fdf4')+';border:1px solid '+(ws>=25?'#c4b5fd':ws>=20?'#fca5a5':ws>=12?'#fde68a':'#86efac')+';border-radius:6px;padding:8px 12px;font-size:12px">'
+      +'<strong style="color:'+vindFarve+'">'+vindIkon+' '+vindStatus+' vind ('+ws.toFixed(1)+' m/s)</strong>'
+      +'<span style="margin-left:8px;color:'+impFarve+'">'+implikation+'</span>'
+      +'</div>'
+      +'<div style="margin-top:6px;font-size:11px;color:var(--text3)">Kilde: Open-Meteo  Opdateret '+new Date().toLocaleTimeString('da-DK')+'</div>'
+      +'</div>';
+
+    var existingVind=document.getElementById('indsigt-vind');
+    if(existingVind) existingVind.outerHTML=vindHTML;
+    else {
+      var panel=document.getElementById('panel-indsigt');
+      if(panel) panel.insertAdjacentHTML('afterbegin','<div id="indsigt-vind">'+vindHTML+'</div>');
+    }
+  }).catch(function(){
+    var panel=document.getElementById('panel-indsigt');
+    if(panel) panel.insertAdjacentHTML('afterbegin','<div id="indsigt-vind"><div class="card"><div class="ct"> Vind</div><p style="color:var(--text3)">Kunne ikke hente vinddata</p></div></div>');
+  });
+}
+
+function hentPlanning(tok){
+  var SITE='844439ef-b88a-4859-9752-5f680c6d7317';
+  var today=new Date();
+  var s=new Date(today.getFullYear(),today.getMonth(),today.getDate()-1).toISOString();
+  var e=new Date(today.getFullYear(),today.getMonth(),today.getDate()+1).toISOString();
+
+  Promise.all([
+    fetch('https://vojens-regulerkraft.madsdahl30.workers.dev/BidApi/v3/assets/sites/bids?ids='+SITE+'&start='+encodeURIComponent(s)+'&end='+encodeURIComponent(e)+'&bidtypes=0&mergeBids=true',
+      {headers:{Authorization:'Bearer '+tok}}).then(function(r){return r.text();}),
+    fetch('https://vojens-regulerkraft.madsdahl30.workers.dev/v1/Chp/siteReport/revenue?siteId='+SITE+'&from='+encodeURIComponent(s)+'&to='+encodeURIComponent(e),
+      {headers:{Authorization:'Bearer '+tok}}).then(function(r){return r.text();})
+  ]).then(function(res){
+    renderPlanning(res[0]);
+    renderRevenue(res[1]);
+  }).catch(function(err){console.log('Planning/Revenue fejl:',err);});
+}
+
+function renderPlanning(xml){
+  var el=document.getElementById('planning-panel');
+  if(!el) return;
+  try{
+    var doc=new DOMParser().parseFromString(xml,'text/xml');
+    var bids=doc.querySelectorAll('AssetBidV1');
+    // Filtrer kun accepterede bud for i dag
+    var today=new Date().toISOString().slice(0,10);
+    var accepted=[],pending=[],rejected=[];
+    bids.forEach(function(b){
+      var status=b.querySelector('Status')?.textContent||'';
+      var from=b.querySelector('FromUtc')?.textContent||'';
+      var bidtype=b.querySelector('BidType')?.textContent||'';
+      var price=parseFloat(b.querySelector('Price')?.textContent||0);
+      var mw=parseFloat(b.querySelector('TotalQuantityMw')?.textContent||0);
+      var dir=b.querySelector('MarketDirection')?.textContent||'';
+      var obj={status,from,bidtype,price,mw,dir};
+      if(status==='Accepted') accepted.push(obj);
+      else if(status==='Submitted'||status==='Active') pending.push(obj);
+      else rejected.push(obj);
+    });
+
+    var h='<div style="display:flex;gap:10px;margin-bottom:12px">';
+    h+='<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:10px 16px;min-width:100px;text-align:center"><div style="font-size:10px;font-weight:700;color:#166534;text-transform:uppercase">Accepteret</div><div style="font-size:28px;font-weight:800;color:#16a34a">'+accepted.length+'</div></div>';
+    h+='<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 16px;min-width:100px;text-align:center"><div style="font-size:10px;font-weight:700;color:#92400e;text-transform:uppercase">Afventer</div><div style="font-size:28px;font-weight:800;color:#d97706">'+pending.length+'</div></div>';
+    h+='<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:10px 16px;min-width:100px;text-align:center"><div style="font-size:10px;font-weight:700;color:#991b1b;text-transform:uppercase">Afvist</div><div style="font-size:28px;font-weight:800;color:#dc2626">'+rejected.length+'</div></div>';
+    h+='</div>';
+
+    if(accepted.length>0){
+      h+='<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px">';
+      h+='<thead><tr style="background:#f0fdf4;border-bottom:2px solid #86efac"><th style="padding:6px;text-align:left">Marked</th><th style="padding:6px;text-align:left">Retning</th><th style="padding:6px">MW</th><th style="padding:6px">Pris (kr/MW)</th><th style="padding:6px;text-align:left">Fra</th></tr></thead><tbody>';
+      accepted.slice(0,20).forEach(function(b){
+        var markedNavn=b.bidtype.includes('AutomaticReserve')||b.bidtype.includes('aFRR')?'aFRR':b.bidtype.includes('ManualReserve')||b.bidtype.includes('mFRR')?'mFRR':b.bidtype.includes('Extra')?'mFRR Extra':b.bidtype;
+        var fra=b.from?new Date(b.from).toLocaleString('da-DK',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+        h+='<tr style="border-bottom:1px solid #dcfce7"><td style="padding:6px;font-weight:600">'+markedNavn+'</td>';
+        h+='<td style="padding:6px"><span style="background:'+(b.dir==='Up'?'#dbeafe':'#fce7f3')+';color:'+(b.dir==='Up'?'#1d4ed8':'#9d174d')+';padding:2px 6px;border-radius:4px;font-size:11px">'+(b.dir==='Up'?'Op':'Ned')+'</span></td>';
+        h+='<td style="padding:6px;text-align:center;font-weight:700">'+b.mw.toFixed(1)+'</td>';
+        h+='<td style="padding:6px;text-align:center">'+b.price.toFixed(2)+'</td>';
+        h+='<td style="padding:6px;color:var(--text3)">'+fra+'</td></tr>';
+      });
+      h+='</tbody></table>';
+    } else {
+      h+='<p style="color:var(--text3);font-size:13px">Ingen accepterede bud i perioden endnu.</p>';
+    }
+    el.innerHTML=h;
+  }catch(e2){el.innerHTML='<p style="color:var(--text3)">Fejl ved parsing af bud-data.</p>';}
+}
+
+function renderRevenue(xml){
+  var el=document.getElementById('revenue-panel');
+  if(!el) return;
+  try{
+    var doc=new DOMParser().parseFromString(xml,'text/xml');
+    var rows=doc.querySelectorAll('RevenueReportData');
+    // Grupper per BidType
+    var grouped={};
+    var total=0;
+    rows.forEach(function(r){
+      var bt=r.querySelector('Bidtype')?.textContent||'Ukendt';
+      var mwh=parseFloat(r.querySelector('BidMWh')?.textContent||0);
+      var price=parseFloat(r.querySelector('BidActivationPricePrMWh')?.textContent||0);
+      var rev=Math.abs(mwh)*price;
+      if(!grouped[bt]) grouped[bt]={mwh:0,rev:0,count:0};
+      grouped[bt].mwh+=mwh;
+      grouped[bt].rev+=rev;
+      grouped[bt].count++;
+      total+=rev;
+    });
+
+    var h='<div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;border-radius:8px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:16px">';
+    h+='<div><div style="font-size:11px;font-weight:700;color:#166534;text-transform:uppercase">Total indtgt (periode)</div>';
+    h+='<div style="font-size:32px;font-weight:800;color:#15803d">'+Math.round(total).toLocaleString('da-DK')+' <span style="font-size:16px">kr</span></div></div></div>';
+
+    h+='<table style="width:100%;border-collapse:collapse;font-size:12px">';
+    h+='<thead><tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0"><th style="padding:6px;text-align:left">Marked</th><th style="padding:6px;text-align:right">MWh</th><th style="padding:6px;text-align:right">Indtgt (kr)</th></tr></thead><tbody>';
+    Object.entries(grouped).forEach(function(kv){
+      var bt=kv[0],v=kv[1];
+      var navn=bt==='BalanceMarket'?'Balancemarked':bt==='AutomaticReserves'?'aFRR':bt==='ManualReserves'?'mFRR':bt==='ManualReservesExtra'?'mFRR Extra':bt;
+      h+='<tr style="border-bottom:1px solid #f1f5f9">';
+      h+='<td style="padding:6px;font-weight:600">'+navn+'</td>';
+      h+='<td style="padding:6px;text-align:right">'+v.mwh.toFixed(2)+'</td>';
+      h+='<td style="padding:6px;text-align:right;font-weight:700;color:#15803d">'+Math.round(v.rev).toLocaleString('da-DK')+'</td></tr>';
+    });
+    h+='</tbody></table>';
+    el.innerHTML=h;
+  }catch(e2){el.innerHTML='<p style="color:var(--text3)">Fejl ved parsing af revenue-data.</p>';}
+}
+function blokLabel(mw){
+  if(mw===0) return 'Ingen deltagelse';
+  // Srtilflde: 18 MW = 3 blokke  4 MW + 1 blok  6 MW
+  if(mw===18) return '3 blokke  4 MW + 1 blok  6 MW';
+  // Standard: MW er et multiplum af 4
+  var full=Math.floor(mw/4);
+  var rest=mw%4;
+  if(rest===0) return full+' blok'+(full>1?'ke':'')+'  4 MW';
+  // Fallback: vis bare MW
+  return mw+' MW';
+}
+function blokPris(p50,p75,blok,total,extraSats){
+  // Blok 1+2: altid P50-baseret (sikre blokke)
+  // Blok 3+4: P75-baseret ved Extra-satsning, ellers P50
+  var satsBlok=extraSats&&blok>=Math.max(3,total-1);
+  var base=satsBlok?p75:p50;
+  if(total===1) return base;
+  if(total===2) return blok===1?Math.round(p50*.95):Math.round(base*1.05);
+  if(total===3) return blok===1?Math.round(p50*.95):blok===2?p50:Math.round(base*1.05);
+  // 4 blokke: blok1=P50-7%, blok2=P50, blok3=base+5%, blok4=base+8%
+  var blokBase=blok<=2?p50:base;
+  var f=[.93,1.0,1.05,1.08];
+  return Math.round(blokBase*(f[blok-1]||1.08));
+}
+
+
+function hentVindIndikator(targetDate,callback){
+  var dateStr=targetDate.toISOString().split('T')[0];
+  fetch('https://api.open-meteo.com/v1/forecast?latitude=55.47&longitude=8.45&hourly=wind_speed_100m&forecast_days=3&timezone=Europe%2FCopenhagen&wind_speed_unit=ms')
+  .then(function(r){return r.json();})
+  .then(function(d){
+    var times=d.hourly&&d.hourly.time||[];
+    var ws=d.hourly&&d.hourly.wind_speed_100m||[];
+    var idxs=times.map(function(t,i){return t.startsWith(dateStr)?i:-1;}).filter(function(i){return i>=0;});
+    if(!idxs.length){
+      var fb=new Date();fb.setDate(fb.getDate()+1);
+      var fbStr=fb.toISOString().split('T')[0];
+      idxs=times.map(function(t,i){return t.startsWith(fbStr)?i:-1;}).filter(function(i){return i>=0;});
+    }
+    var avg=idxs.length?Math.round(idxs.reduce(function(s,i){return s+ws[i];},0)/idxs.length*10)/10:0;
+    var niveau=avg<5?'lav':avg>12?'hoj':'normal';
+    callback({ms:avg,niveau:niveau,harData:idxs.length>0});
+  })
+  .catch(function(){callback({ms:0,niveau:'ukendt',harData:false});});
+}
+function renderBudstrategi(data){
+  if(!data||!data.length){
+    document.getElementById('bs-summary').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--text3)">Henter Centrica data...</div>';
+    ensureValidToken().then(function(){
+      var tok=localStorage.getItem('centrica_token');
+      var t=new Date(),s=new Date(t);s.setDate(s.getDate()-90);
+      var fmt=function(d){return d.toISOString().split('.')[0];};
+      fetch('https://vojens-regulerkraft.madsdahl30.workers.dev/v1/Chp/siteReport/revenue?siteId=844439ef-b88a-4859-9752-5f680c6d7317&from='+fmt(s)+'&to='+fmt(t),
+        {headers:{'Authorization':'Bearer '+tok}}).then(function(r){return r.text();}).then(function(xml){
+        // Parse XML til array af objekter
+        var parser=new DOMParser();
+        var doc=parser.parseFromString(xml,'text/xml');
+        var items=doc.querySelectorAll('RevenueData,RevenueEntry,Revenue,*');
+        var d=[];
+        if(items.length>0){
+          items.forEach(function(el){
+            var obj={};
+            el.getAttributeNames().forEach(function(a){obj[a]=el.getAttribute(a);});
+            Array.from(el.children).forEach(function(c){obj[c.tagName]=c.textContent;});
+            if(Object.keys(obj).length>0) d.push(obj);
+          });
+        }
+        if(d.length===0){
+          // Prv direkte JSON parse (i tilflde af at API format ndres)
+          try{d=JSON.parse(xml);}catch(e){d=[{raw:xml.slice(0,200)}];}
+        }
+        window._centricaData=d;
+        window._centricaXml=xml;
+        renderBudstrategi(d);
+      });
+    });
+    return;
+  }
+
+  // DATO-LOGIK: Fr kl 09:00 = +1 dag, fra kl 09:00 = +2 dage
+  var now=new Date();
+  var daysAhead=now.getHours()>=9?2:1;
+  var targetDate=new Date(now);
+  targetDate.setDate(targetDate.getDate()+daysAhead);
+  var targetWD=targetDate.getDay();
+  var targetMonth=targetDate.getMonth();
+  var dagNavne=['Sn','Man','Tirs','Ons','Tors','Fre','Lr'];
+  var dagNavn=dagNavne[targetDate.getDay()];
+  var dato=targetDate.getDate()+'.'+(targetDate.getMonth()+1)+'.'+targetDate.getFullYear();
+  var skiftNote=daysAhead===2?
+    '<span style="font-size:10px;background:#fef9c3;color:#92400e;padding:2px 8px;border-radius:10px;margin-left:8px">Auktion afgivet kl. 07:30  forecaster +2 dage</span>':
+    '<span style="font-size:10px;background:#dcfce7;color:#065f46;padding:2px 8px;border-radius:10px;margin-left:8px">Fr kl. 09:00  forecaster til i morgen</span>';
+
+  // UGEDAGS-FAKTORER (fra 365 dages EDS data, normaliseret til snit=1.0)
+  // P50: Sn=50, Man=100, Tirs=100, Ons=144, Tors=100, Fre=89, Lr=66 | snit=92.7
+  var wdFaktorer=[0.54,1.08,1.08,1.55,1.08,0.96,0.71]; // [sn,man,tirs,ons,tors,fre,lr]
+  var wdFaktor=wdFaktorer[targetWD];
+
+  // MNEDS-FAKTORER (fra 365 dages EDS data, normaliseret til snit=1.0)
+  // P50: Jan=45,Feb=10,Mar=43,Apr=295,Maj=304,Jun=350,Jul=429,Aug=100,Sep=50,Okt=48,Nov=50,Dec=90
+  // snit=151
+  var mFaktorer=[0.30,0.07,0.28,1.95,2.01,2.32,2.84,0.66,0.33,0.32,0.33,0.60];
+  var mFaktor=mFaktorer[targetMonth];
+
+  // Extra-sandsynlighed sson-justeret (fra 365d: sommer=0%, vinter=hj)
+  // Jun/Jul: 0%, Aug: 1%, Sep: 3%, Okt: 1%, Nov: 6%, Dec: 17%, Jan: 27%, Feb: 9%, Mar: 21%
+  var extraSsonFaktor=[1.5,0.6,1.3,0.5,0.2,0.0,0.0,0.1,0.2,0.1,0.4,1.1]; // pr. mned
+  var extraSson=extraSsonFaktor[targetMonth];
+
+  // KOMBINERET PRISJUSTERING:
+  // Vgtning: 90d historik = 60%, ugedag = 25%, sson = 15%
+  // (vejr tilfjes senere som separat indikator)
+  function kombFaktor(wdF, mF){
+    return 0.60*1.0 + 0.25*wdF + 0.15*mF;
+  }
+  var prisJustering=kombFaktor(wdFaktor, mFaktor);
+
+  var enc2=encodeURIComponent;
+  var today=new Date(),start90=new Date(today);
+  start90.setDate(start90.getDate()-90);
+  var fmt2=function(d){return d.toISOString().split('T')[0];};
+
+  Promise.all([
+    fetch('https://api.energidataservice.dk/dataset/AfrrReservesNordic?limit=5000&filter='+enc2('{"PriceArea":"DK1"}')+'&start='+fmt2(start90)+'&end='+fmt2(today)).then(function(r){return r.json();}),
+    fetch('https://api.energidataservice.dk/dataset/mFRRCapacityMarket?limit=5000&filter='+enc2('{"PriceArea":"DK1"}')+'&start='+fmt2(start90)+'&end='+fmt2(today)).then(function(r){return r.json();}),
+    fetch('https://api.energidataservice.dk/dataset/MfrrCapacityMarketExtra?limit=5000&filter='+enc2('{"PriceArea":"DK1"}')+'&start='+fmt2(start90)+'&end='+fmt2(today)).then(function(r){return r.json();})
+  ]).then(function(results){
+    var afrrRecs=results[0].records, mfrrRecs=results[1].records, extraRecs=results[2].records;
+    var cutoff90=new Date(today); cutoff90.setDate(cutoff90.getDate()-90);
+
+    // VGTET STATS PR. TIME:
+    // Seneste 90 dage, vgtet efter: samme ugedag x3, seneste 7 dage x3, resten x1
+    function calcWeightedStats(recs, priceField){
+      var s={};
+      var cutoff7=new Date(today); cutoff7.setDate(cutoff7.getDate()-7);
+      for(var h=0;h<24;h++){
+        var all365=recs.filter(function(r){return new Date(r.TimeDK).getHours()===h && r[priceField]>0;});
+        var all90=all365.filter(function(r){return new Date(r.TimeDK)>=cutoff90;});
+        var recent7=all90.filter(function(r){return new Date(r.TimeDK)>=cutoff7;});
+        var sameWD=all90.filter(function(r){
+          var d=new Date(r.TimeDK);
+          return d.getDay()===targetWD && (today-d)/864e5<=28;
+        });
+        // Vgtet sample: 90d base + recent7 x3 + sameWD x3
+        var weighted=all90.concat(recent7,recent7,recent7,sameWD,sameWD,sameWD);
+        var prices=weighted.map(function(r){return r[priceField];}).sort(function(a,b){return a-b;});
+        var all90prices=all90.map(function(r){return r[priceField];}).sort(function(a,b){return a-b;});
+        // Anvend kombineret faktor p P50/P75
+        var rawP50=prices.length?Math.round(prices[Math.floor(prices.length*.5)]):0;
+        var rawP75=prices.length?Math.round(prices[Math.floor(prices.length*.75)]):0;
+        // Justr med ugedag og sson (blendad faktor)
+        s[h]={
+          p25:prices.length?Math.round(prices[Math.floor(prices.length*.25)]):0,
+          p50:Math.round(rawP50*prisJustering),
+          p75:Math.round(rawP75*prisJustering),
+          p50raw:rawP50,
+          p75raw:rawP75,
+          n90:all90.length, n7:recent7.length, nWD:sameWD.length
+        };
+      }
+      return s;
+    }
+
+    var aStats=calcWeightedStats(afrrRecs,'UpPriceDKK');
+    var mStats=calcWeightedStats(mfrrRecs,'UpPriceDKK');
+
+    // Extra sandsynlighed - vgtet + sson-justeret
+    var extraByHour={};
+    var cutoff7b=new Date(today); cutoff7b.setDate(cutoff7b.getDate()-7);
+    for(var h=0;h<24;h++){
+      var hr=extraRecs.filter(function(r){return new Date(r.TimeDK).getHours()===h;});
+      var hr90=hr.filter(function(r){return new Date(r.TimeDK)>=cutoff90;});
+      var aktive90=hr90.filter(function(r){return r.UpDemandMW>0;});
+      var aktive7=aktive90.filter(function(r){return new Date(r.TimeDK)>=cutoff7b;});
+      var aktiveWD=aktive90.filter(function(r){
+        var d=new Date(r.TimeDK);
+        return d.getDay()===targetWD && (today-d)/864e5<=28;
+      });
+      var pct90=Math.round(aktive90.length/90*100);
+      var pct7=aktive7.length>0?Math.round(aktive7.length/7*100):pct90;
+      var pctWD=aktiveWD.length>0?Math.round(aktiveWD.length/4*100):pct90;
+      // Vgtet + sson-justeret
+      var pctVgtet=Math.round(((pct90+pct7*3+pctWD*3)/7)*extraSson);
+      var cl=hr90.filter(function(r){return r.UpPriceDKK>0;}).map(function(r){return r.UpPriceDKK;}).sort(function(a,b){return a-b;});
+      extraByHour[h]={
+        pct:Math.min(pctVgtet,99), pct90:pct90, aktive:aktive90.length,
+        p50cl:cl.length?Math.round(cl[Math.floor(cl.length*.5)]):0,
+        p75cl:cl.length?Math.round(cl[Math.floor(cl.length*.75)]):0
+      };
+    }
+
+    // MW-SCENARIER
+    var aMwOptions=[0,4,8,12,18];
+    var scenarier=aMwOptions.map(function(a){
+      return {a:a,m:18-a,aBlok:a===18?4:a/4,mBlok:(18-a)/4};
+    });
+    var scResults=scenarier.map(function(sc){
+      var dagA=0,dagM=0,dagX=0;
+      for(var h=0;h<24;h++){
+        var a=aStats[h],m=mStats[h],x=extraByHour[h];
+        dagA+=(a.p50||0)*sc.a*0.5;
+        dagM+=(m.p50||0)*sc.m;
+        dagX+=(x.pct/100)*(x.p50cl||0)*(sc.a>0?4:0);
+      }
+      return {a:sc.a,m:sc.m,aBlok:sc.aBlok,mBlok:sc.mBlok,
+        dagA:Math.round(dagA/1000),dagM:Math.round(dagM/1000),dagX:Math.round(dagX/1000),
+        dag:Math.round((dagA+dagM+dagX)/1000)};
+    });
+    var bestSc=scResults.reduce(function(b,s){return s.dag>b.dag?s:b;},scResults[0]);
+
+    // Faktor-beskrivelse til UI
+    var wdLabel=dagNavn+'-faktor: '+(wdFaktor>1.2?' Hj dag':wdFaktor<0.8?' Lav dag':'Normal dag')+' ('+Math.round(wdFaktor*100)+'%)';
+    var mLabel=['Jan','Feb','Mar','Apr','Maj','Jun','Jul','Aug','Sep','Okt','Nov','Dec'][targetMonth]+'-faktor: '+(mFaktor>1.5?' Sommer-peak':mFaktor>1.0?' Over snit':mFaktor<0.5?' Under snit':'Normal')+' ('+Math.round(mFaktor*100)+'%)';
+    var extraSsonLabel=extraSson===0?' Extra bner sjeldent denne mned':extraSson>1.0?' Extra aktiv mned':'';
+
+    // HEADER
+    var topHtml='<div style="grid-column:1/-1;background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe;border-radius:10px;padding:18px;margin-bottom:8px">';
+    topHtml+='<div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:4px">';
+    topHtml+='<div style="font-size:15px;font-weight:800;color:#1d4ed8"> Budanbefaling til '+dagNavn+'. '+dato+'</div>';
+    topHtml+=skiftNote+'</div>';
+    // Faktorer-badges
+    topHtml+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">';
+    topHtml+='<span style="font-size:10px;background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:10px">'+wdLabel+'</span>';
+    topHtml+='<span style="font-size:10px;background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:10px">'+mLabel+'</span>';
+    if(extraSsonLabel) topHtml+='<span style="font-size:10px;background:#fef9c3;color:#92400e;padding:2px 8px;border-radius:10px">'+extraSsonLabel+'</span>';
+    topHtml+='<span style="font-size:10px;background:#f0fdf4;color:#065f46;padding:2px 8px;border-radius:10px">Prisjustering: '+Math.round(prisJustering*100)+'% af historisk snit</span>';
+    topHtml+='<span id="vind-badge" style="font-size:10px;background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:10px">Vind: henter</span>';
+    topHtml+='</div>';
+    topHtml+='<div style="font-size:11px;color:#3b82f6;margin-bottom:14px">18 MW  EDS DK1 90 dage  Ugedags- og ssonfaktorer fra 365d historisk analyse</div>';
+
+    topHtml+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">';
+    topHtml+='<div style="background:#fff;border-radius:8px;padding:12px;border:2px solid #2563eb">';
+    topHtml+='<div style="font-size:10px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Anbefalet fordeling</div>';
+    topHtml+='<div style="font-size:17px;font-weight:800;color:#1d4ed8">'+bestSc.a+' MW aFRR</div>';
+    topHtml+='<div style="font-size:10px;color:#64748b;margin-bottom:4px">'+blokLabel(bestSc.a)+'</div>';
+    topHtml+='<div style="font-size:15px;font-weight:700;color:#059669">'+bestSc.m+' MW mFRR</div>';
+    topHtml+='<div style="font-size:10px;color:#64748b;margin-bottom:6px">'+blokLabel(bestSc.m)+'</div>';
+    topHtml+='<div style="font-size:11px;color:#64748b;padding-top:6px;border-top:1px solid #e0e7ff">~'+bestSc.dag+'k kr./dag</div>';
+    topHtml+='<div style="font-size:10px;color:#94a3b8">aFRR: '+bestSc.dagA+'k  mFRR: '+bestSc.dagM+'k  Extra: '+bestSc.dagX+'k</div>';
+    topHtml+='</div>';
+    var peakH=Object.entries(extraByHour).sort(function(a,b){return b[1].pct-a[1].pct;})[0];
+    topHtml+='<div style="background:#fff;border-radius:8px;padding:12px;border:1px solid #fde68a">';
+    topHtml+='<div style="font-size:10px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Peak Extra-time</div>';
+    topHtml+='<div style="font-size:17px;font-weight:800;color:#d97706">Kl. '+String(peakH[0]).padStart(2,'0')+'</div>';
+    topHtml+='<div style="font-size:13px;font-weight:600;color:#d97706">'+peakH[1].pct+'% (vgtet+sson)</div>';
+    topHtml+='<div style="font-size:10px;color:#64748b">90d: '+peakH[1].pct90+'%  P50 clearing: '+peakH[1].p50cl+' kr./MW</div>';
+    topHtml+='</div>';
+    topHtml+='<div style="background:#fff;border-radius:8px;padding:12px;border:1px solid var(--border)">';
+    topHtml+='<div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Aktiveringsbuddet</div>';
+    topHtml+='<div style="font-size:17px;font-weight:800"> 7.000 kr.</div>';
+    topHtml+='<div style="font-size:11px;color:#64748b;margin-top:4px">Min. driftsomkostning pr. MW/time</div>';
+    topHtml+='</div></div>';
+    topHtml+='<div style="font-size:11px;font-weight:700;color:#1e40af;margin-bottom:6px">Alle scenarier:</div>';
+    topHtml+='<div style="display:flex;gap:6px;flex-wrap:wrap">';
+    scResults.forEach(function(s){
+      var best=s.a===bestSc.a;
+      topHtml+='<div style="padding:5px 12px;border-radius:20px;font-size:11px;font-weight:'+(best?'700':'500')+';background:'+(best?'#1d4ed8':'#e0e7ff')+';color:'+(best?'#fff':'#3730a3')+';border:1px solid '+(best?'#1d4ed8':'#c7d2fe')+'">';
+      topHtml+=s.a+'MW aFRR + '+s.m+'MW mFRR: ~'+s.dag+'k kr.'+(best?' ':'');
+      topHtml+='</div>';
+    });
+    topHtml+='</div></div>';
+    document.getElementById('bs-summary').innerHTML=topHtml;
+    hentVindIndikator(targetDate,function(vind){
+      var b2=document.getElementById('vind-badge');
+      if(!b2)return;
+      if(!vind.harData){b2.textContent='Vind: ingen prognose';return;}
+      if(vind.niveau==='lav'){b2.style.background='#fee2e2';b2.style.color='#991b1b';b2.textContent=' Lav vind '+vind.ms+' m/s  +10%';}
+      else if(vind.niveau==='hoj'){b2.style.background='#dcfce7';b2.style.color='#065f46';b2.textContent=' Hj vind '+vind.ms+' m/s  -10%';}
+      else{b2.style.background='#f0fdf4';b2.style.color='#065f46';b2.textContent=' Normal vind '+vind.ms+' m/s';}
+    });
+
+    // TIMEOVERSIGT
+    function xCol(p){return p>=25?'#dcfce7':p>=18?'#fef9c3':p>=12?'#fff7ed':'#f9fafb';}
+    function xIcon(p){return p>=25?'':p>=18?'':p>=12?'':'';}
+
+    var nABlok=bestSc.aBlok, nMBlok=bestSc.mBlok;
+    var thead='<thead><tr style="font-size:10px;background:#f8fafc;border-bottom:2px solid #e2e8f0">';
+    thead+='<th style="padding:8px;text-align:left;color:var(--text2)">TIME</th>';
+    for(var b=1;b<=nABlok;b++){
+      var pct2=b===1?'5%':b===nABlok&&nABlok>2?'+5%':'';
+      var thMW=(b===nABlok&&nABlok>3&&bestSc.a===18)?'6MW':'4MW';
+      thead+='<th style="color:var(--afrr);padding:8px 6px">aFRR BLK '+b+'<br><span style="font-weight:400;color:var(--text3)">P50'+pct2+'  '+thMW+'</span></th>';
+    }
+    for(var b=1;b<=nMBlok;b++){
+      var pct2=b===1?'5%':b===nMBlok&&nMBlok>2?'+5%':'';
+      thead+='<th style="color:var(--mfrr);padding:8px 6px">mFRR BLK '+b+'<br><span style="font-weight:400;color:var(--text3)">P50'+pct2+'  4MW</span></th>';
+    }
+    thead+='<th style="color:var(--extra);padding:8px 6px">EXTRA<br><span style="font-weight:400;color:var(--text3)">vgtet+sson</span></th>';
+    thead+='<th style="padding:8px 6px;color:var(--text2)">NOTE</th>';
+    thead+='</tr></thead>';
+
+    var tbody='';
+    for(var h=0;h<24;h++){
+      var a=aStats[h],m2=mStats[h],x=extraByHour[h];
+      var extraSats=x.pct>=25;
+      var note=extraSats?'<span style="color:#d97706;font-weight:600"> Blok 3/4 hvet  Extra</span>':
+        x.pct>=18?'<span style="color:#ca8a04">Extra mulig  normal strat.</span>':
+        '<span style="color:var(--text3)">Normal P50-strategi</span>';
+
+      tbody+='<tr style="background:'+xCol(x.pct)+';border-bottom:1px solid rgba(0,0,0,.04)">';
+      tbody+='<td style="font-weight:700;font-size:12px;padding:7px 8px;white-space:nowrap">kl. '+String(h).padStart(2,'0')+'</td>';
+      for(var b=1;b<=nABlok;b++){
+        var pr=blokPris(a.p50,a.p75,b,nABlok,extraSats);
+        var tdMW=(b===nABlok&&nABlok>3&&bestSc.a===18)?'6 MW':'4 MW';
+        tbody+='<td style="font-weight:'+(b===1?'700':'400')+';color:var(--afrr);padding:7px 6px">'+pr+' kr.<br><span style="font-size:9px;color:var(--text3);font-weight:400">'+tdMW+'</span></td>';
+      }
+      for(var b=1;b<=nMBlok;b++){
+        var pr=5; // mFRR fast 5 kr.
+        tbody+='<td style="font-weight:'+(b===1?'700':'400')+';color:var(--mfrr);padding:7px 6px">'+pr+' kr.<br><span style="font-size:9px;color:var(--text3);font-weight:400">4 MW</span></td>';
+      }
+      tbody+='<td style="padding:7px 6px">'+xIcon(x.pct)+' <strong>'+x.pct+'%</strong><br><span style="font-size:9px;color:var(--text3)">90d: '+x.pct90+'%</span></td>';
+      tbody+='<td style="padding:7px 6px;font-size:11px">'+note+'</td>';
+      tbody+='</tr>';
+    }
+    document.getElementById('bs-table').innerHTML=thead+'<tbody>'+tbody+'</tbody>';
+
+    // FORKLARING
+    document.getElementById('bs-gain').innerHTML=
+      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;font-size:12px;margin-top:4px">'+
+      '<div><div style="font-weight:700;color:var(--text);margin-bottom:8px">Vgtningsmodel</div>'+
+      '<div style="color:var(--text2);line-height:1.9">'+
+      '<strong>60%</strong>  90 dages historik (seneste 7d + samme ugedag vgter 3)<br>'+
+      '<strong>25%</strong>  Ugedag-faktor (ons. er +55% over snit, sn. er 46%)<br>'+
+      '<strong>15%</strong>  Sson-faktor (sommer 3-4x dyrere end vinter)<br>'+
+      'Vind/vejr: Ikke inkluderet endnu  kommer som separat indikator</div></div>'+
+      '<div><div style="font-weight:700;color:var(--text);margin-bottom:8px">Blokkenes prisstrategi</div>'+
+      '<div style="color:var(--text2);line-height:1.9">'+
+      'Blok 1: P50 5%  altid konservativt<br>'+
+      'Blok 2: P50  altid P50<br>'+
+      'Blok 3: P50+5% normalt  P75 ved Extra 25%<br>'+
+      'Blok 4 (6MW): P50+8% normalt  P75+5% ved Extra 25%<br>'+
+      'mFRR: Altid P50-baseret, ingen Extra-satsning</div></div>'+
+      '<div><div style="font-weight:700;color:var(--text);margin-bottom:8px">Extra sson-mnster</div>'+
+      '<div style="color:var(--text2);line-height:1.9">'+
+      'Jan: 27%   Feb: 9%  Mar: 21% <br>'+
+      'Apr-Maj: ingen data  Jun-Jul: 0% <br>'+
+      'Aug: 1%  Sep: 3%  Okt: 1%<br>'+
+      'Nov: 6%  Dec: 17% <br>'+
+      'Extra bner nsten aldrig om sommeren</div></div>'+
+      '</div>';
+  });
+}
+function fmtRev(v){
+  if(v>=1000000) return (v/1000000).toFixed(1).replace('.0','')+' M kr.';
+  return Math.round(v/1000)+'k kr.';
+}
+
+function fetchCentricaWithActive(days, btn) {
+  document.querySelectorAll('.centrica-period-btn').forEach(b => b.classList.remove('active-period'));
+  btn.classList.add('active-period');
+  window.fetchCentrica(days);
+}
+
+let cChart=null;
+window.fetchCentrica=async function(days){
+  setSt('loading','Henter Centrica data...');
+  try{
+    await ensureValidToken();
+    const token=localStorage.getItem('centrica_token');
+    if(!token){
+      document.getElementById('c-metrics').innerHTML='<div class="info-box amber" style="grid-column:1/-1"><div class="ibtag">Token udlbet</div><p style="margin:8px 0">G til <a href="https://direct.neasenergy.com/CHP/da-DK/#/dashboard" target="_blank" style="color:#1d4ed8;font-weight:600">direct.neasenergy.com</a>, klik derefter <strong>Hent token nu</strong> herunder.</p><button onclick="manueltHentToken()" style="background:#f59e0b;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-weight:600;font-size:13px">Hent token nu</button><span id="token-status" style="margin-left:10px;font-size:12px;color:#92400e"></span></div>';
+      setSt('ok','');return;
+    }
+    const PROXY='https://vojens-regulerkraft.madsdahl30.workers.dev';
+    const today=new Date(),start=new Date(today);start.setDate(start.getDate()-days);
+    const fmt=d=>d.toISOString().split('.')[0];
+    const resp=await fetch(PROXY+'/v1/Chp/siteReport/revenue?siteId=844439ef-b88a-4859-9752-5f680c6d7317&from='+fmt(start)+'&to='+fmt(today),
+      {headers:{'Authorization':'Bearer '+token,'Accept':'application/json'}});
+    if(resp.status===401){
+      localStorage.removeItem('centrica_token');
+      // Auto-forsg: hent token fra Centrica-tab via extension
+    document.getElementById('c-metrics').innerHTML='<div class="info-box amber" style="grid-column:1/-1"><div class="ibtag">Henter token...</div><p>Forsger automatisk login...</p></div>';
+    setSt('ok','');
+    autoHentToken();
+    return;
+    }
+    const xml=await resp.text();
+    let data;
+    try{data=JSON.parse(xml);}catch(e){
+      // Centrica svarer XML: ArrayOfRevenueReportData > RevenueReportData
+      const p=new DOMParser(),doc=p.parseFromString(xml,'text/xml');
+      const ns='http://schemas.datacontract.org/2004/07/Neas.ReportApi.Models.Report';
+      const items=doc.getElementsByTagNameNS(ns,'RevenueReportData');
+      data=Array.from(items).map(function(el){
+        const o={};
+        Array.from(el.children).forEach(function(c){o[c.localName]=c.textContent;});
+        return o;
+      });
+      if(!data.length) data=[{_xml:xml.slice(0,200)}];
+    }
+    window.renderCentrica(data,days);
+    setSt('ok',S?'Opdateret '+S.at:'');
+  }catch(e){
+    document.getElementById('c-metrics').innerHTML='<div class="info-box red" style="grid-column:1/-1"><div class="ibtag">Fejl</div><p>'+e.message+'</p></div>';
+    setSt('ok','');
+  }
+};
+window.renderCentrica=function(data,days){
+  const rev=t=>data.filter(r=>r.Bidtype===t).reduce((s,r)=>s+r.BidMWh*r.BidActivationPricePrMWh,0);
+  const cnt=t=>data.filter(r=>r.Bidtype===t).length;
+  const avg=(t,f)=>{const rs=data.filter(r=>r.Bidtype===t);return rs.length?Math.round(rs.reduce((s,r)=>s+f(r),0)/rs.length):0;};
+  const total=['ManualReserveAvailable','AFRRCapacity15','ManualReserveExtra','AFRREnergy15','MFRREnergy15'].reduce((s,t)=>s+rev(t),0);
+  document.getElementById('c-period').textContent='Seneste '+days+' dage';
+  document.getElementById('c-metrics').innerHTML=
+    '<div class="metric"><div class="ml">Total omsaetning</div><div class="mv">'+fmtRev(total)+'</div><div class="ms">alle markeder</div></div>'+
+    '<div class="metric"><div class="ml">Dagligt snit</div><div class="mv">'+fmtRev(total/days)+'</div><div class="ms">pr. dag</div></div>'+
+    '<div class="metric"><div class="ml">aFRR beredskab</div><div class="mv" style="color:var(--afrr)">'+fmtRev(rev('AFRRCapacity15'))+'</div><div class="ms">'+cnt('AFRRCapacity15')+' timer  '+avg('AFRRCapacity15',r=>r.BidActivationPricePrMWh)+' kr./MW</div></div>'+
+    '<div class="metric"><div class="ml">mFRR beredskab</div><div class="mv" style="color:var(--mfrr)">'+fmtRev(rev('ManualReserveAvailable'))+'</div><div class="ms">'+cnt('ManualReserveAvailable')+' timer  '+avg('ManualReserveAvailable',r=>r.BidActivationPricePrMWh)+' kr./MW</div></div>'+
+    '<div class="metric"><div class="ml">mFRR Extra</div><div class="mv" style="color:var(--extra)">'+fmtRev(rev('ManualReserveExtra'))+'</div><div class="ms">'+cnt('ManualReserveExtra')+' vundne timer</div></div>'+
+    '<div class="metric"><div class="ml">Aktiveringer</div><div class="mv" style="color:#7C3AED">'+fmtRev(rev('AFRREnergy15')+rev('MFRREnergy15'))+'</div><div class="ms">'+(cnt('AFRREnergy15')+cnt('MFRREnergy15'))+' aktiveringer</div></div>';
+  const byDay={};
+  data.forEach(r=>{const day=r.FromUtc.split('T')[0];if(!byDay[day])byDay[day]={a:0,m:0,x:0,e:0};
+    const v=r.BidMWh*r.BidActivationPricePrMWh;
+    if(r.Bidtype==='AFRRCapacity15')byDay[day].a+=v;else if(r.Bidtype==='ManualReserveAvailable')byDay[day].m+=v;
+    else if(r.Bidtype==='ManualReserveExtra')byDay[day].x+=v;else byDay[day].e+=v;});
+  const ds=Object.keys(byDay).sort();
+  document.getElementById('c-chart-card').style.display='block';document.getElementById('c-perf-card').style.display='block';
+  if(cChart)cChart.destroy();
+  cChart=new Chart(document.getElementById('cChart'),{type:'bar',data:{labels:ds.map(d=>d.slice(5)),datasets:[
+    {label:'aFRR',data:ds.map(d=>Math.round(byDay[d].a)),backgroundColor:'rgba(37,99,235,0.75)',stack:'s'},
+    {label:'mFRR',data:ds.map(d=>Math.round(byDay[d].m)),backgroundColor:'rgba(5,150,105,0.75)',stack:'s'},
+    {label:'Extra',data:ds.map(d=>Math.round(byDay[d].x)),backgroundColor:'rgba(217,119,6,0.75)',stack:'s'},
+    {label:'Aktiv.',data:ds.map(d=>Math.round(byDay[d].e)),backgroundColor:'rgba(124,58,237,0.75)',stack:'s'}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+    scales:{x:{stacked:true,ticks:{font:{size:9},maxRotation:45,autoSkip:true,maxTicksLimit:20}},
+            y:{stacked:true,ticks:{font:{size:10},callback:v=>Math.round(v/1000)+'k'}}}}});
+  const lbl={'ManualReserveAvailable':'mFRR beredskab','AFRRCapacity15':'aFRR beredskab','ManualReserveExtra':'mFRR Extra'};
+  const rows=['ManualReserveAvailable','AFRRCapacity15','ManualReserveExtra'].filter(t=>cnt(t)>0).map(t=>
+    '<tr><td style="font-weight:500">'+lbl[t]+'</td><td>'+cnt(t)+' timer</td>'+
+    '<td style="color:var(--text3)">'+avg(t,r=>r.BidPricePrMWh)+' kr./MW</td>'+
+    '<td style="color:var(--text3)">'+avg(t,r=>r.BidActivationPricePrMWh)+' kr./MW</td>'+
+    '<td style="font-weight:600;color:#059669">+'+(avg(t,r=>r.BidActivationPricePrMWh)-avg(t,r=>r.BidPricePrMWh))+' kr./MW</td>'+
+    '<td style="color:var(--text3)">'+fmtRev(rev(t))+'</td></tr>');
+  document.getElementById('c-table').innerHTML='<thead><tr><th>Marked</th><th>Timer</th><th>Din budpris</th><th>Clearing</th><th>Gevinst pr. MW</th><th>Total</th></tr></thead><tbody>'+rows.join('')+'</tbody>';
+};
+
+// Gem token + refresh_token fra URL hash ved load
+document.addEventListener('DOMContentLoaded',()=>{
+  const hash=window.location.hash;
+  if(hash.startsWith('#token=')){
+    const parts = hash.slice(7).split('&refresh=');
+    const token = decodeURIComponent(parts[0]);
+    const refresh = parts[1] ? decodeURIComponent(parts[1]) : null;
+    if(token.length>100){
+      localStorage.setItem('centrica_token', token);
+      localStorage.setItem('centrica_token_expiry', Date.now() + (20 * 60 * 1000));
+    }
+    if(refresh) localStorage.setItem('centrica_refresh_token', refresh);
+    history.replaceState(null,'',window.location.pathname);
+  }
+  if(localStorage.getItem('centrica_token')){
+    const el=document.getElementById('token-status');
+    if(el) el.innerHTML='<span style="color:#059669">&#10003; Centrica klar</span>';
+  }
+});
