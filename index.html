@@ -118,8 +118,6 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
 
   <div class="tabs">
     <button class="tab active" onclick="sw('heatmap',this)">Priskort</button>
-    <button class="tab" onclick="sw('anbefaling',this)">Anbefaling</button>
-    <button class="tab" onclick="sw('fordeling',this)">MW-fordeling</button>
     <button class="tab" onclick="sw('extra',this)">mFRR Extra</button>
     <button class="tab" onclick="sw('indsigt',this)">Indsigter</button><button class="tab" onclick="sw('budstrategi',this)">Budstrategi</button>
     <button class="tab" onclick="sw('resultater',this)">Mine resultater</button>
@@ -156,10 +154,33 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
   </div>
 
   <!-- ANBEFALING -->
-  
+  <div id="panel-anbefaling" class="panel">
+    <div class="card">
+      <div class="ct">Anbefalet prisstrategi pr. time <span class="badge ba">90 dages data</span></div>
+      <table class="rt" id="rec-table"></table>
+    </div>
+  </div>
 
   <!-- MW-FORDELING -->
-  
+  <div id="panel-fordeling" class="panel">
+    <div class="info-box blue" style="margin-bottom:16px;">
+      <div class="ibtag">Sådan fungerer fordelingen</div>
+      <p>Du fordeler dine 18,3 MW mellem <strong>aFRR</strong> og <strong>mFRR</strong> time for time. Hvis du taber aFRR-auktionen i en given time, ryger de tabte MW automatisk til <strong>mFRR Extra</strong>-runden (hvis Energinet åbner den). Du kan IKKE aktivt sende MW til Extra – det sker kun ved tab af aFRR. Brug derfor altid blokke af 4 MW i aFRR, så du kan vinde Extra med præcise mængder.</p>
+    </div>
+
+    <div class="card">
+      <div class="ct">Planlæg MW-fordeling time for time <span class="badge ba">Klik en time for at redigere</span></div>
+      <div class="hour-planner" id="hour-planner"></div>
+
+      <div class="hour-editor" id="hour-editor">
+        <div class="he-title" id="he-title">Vælg en time ovenfor for at redigere</div>
+        <div id="he-body"></div>
+      </div>
+
+      <div class="summary-grid" id="fordeling-summary"></div>
+      <div class="cw" style="height:220px;"><canvas id="fordelingChart"></canvas></div>
+    </div>
+  </div>
 
   <!-- mFRR EXTRA -->
   <div id="panel-extra" class="panel">
