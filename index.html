@@ -3,7 +3,7 @@
 <head><!-- vojens-regulerkraft auto-refresh v2 -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vojens Regulerkraft Ã¢ÂÂ Version 1.0</title>
+<title>Vojens Regulerkraft – Version 1.0</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 :root {
@@ -168,7 +168,7 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
   <div id="panel-fordeling" class="panel">
     <div class="info-box blue" style="margin-bottom:16px;">
       <div class="ibtag">SÃÂ¥dan fungerer fordelingen</div>
-      <p>Du fordeler dine 18,3 MW mellem <strong>aFRR</strong> og <strong>mFRR</strong> time for time. Hvis du taber aFRR-auktionen i en given time, ryger de tabte MW automatisk til <strong>mFRR Extra</strong>-runden (hvis Energinet ÃÂ¥bner den). Du kan IKKE aktivt sende MW til Extra Ã¢ÂÂ det sker kun ved tab af aFRR. Brug derfor altid blokke af 4 MW i aFRR, sÃÂ¥ du kan vinde Extra med prÃÂ¦cise mÃÂ¦ngder.</p>
+      <p>Du fordeler dine 18,3 MW mellem <strong>aFRR</strong> og <strong>mFRR</strong> time for time. Hvis du taber aFRR-auktionen i en given time, ryger de tabte MW automatisk til <strong>mFRR Extra</strong>-runden (hvis Energinet ÃÂ¥bner den). Du kan IKKE aktivt sende MW til Extra – det sker kun ved tab af aFRR. Brug derfor altid blokke af 4 MW i aFRR, sÃÂ¥ du kan vinde Extra med prÃÂ¦cise mÃÂ¦ngder.</p>
     </div>
 
     <div class="card">
@@ -188,8 +188,8 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
   <!-- mFRR EXTRA -->
   <div id="panel-extra" class="panel">
     <div class="info-box amber" style="margin-bottom:16px;">
-      <div class="ibtag">mFRR Extra Ã¢ÂÂ forstÃÂ¥ mekanismen</div>
-      <p>Extra-runden ÃÂ¥bner kl. 15:00 dagen fÃÂ¸r, men <strong>kun hvis Energinet har behov</strong> og <strong>kun for aktÃÂ¸rer der tabte primÃÂ¦r mFRR-auktionen</strong>. Priser er historisk markant hÃÂ¸jere end primÃÂ¦r mFRR. AfgÃÂ¸rende: Brug blokke af max 4 MW Ã¢ÂÂ Energinet tager kun det de mangler og afviser for store blokke.</p>
+      <div class="ibtag">mFRR Extra – forstÃÂ¥ mekanismen</div>
+      <p>Extra-runden ÃÂ¥bner kl. 15:00 dagen fÃÂ¸r, men <strong>kun hvis Energinet har behov</strong> og <strong>kun for aktÃÂ¸rer der tabte primÃÂ¦r mFRR-auktionen</strong>. Priser er historisk markant hÃÂ¸jere end primÃÂ¦r mFRR. AfgÃÂ¸rende: Brug blokke af max 4 MW – Energinet tager kun det de mangler og afviser for store blokke.</p>
     </div>
     <div class="card">
       <div class="ct">Extra aktiveringsfrekvens og priser pr. time <span class="badge bx">90 dage ÃÂ· DK1</span></div>
@@ -203,18 +203,18 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
   </div>
 
   <!-- INDSIGTER -->
-  <div id="panel-indsigt" class="panel"><div id="indsigt-vind"><div class="card"><div class="ct">Ã°ÂÂÂ¬Ã¯Â¸Â Vindforhold Ã¢ÂÂ Esbjerg</div><p style="color:var(--text3);padding:12px">Klik pÃÂ¥ Indsigter for at hente aktuel vinddataÃ¢ÂÂ¦</p></div></div>
+  <div id="panel-indsigt" class="panel"><div id="indsigt-vind"><div class="card"><div class="ct">Ã°ÂÂÂ¬Ã¯Â¸Â Vindforhold – Esbjerg</div><p style="color:var(--text3);padding:12px">Klik pÃÂ¥ Indsigter for at hente aktuel vinddata…</p></div></div>
     <div id="insights"></div>
   </div>
   <div id="panel-budstrategi" class="panel"><div class="card"><div class="ct">Budstrategi <span class="badge ba">Seneste 90 dage</span><span style="font-size:11px;color:var(--text3);margin-left:8px">Baseret pÃÂ¥ dine egne vundne bud</span></div><div id="bs-summary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px"></div></div><div class="card"><div class="ct">Anbefalet budpris pr. time <span style="font-size:11px;font-weight:400;color:var(--text3)">Ã°ÂÂÂ¢ hÃÂ¦v budpris &nbsp;Ã°ÂÂÂ¡ ok &nbsp;Ã°ÂÂÂ´ for hÃÂ¸jt</span></div><div style="overflow-x:auto"><table class="rt" id="bs-table"></table></div></div><div class="card" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-color:#86efac"><div class="ct" style="color:#166534">Ã°ÂÂÂ° Potentiel gevinst ved optimerede budpriser</div><div id="bs-gain"></div></div></div>
   <div id="panel-resultater" class="panel">
 <div class="card" style="margin-bottom:12px">
-  <div class="ct">&#127942; Accepterede bud Ã¢ÂÂ i dag <span style="font-size:11px;color:var(--text3);margin-left:8px">Fra Centrica Planning</span></div>
-  <div id="planning-panel" style="padding:8px 0"><p style="color:var(--text3);font-size:13px">HenterÃ¢ÂÂ¦</p></div>
+  <div class="ct">&#127942; Accepterede bud – i dag <span style="font-size:11px;color:var(--text3);margin-left:8px">Fra Centrica Planning</span></div>
+  <div id="planning-panel" style="padding:8px 0"><p style="color:var(--text3);font-size:13px">Henter…</p></div>
 </div>
 <div class="card" style="margin-bottom:12px">
   <div class="ct">&#128176; IndtÃÂ¦gter <span style="font-size:11px;color:var(--text3);margin-left:8px">Fra Centrica Revenue</span></div>
-  <div id="revenue-panel" style="padding:8px 0"><p style="color:var(--text3);font-size:13px">HenterÃ¢ÂÂ¦</p></div>
+  <div id="revenue-panel" style="padding:8px 0"><p style="color:var(--text3);font-size:13px">Henter…</p></div>
 </div>
 
     <div id="token-status" style="font-size:12px;color:var(--text3);margin-bottom:12px;"></div>
