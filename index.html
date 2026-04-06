@@ -734,30 +734,58 @@ function autoHentToken(){
 }
 
 function manueltHentToken(){
-  var status=document.getElementById('token-status');
-  if(status) status.textContent='Henter...';
-  // Åbn Centrica og injicér script der sender token tilbage
-  var w=window.open('https://direct.neasenergy.com/CHP/da-DK/#/dashboard','centrica-sync','width=400,height=300');
+  var statusEl=document.getElementById('token-status');
+  // Åbn Centrica i et nyt vindue
+  var popup=window.open('https://direct.neasenergy.com/CHP/da-DK/#/dashboard','centrica-token','width=900,height=600');
+  if(!popup){
+    if(statusEl) statusEl.innerHTML='<span style="color:#dc2626">Pop-up blokeret. Tillad pop-ups og prøv igen.</span>';
+    return;
+  }
+  if(statusEl) statusEl.innerHTML='<span style="color:#92400e">Venter på Centrica login…</span>';
   var attempts=0;
   var poll=setInterval(function(){
     attempts++;
     try{
-      var tok=w.localStorage&&w.localStorage.getItem('access_token');
+      // Forsøg cross-origin læsning (virker kun hvis same-origin)
+      var tok=popup.localStorage&&popup.localStorage.getItem('access_token');
       if(tok){
         localStorage.setItem('centrica_token',tok);
-        var ref=w.localStorage.getItem('refresh_token');
+        var ref=popup.localStorage.getItem('refresh_token');
         if(ref) localStorage.setItem('centrica_refresh_token',ref);
         clearInterval(poll);
-        w.close();
-        if(status) status.textContent='Token hentet! Indlæser data...';
+        popup.close();
+        if(statusEl) statusEl.innerHTML='<span style="color:#16a34a">✓ Token hentet!</span>';
         setTimeout(function(){fetchAll();},500);
+        return;
       }
-    }catch(e){}
-    if(attempts>30){
+    }catch(e){
+      // Cross-origin blokeret - vis script-guide
       clearInterval(poll);
-      if(status) status.textContent='Kunne ikke hente automatisk. Er du logget ind på Centrica?';
+      if(statusEl) statusEl.innerHTML='';
+      var metricsEl=document.getElementById('c-metrics');
+      if(metricsEl){
+        var script='const t=localStorage.getItem(\'access_token\'),r=localStorage.getItem(\'refresh_token\');window.opener&&window.opener.postMessage({centrica_token:t,centrica_refresh_token:r},\'*\');';
+        metricsEl.innerHTML+='<div style="margin-top:10px;padding:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;font-size:12px">'
+          +'<strong>I Centrica-vinduet der åbnede:</strong><br>'
+          +'1. Tryk <kbd>F12</kbd> (eller Højreklik → Inspéktér)<br>'
+          +'2. Gå til <strong>Konsol</strong>-fanen<br>'
+          +'3. Kopier og kør dette:<br>'
+          +'<code style="display:block;margin:6px 0;padding:6px;background:#1e293b;color:#e2e8f0;border-radius:4px;font-size:11px;word-break:break-all">'+script+'</code>'
+          +'<button onclick="void(0)" style="background:#f59e0b;color:#fff;border:none;padding:4px 10px;border-radius:3px;cursor:pointer;font-size:11px" onclick="navigator.clipboard.writeText(\''+script+'\')">Kopiér script</button></div>';
+      }
+      // Lyt på postMessage fra Centrica-vinduet
+      window.addEventListener('message',function handler(e){
+        if(e.data&&e.data.centrica_token){
+          localStorage.setItem('centrica_token',e.data.centrica_token);
+          if(e.data.centrica_refresh_token) localStorage.setItem('centrica_refresh_token',e.data.centrica_refresh_token);
+          window.removeEventListener('message',handler);
+          try{popup.close();}catch(e2){}
+          fetchAll();
+        }
+      });
     }
-  },1000);
+    if(attempts>3) clearInterval(poll);
+  },2000);
 }
 
 function genindlaesENTSOE(){
