@@ -3,7 +3,7 @@
 <head><!-- vojens-regulerkraft auto-refresh v2 -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vojens Regulerkraft – Version 1.0</title>
+<title>Vojens Regulerkraft - Version 1.0</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 :root {
@@ -55,7 +55,7 @@ h1{font-size:20px;font-weight:600;letter-spacing:-.3px;}
 .rt tr:last-child td{border-bottom:none;}
 .rt tr:hover td{background:var(--surface2);}
 
-/* MW-fordeling: Time-for-time planlÃÂ¦gger */
+/* MW-fordeling: Time-for-time planlgger */
 .hour-planner{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:16px;}
 .hpc{border:1px solid var(--border);border-radius:var(--rs);padding:10px 8px;background:var(--surface);cursor:pointer;transition:border-color .15s;}
 .hpc:hover{border-color:#2563EB;}
@@ -111,7 +111,7 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
   <header>
     <div>
       <h1>Vojens Regulerkraft</h1>
-      <div class="sub">DK1 ÃÂ· aFRR + mFRR + mFRR Extra ÃÂ· Version 1.0 ÃÂ· Henter seneste 90 dage automatisk</div>
+      <div class="sub">DK1  aFRR + mFRR + mFRR Extra  Version 1.0  Henter seneste 90 dage automatisk</div>
     </div>
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
       <div class="status"><div class="dot loading" id="sdot"></div><span id="stxt">Henter data...</span></div>
@@ -129,17 +129,17 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
   <!-- PRISKORT -->
   <div id="panel-heatmap" class="panel active">
     <div class="card">
-      <div class="ct">Gennemsnitlig clearing-pris pr. time ÃÂ· seneste 90 dage ÃÂ· DK1</div>
+      <div class="ct">Gennemsnitlig clearing-pris pr. time  seneste 90 dage  DK1</div>
 <div class="card" style="margin-top:16px">
   <div class="ct" style="display:flex;align-items:center">
     <span>&#9889; ENTSO-E Outages DK1</span>
-    <span style="font-size:11px;color:var(--text3);margin-left:8px">Planlagte & aktive kraftvÃÂ¦rksudfald</span>
+    <span style="font-size:11px;color:var(--text3);margin-left:8px">Planlagte & aktive kraftvrksudfald</span>
     <button onclick="genindlaesENTSOE()" style="margin-left:auto;background:var(--primary);color:#fff;border:none;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:600">&#8635; Opdater</button>
   </div>
   <div id="entsoe-panel" style="padding:8px 0">
     <div style="text-align:center;padding:16px;color:var(--text3);font-size:13px">
       Klik <strong>Opdater</strong> for at hente aktuelle outages fra ENTSO-E<br>
-      <span style="font-size:11px">(KrÃÂ¦ver at du er logget ind pÃÂ¥ ENTSO-E i browseren)</span>
+      <span style="font-size:11px">(Krver at du er logget ind p ENTSO-E i browseren)</span>
     </div>
   </div>
 </div>
@@ -151,7 +151,7 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
       </div>
       <div class="hlrow" id="hlabels"></div>
       <div id="heatmap"></div>
-      <div style="margin-top:10px;font-size:11px;color:var(--text3);">MÃÂ¸rkere = hÃÂ¸jere snit ÃÂ· Hold musen over celle for detaljer</div>
+      <div style="margin-top:10px;font-size:11px;color:var(--text3);">Mrkere = hjere snit  Hold musen over celle for detaljer</div>
     </div>
     <div class="metrics" id="heat-metrics"></div>
   </div>
@@ -167,16 +167,16 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
   <!-- MW-FORDELING -->
   <div id="panel-fordeling" class="panel">
     <div class="info-box blue" style="margin-bottom:16px;">
-      <div class="ibtag">SÃÂ¥dan fungerer fordelingen</div>
-      <p>Du fordeler dine 18,3 MW mellem <strong>aFRR</strong> og <strong>mFRR</strong> time for time. Hvis du taber aFRR-auktionen i en given time, ryger de tabte MW automatisk til <strong>mFRR Extra</strong>-runden (hvis Energinet ÃÂ¥bner den). Du kan IKKE aktivt sende MW til Extra – det sker kun ved tab af aFRR. Brug derfor altid blokke af 4 MW i aFRR, sÃÂ¥ du kan vinde Extra med prÃÂ¦cise mÃÂ¦ngder.</p>
+      <div class="ibtag">Sdan fungerer fordelingen</div>
+      <p>Du fordeler dine 18,3 MW mellem <strong>aFRR</strong> og <strong>mFRR</strong> time for time. Hvis du taber aFRR-auktionen i en given time, ryger de tabte MW automatisk til <strong>mFRR Extra</strong>-runden (hvis Energinet bner den). Du kan IKKE aktivt sende MW til Extra - det sker kun ved tab af aFRR. Brug derfor altid blokke af 4 MW i aFRR, s du kan vinde Extra med prcise mngder.</p>
     </div>
 
     <div class="card">
-      <div class="ct">PlanlÃÂ¦g MW-fordeling time for time <span class="badge ba">Klik en time for at redigere</span></div>
+      <div class="ct">Planlg MW-fordeling time for time <span class="badge ba">Klik en time for at redigere</span></div>
       <div class="hour-planner" id="hour-planner"></div>
 
       <div class="hour-editor" id="hour-editor">
-        <div class="he-title" id="he-title">VÃÂ¦lg en time ovenfor for at redigere</div>
+        <div class="he-title" id="he-title">Vlg en time ovenfor for at redigere</div>
         <div id="he-body"></div>
       </div>
 
@@ -188,33 +188,33 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
   <!-- mFRR EXTRA -->
   <div id="panel-extra" class="panel">
     <div class="info-box amber" style="margin-bottom:16px;">
-      <div class="ibtag">mFRR Extra – forstÃÂ¥ mekanismen</div>
-      <p>Extra-runden ÃÂ¥bner kl. 15:00 dagen fÃÂ¸r, men <strong>kun hvis Energinet har behov</strong> og <strong>kun for aktÃÂ¸rer der tabte primÃÂ¦r mFRR-auktionen</strong>. Priser er historisk markant hÃÂ¸jere end primÃÂ¦r mFRR. AfgÃÂ¸rende: Brug blokke af max 4 MW – Energinet tager kun det de mangler og afviser for store blokke.</p>
+      <div class="ibtag">mFRR Extra - forst mekanismen</div>
+      <p>Extra-runden bner kl. 15:00 dagen fr, men <strong>kun hvis Energinet har behov</strong> og <strong>kun for aktrer der tabte primr mFRR-auktionen</strong>. Priser er historisk markant hjere end primr mFRR. Afgrende: Brug blokke af max 4 MW - Energinet tager kun det de mangler og afviser for store blokke.</p>
     </div>
     <div class="card">
-      <div class="ct">Extra aktiveringsfrekvens og priser pr. time <span class="badge bx">90 dage ÃÂ· DK1</span></div>
+      <div class="ct">Extra aktiveringsfrekvens og priser pr. time <span class="badge bx">90 dage  DK1</span></div>
       <div class="cw" style="height:220px;"><canvas id="extraChart"></canvas></div>
-      <div style="font-size:11px;color:var(--text3);margin-top:8px;">SÃÂ¸jle = % af dage Extra-markedet er aktivt ÃÂ· Linje = snit-clearing-pris nÃÂ¥r aktiv (kr./MW)</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:8px;">Sjle = % af dage Extra-markedet er aktivt  Linje = snit-clearing-pris nr aktiv (kr./MW)</div>
     </div>
     <div class="card">
-      <div class="ct">Extra vs. aFRR sammenligning <span class="badge bx">HvornÃÂ¥r betaler det sig at satse pÃÂ¥ Extra?</span></div>
+      <div class="ct">Extra vs. aFRR sammenligning <span class="badge bx">Hvornr betaler det sig at satse p Extra?</span></div>
       <table class="rt" id="extra-compare"></table>
     </div>
   </div>
 
   <!-- INDSIGTER -->
-  <div id="panel-indsigt" class="panel"><div id="indsigt-vind"><div class="card"><div class="ct">Ã°ÂÂÂ¬Ã¯Â¸Â Vindforhold – Esbjerg</div><p style="color:var(--text3);padding:12px">Klik pÃÂ¥ Indsigter for at hente aktuel vinddata…</p></div></div>
+  <div id="panel-indsigt" class="panel"><div id="indsigt-vind"><div class="card"><div class="ct"> Vindforhold - Esbjerg</div><p style="color:var(--text3);padding:12px">Klik p Indsigter for at hente aktuel vinddata</p></div></div>
     <div id="insights"></div>
   </div>
-  <div id="panel-budstrategi" class="panel"><div class="card"><div class="ct">Budstrategi <span class="badge ba">Seneste 90 dage</span><span style="font-size:11px;color:var(--text3);margin-left:8px">Baseret pÃÂ¥ dine egne vundne bud</span></div><div id="bs-summary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px"></div></div><div class="card"><div class="ct">Anbefalet budpris pr. time <span style="font-size:11px;font-weight:400;color:var(--text3)">Ã°ÂÂÂ¢ hÃÂ¦v budpris &nbsp;Ã°ÂÂÂ¡ ok &nbsp;Ã°ÂÂÂ´ for hÃÂ¸jt</span></div><div style="overflow-x:auto"><table class="rt" id="bs-table"></table></div></div><div class="card" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-color:#86efac"><div class="ct" style="color:#166534">Ã°ÂÂÂ° Potentiel gevinst ved optimerede budpriser</div><div id="bs-gain"></div></div></div>
+  <div id="panel-budstrategi" class="panel"><div class="card"><div class="ct">Budstrategi <span class="badge ba">Seneste 90 dage</span><span style="font-size:11px;color:var(--text3);margin-left:8px">Baseret p dine egne vundne bud</span></div><div id="bs-summary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px"></div></div><div class="card"><div class="ct">Anbefalet budpris pr. time <span style="font-size:11px;font-weight:400;color:var(--text3)"> hv budpris &nbsp; ok &nbsp; for hjt</span></div><div style="overflow-x:auto"><table class="rt" id="bs-table"></table></div></div><div class="card" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-color:#86efac"><div class="ct" style="color:#166534"> Potentiel gevinst ved optimerede budpriser</div><div id="bs-gain"></div></div></div>
   <div id="panel-resultater" class="panel">
 <div class="card" style="margin-bottom:12px">
-  <div class="ct">&#127942; Accepterede bud – i dag <span style="font-size:11px;color:var(--text3);margin-left:8px">Fra Centrica Planning</span></div>
-  <div id="planning-panel" style="padding:8px 0"><p style="color:var(--text3);font-size:13px">Henter…</p></div>
+  <div class="ct">&#127942; Accepterede bud - i dag <span style="font-size:11px;color:var(--text3);margin-left:8px">Fra Centrica Planning</span></div>
+  <div id="planning-panel" style="padding:8px 0"><p style="color:var(--text3);font-size:13px">Henter</p></div>
 </div>
 <div class="card" style="margin-bottom:12px">
-  <div class="ct">&#128176; IndtÃÂ¦gter <span style="font-size:11px;color:var(--text3);margin-left:8px">Fra Centrica Revenue</span></div>
-  <div id="revenue-panel" style="padding:8px 0"><p style="color:var(--text3);font-size:13px">Henter…</p></div>
+  <div class="ct">&#128176; Indtgter <span style="font-size:11px;color:var(--text3);margin-left:8px">Fra Centrica Revenue</span></div>
+  <div id="revenue-panel" style="padding:8px 0"><p style="color:var(--text3);font-size:13px">Henter</p></div>
 </div>
 
     <div id="token-status" style="font-size:12px;color:var(--text3);margin-bottom:12px;"></div>
