@@ -941,91 +941,121 @@ function hentPlanning(tok){
 }
 
 function renderPlanning(xml){
-  var el=document.getElementById('planning-panel');
-  if(!el) return;
-  try{
-    var doc=new DOMParser().parseFromString(xml,'text/xml');
-    var bids=doc.querySelectorAll('AssetBidV1');
-    // Filtrer kun accepterede bud for i dag
-    var today=new Date().toISOString().slice(0,10);
-    var accepted=[],pending=[],rejected=[];
-    bids.forEach(function(b){
-      var status=b.querySelector('Status')?.textContent||'';
-      var from=b.querySelector('FromUtc')?.textContent||'';
-      var bidtype=b.querySelector('BidType')?.textContent||'';
-      var price=parseFloat(b.querySelector('Price')?.textContent||0);
-      var mw=parseFloat(b.querySelector('TotalQuantityMw')?.textContent||0);
-      var dir=b.querySelector('MarketDirection')?.textContent||'';
-      var obj={status,from,bidtype,price,mw,dir};
-      if(status==='Accepted') accepted.push(obj);
-      else if(status==='Submitted'||status==='Active') pending.push(obj);
-      else rejected.push(obj);
-    });
-
-    var h='<div style="display:flex;gap:10px;margin-bottom:12px">';
-    h+='<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:10px 16px;min-width:100px;text-align:center"><div style="font-size:10px;font-weight:700;color:#166534;text-transform:uppercase">Accepteret</div><div style="font-size:28px;font-weight:800;color:#16a34a">'+accepted.length+'</div></div>';
-    h+='<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 16px;min-width:100px;text-align:center"><div style="font-size:10px;font-weight:700;color:#92400e;text-transform:uppercase">Afventer</div><div style="font-size:28px;font-weight:800;color:#d97706">'+pending.length+'</div></div>';
-    h+='<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:10px 16px;min-width:100px;text-align:center"><div style="font-size:10px;font-weight:700;color:#991b1b;text-transform:uppercase">Afvist</div><div style="font-size:28px;font-weight:800;color:#dc2626">'+rejected.length+'</div></div>';
-    h+='</div>';
-
-    if(accepted.length>0){
-      h+='<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px">';
-      h+='<thead><tr style="background:#f0fdf4;border-bottom:2px solid #86efac"><th style="padding:6px;text-align:left">Marked</th><th style="padding:6px;text-align:left">Retning</th><th style="padding:6px">MW</th><th style="padding:6px">Pris (kr/MW)</th><th style="padding:6px;text-align:left">Fra</th></tr></thead><tbody>';
-      accepted.slice(0,20).forEach(function(b){
-        var markedNavn=b.bidtype.includes('AutomaticReserve')||b.bidtype.includes('aFRR')?'aFRR':b.bidtype.includes('ManualReserve')||b.bidtype.includes('mFRR')?'mFRR':b.bidtype.includes('Extra')?'mFRR Extra':b.bidtype;
-        var fra=b.from?new Date(b.from).toLocaleString('da-DK',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
-        h+='<tr style="border-bottom:1px solid #dcfce7"><td style="padding:6px;font-weight:600">'+markedNavn+'</td>';
-        h+='<td style="padding:6px"><span style="background:'+(b.dir==='Up'?'#dbeafe':'#fce7f3')+';color:'+(b.dir==='Up'?'#1d4ed8':'#9d174d')+';padding:2px 6px;border-radius:4px;font-size:11px">'+(b.dir==='Up'?'Op':'Ned')+'</span></td>';
-        h+='<td style="padding:6px;text-align:center;font-weight:700">'+b.mw.toFixed(1)+'</td>';
-        h+='<td style="padding:6px;text-align:center">'+b.price.toFixed(2)+'</td>';
-        h+='<td style="padding:6px;color:var(--text3)">'+fra+'</td></tr>';
-      });
-      h+='</tbody></table>';
-    } else {
-      h+='<p style="color:var(--text3);font-size:13px">Ingen accepterede bud i perioden endnu.</p>';
-    }
-    el.innerHTML=h;
-  }catch(e2){el.innerHTML='<p style="color:var(--text3)">Fejl ved parsing af bud-data.</p>';}
+var el=document.getElementById('planning-panel');
+if(!el) return;
+try{
+var doc=new DOMParser().parseFromString(xml,'text/xml');
+var bids=Array.from(doc.querySelectorAll('AssetBidV1'));
+var tm={'12RegulationAndReservesManualReserveAvailable':'mFRR Kapacitet','13RegulationAndReservesManualReserveExtra':'mFRR Extra','78RegulationAndReservesAfrrCapacity15':'aFRR Kapacitet','79RegulationAndReservesAfrrEnergy15':'aFRR Energi','81RegulationAndReservesMfrrEnergy15':'mFRR Energi'};
+var acc=[],rej=[],pen=[];
+bids.forEach(function(b){
+var st=b.querySelector('Status')?.textContent||'';
+var bt=b.querySelector('BidType')?.textContent||'';
+var pr=parseFloat(b.querySelector('PriceAdjusted')?.textContent||0);
+var mw=parseFloat(b.querySelector('TotalQuantityMw')?.textContent||0);
+var dir=b.querySelector('MarketDirection')?.textContent||'';
+var fr=b.querySelector('FromUtc')?.textContent||'';
+var to=b.querySelector('ToUtc')?.textContent||'';
+var nm=tm[bt]||bt.replace('RegulationAndReserves','');
+var obj={st,bt,pr,mw,dir,fr,to,nm};
+if(st==='Accepted') acc.push(obj);
+else if(st==='Submitted'||st==='Active') pen.push(obj);
+else rej.push(obj);
+});
+var byType={};
+acc.forEach(function(b){
+if(!byType[b.nm]) byType[b.nm]={n:0,mw:0,prMin:999,prMax:0};
+byType[b.nm].n++;byType[b.nm].mw+=b.mw;
+if(b.pr<byType[b.nm].prMin) byType[b.nm].prMin=b.pr;
+if(b.pr>byType[b.nm].prMax) byType[b.nm].prMax=b.pr;
+});
+var h='<div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">';
+[{l:'Accepteret',n:acc.length,c:'#16a34a',bg:'#f0fdf4',bd:'#86efac'},
+{l:'Afventer',n:pen.length,c:'#d97706',bg:'#fffbeb',bd:'#fde68a'},
+{l:'Afvist',n:rej.length,c:'#dc2626',bg:'#fef2f2',bd:'#fca5a5'}
+].forEach(function(s){
+h+='<div style="background:'+s.bg+';border:1px solid '+s.bd+';border-radius:8px;padding:10px 14px;text-align:center;flex:1">'+
+'<div style="font-size:10px;font-weight:700;color:'+s.c+';text-transform:uppercase">'+s.l+'</div>'+
+'<div style="font-size:28px;font-weight:800;color:'+s.c+'">'+s.n+'</div></div>';
+});
+h+='</div>';
+if(Object.keys(byType).length>0){
+h+='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">';
+Object.entries(byType).forEach(function(kv){
+var t=kv[0],v=kv[1];
+var c=t.includes('aFRR')?'#1d4ed8':t.includes('Extra')?'#7c3aed':'#059669';
+h+='<div style="background:#fff;border:1px solid '+c+';border-radius:20px;padding:3px 10px;font-size:11px;color:'+c+';font-weight:600">'+t+': '+v.n+' bud - '+v.mw.toFixed(0)+' MW ('+v.prMin.toFixed(2)+'-'+v.prMax.toFixed(2)+' kr/MW)</div>';
+});
+h+='</div>';
+}
+if(acc.length>0){
+h+='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">';
+h+='<thead><tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0">';
+['Marked','Dir','MW','Pris kr/MW','Fra','Til'].forEach(function(c){h+='<th style="padding:6px 10px;text-align:left;font-size:11px;font-weight:700;color:#64748b;white-space:nowrap">'+c+'</th>';});
+h+='</tr></thead><tbody>';
+acc.slice().sort(function(a,b){return a.fr.localeCompare(b.fr);}).forEach(function(b,i){
+var c=b.nm.includes('aFRR')?'#1d4ed8':b.nm.includes('Extra')?'#7c3aed':'#059669';
+var fra=b.fr?new Date(b.fr).toLocaleString('da-DK',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+var til=b.to?new Date(b.to).toLocaleString('da-DK',{hour:'2-digit',minute:'2-digit'}):'';
+h+='<tr style="border-bottom:1px solid #f1f5f9;background:'+(i%2===0?'#fff':'#fafafa')+'">';
+h+='<td style="padding:6px 10px"><span style="background:'+c+'18;color:'+c+';padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600">'+b.nm+'</span></td>';
+h+='<td style="padding:6px 10px"><span style="background:'+(b.dir==='Up'?'#dbeafe':'#fce7f3')+';color:'+(b.dir==='Up'?'#1d4ed8':'#9d174d')+';padding:2px 6px;border-radius:4px;font-size:11px">'+(b.dir==='Up'?'Op':'Ned')+'</span></td>';
+h+='<td style="padding:6px 10px;font-weight:700">'+b.mw.toFixed(1)+'</td>';
+h+='<td style="padding:6px 10px">'+b.pr.toFixed(2)+'</td>';
+h+='<td style="padding:6px 10px;color:#94a3b8">'+fra+'</td>';
+h+='<td style="padding:6px 10px;color:#94a3b8">'+til+'</td>';
+h+='</tr>';
+});
+h+='</tbody></table></div>';
+}
+el.innerHTML=h;
+}catch(e2){el.innerHTML='<p style="color:var(--text3)">Fejl: '+e2.message+'</p>';}
 }
 
 function renderRevenue(xml){
-  var el=document.getElementById('revenue-panel');
-  if(!el) return;
-  try{
-    var doc=new DOMParser().parseFromString(xml,'text/xml');
-    var rows=doc.querySelectorAll('RevenueReportData');
-    // Grupper per BidType
-    var grouped={};
-    var total=0;
-    rows.forEach(function(r){
-      var bt=r.querySelector('Bidtype')?.textContent||'Ukendt';
-      var mwh=parseFloat(r.querySelector('BidMWh')?.textContent||0);
-      var price=parseFloat(r.querySelector('BidActivationPricePrMWh')?.textContent||0);
-      var rev=Math.abs(mwh)*price;
-      if(!grouped[bt]) grouped[bt]={mwh:0,rev:0,count:0};
-      grouped[bt].mwh+=mwh;
-      grouped[bt].rev+=rev;
-      grouped[bt].count++;
-      total+=rev;
-    });
-
-    var h='<div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;border-radius:8px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:16px">';
-    h+='<div><div style="font-size:11px;font-weight:700;color:#166534;text-transform:uppercase">Total indtgt (periode)</div>';
-    h+='<div style="font-size:32px;font-weight:800;color:#15803d">'+Math.round(total).toLocaleString('da-DK')+' <span style="font-size:16px">kr</span></div></div></div>';
-
-    h+='<table style="width:100%;border-collapse:collapse;font-size:12px">';
-    h+='<thead><tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0"><th style="padding:6px;text-align:left">Marked</th><th style="padding:6px;text-align:right">MWh</th><th style="padding:6px;text-align:right">Indtgt (kr)</th></tr></thead><tbody>';
-    Object.entries(grouped).forEach(function(kv){
-      var bt=kv[0],v=kv[1];
-      var navn=bt==='BalanceMarket'?'Balancemarked':bt==='AutomaticReserves'?'aFRR':bt==='ManualReserves'?'mFRR':bt==='ManualReservesExtra'?'mFRR Extra':bt;
-      h+='<tr style="border-bottom:1px solid #f1f5f9">';
-      h+='<td style="padding:6px;font-weight:600">'+navn+'</td>';
-      h+='<td style="padding:6px;text-align:right">'+v.mwh.toFixed(2)+'</td>';
-      h+='<td style="padding:6px;text-align:right;font-weight:700;color:#15803d">'+Math.round(v.rev).toLocaleString('da-DK')+'</td></tr>';
-    });
-    h+='</tbody></table>';
-    el.innerHTML=h;
-  }catch(e2){el.innerHTML='<p style="color:var(--text3)">Fejl ved parsing af revenue-data.</p>';}
+var el=document.getElementById('revenue-panel');
+if(!el) return;
+try{
+var doc=new DOMParser().parseFromString(xml,'text/xml');
+var rows=Array.from(doc.querySelectorAll('RevenueReportData'));
+var nm={'BalanceMarket':'Balancemarked','ManualReserveAvailable':'mFRR Kapacitet','ManualReserveExtra':'mFRR Extra','AFRRCapacity15':'aFRR Kapacitet','AFRREnergy15':'aFRR Energi','MFRREnergy15':'mFRR Energi'};
+var grouped={};var total=0;
+rows.forEach(function(r){
+var bt=r.querySelector('Bidtype')?.textContent||'Andet';
+var mwh=parseFloat(r.querySelector('BidMWh')?.textContent||0);
+var actPr=parseFloat(r.querySelector('BidActivationPricePrMWh')?.textContent||0);
+var bidPr=parseFloat(r.querySelector('BidPricePrMWh')?.textContent||0);
+var kapRev=Math.abs(mwh)*bidPr;
+var actRev=Math.abs(mwh)*(actPr-bidPr);
+var n=nm[bt]||bt;
+if(!grouped[n]) grouped[n]={mwh:0,kap:0,act:0};
+grouped[n].mwh+=mwh;grouped[n].kap+=kapRev;grouped[n].act+=actRev;
+total+=kapRev+actRev;
+});
+var h='<div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;border-radius:10px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">';
+h+='<div><div style="font-size:10px;font-weight:700;color:#166534;text-transform:uppercase;margin-bottom:2px">Total indt&aelig;gt (periode)</div>';
+h+='<div style="font-size:32px;font-weight:800;color:#15803d">'+Math.round(total).toLocaleString('da-DK')+' <span style="font-size:16px;font-weight:500">kr</span></div></div>';
+h+='<div style="text-align:right;font-size:11px;color:#166534">'+rows.length+' rk<br>'+Object.keys(grouped).length+' markeder</div></div>';
+h+='<table style="width:100%;border-collapse:collapse;font-size:12px">';
+h+='<thead><tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0">';
+['Marked','MWh','Kapacitet (kr)','Aktivering (kr)','Total (kr)'].forEach(function(c){h+='<th style="padding:6px 10px;text-align:left;font-size:11px;font-weight:700;color:#64748b">'+c+'</th>';});
+h+='</tr></thead><tbody>';
+var ord=['mFRR Kapacitet','mFRR Extra','aFRR Kapacitet','aFRR Energi','mFRR Energi','Balancemarked'];
+Object.entries(grouped).sort(function(a,b){var ai=ord.indexOf(a[0]),bi=ord.indexOf(b[0]);return(ai<0?99:ai)-(bi<0?99:bi);}).forEach(function(kv,i){
+var n=kv[0],v=kv[1];var t=v.kap+v.act;
+var c=n.includes('aFRR')?'#1d4ed8':n.includes('Extra')?'#7c3aed':n==='Balancemarked'?'#6b7280':'#059669';
+h+='<tr style="border-bottom:1px solid #f1f5f9;background:'+(i%2===0?'#fff':'#fafafa')+'">';
+h+='<td style="padding:6px 10px"><span style="background:'+c+'18;color:'+c+';padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600">'+n+'</span></td>';
+h+='<td style="padding:6px 10px;color:#374151">'+v.mwh.toFixed(2)+'</td>';
+h+='<td style="padding:6px 10px">'+Math.round(v.kap).toLocaleString('da-DK')+'</td>';
+h+='<td style="padding:6px 10px">'+Math.round(v.act).toLocaleString('da-DK')+'</td>';
+h+='<td style="padding:6px 10px;font-weight:700;color:'+(t>=0?'#15803d':'#dc2626')+'">'+Math.round(t).toLocaleString('da-DK')+'</td>';
+h+='</tr>';
+});
+h+='</tbody></table>';
+h+='<div style="margin-top:6px;font-size:11px;color:var(--text3)">Centrica/NEAS Energy - '+new Date().toLocaleTimeString('da-DK')+'</div>';
+el.innerHTML=h;
+}catch(e2){el.innerHTML='<p style="color:var(--text3)">Fejl: '+e2.message+'</p>';}
 }
 function blokLabel(mw){
   if(mw===0) return 'Ingen deltagelse';
