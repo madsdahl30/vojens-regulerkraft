@@ -925,19 +925,26 @@ function renderIndsigter(){
 
 function hentPlanning(tok){
   var SITE='844439ef-b88a-4859-9752-5f680c6d7317';
-  var today=new Date();
-  var s=new Date(today.getFullYear(),today.getMonth(),today.getDate()-1).toISOString();
-  var e=new Date(today.getFullYear(),today.getMonth(),today.getDate()+1).toISOString();
-
+  // Centrica bruger midnat CET: UTC+2 om sommeren = 22:00 UTC dagen foer
+  var now=new Date();
+  var cetOffset=2; // CEST (sommertid)
+  var cetMidnat=new Date(now.getFullYear(),now.getMonth(),now.getDate(),0,0,0);
+  var s=new Date(cetMidnat.getTime()-cetOffset*3600000);
+  var e=new Date(s.getTime()+24*3600000);
+  var sf=s.toISOString(); var ef=e.toISOString();
+  document.getElementById('planning-panel').innerHTML='<div style="padding:12px;color:var(--text3)">Henter...</div>';
+  document.getElementById('revenue-panel').innerHTML='<div style="padding:12px;color:var(--text3)">Henter...</div>';
   Promise.all([
-    fetch('https://vojens-regulerkraft.madsdahl30.workers.dev/BidApi/v3/assets/sites/bids?ids='+SITE+'&start='+encodeURIComponent(s)+'&end='+encodeURIComponent(e)+'&bidtypes=0&mergeBids=true',
+    fetch('https://vojens-regulerkraft.madsdahl30.workers.dev/BidApi/v3/assets/sites/bids?ids='+SITE+'&start='+encodeURIComponent(sf)+'&end='+encodeURIComponent(ef)+'&bidtypes=0&mergeBids=true',
       {headers:{Authorization:'Bearer '+tok}}).then(function(r){return r.text();}),
-    fetch('https://vojens-regulerkraft.madsdahl30.workers.dev/v1/Chp/siteReport/revenue?siteId='+SITE+'&from='+encodeURIComponent(s)+'&to='+encodeURIComponent(e),
+    fetch('https://vojens-regulerkraft.madsdahl30.workers.dev/v1/Chp/siteReport/revenue?siteId='+SITE+'&from='+encodeURIComponent(sf)+'&to='+encodeURIComponent(ef),
       {headers:{Authorization:'Bearer '+tok}}).then(function(r){return r.text();})
   ]).then(function(res){
     renderPlanning(res[0]);
-    renderRevenue(res[1]);
-  }).catch(function(err){console.log('Planning/Revenue fejl:',err);});
+    renderRevenue(res[1], sf, ef);
+  }).catch(function(err){
+    document.getElementById('planning-panel').innerHTML='<p style="color:red">Fejl: '+err.message+'</p>';
+  });
 }
 
 function renderPlanning(xml){
@@ -1012,50 +1019,79 @@ el.innerHTML=h;
 }catch(e2){el.innerHTML='<p style="color:var(--text3)">Fejl: '+e2.message+'</p>';}
 }
 
-function renderRevenue(xml){
-var el=document.getElementById('revenue-panel');
-if(!el) return;
-try{
-var doc=new DOMParser().parseFromString(xml,'text/xml');
-var rows=Array.from(doc.querySelectorAll('RevenueReportData'));
-var nm={'BalanceMarket':'Balancemarked','ManualReserveAvailable':'mFRR Kapacitet','ManualReserveExtra':'mFRR Extra','AFRRCapacity15':'aFRR Kapacitet','AFRREnergy15':'aFRR Energi','MFRREnergy15':'mFRR Energi'};
-var grouped={};var total=0;
-rows.forEach(function(r){
-var bt=r.querySelector('Bidtype')?.textContent||'Andet';
-var mwh=parseFloat(r.querySelector('BidMWh')?.textContent||0);
-var actPr=parseFloat(r.querySelector('BidActivationPricePrMWh')?.textContent||0);
-var bidPr=parseFloat(r.querySelector('BidPricePrMWh')?.textContent||0);
-var kapRev=Math.abs(mwh)*bidPr;
-var actRev=Math.abs(mwh)*(actPr-bidPr);
-var n=nm[bt]||bt;
-if(!grouped[n]) grouped[n]={mwh:0,kap:0,act:0};
-grouped[n].mwh+=mwh;grouped[n].kap+=kapRev;grouped[n].act+=actRev;
-total+=kapRev+actRev;
-});
-var h='<div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;border-radius:10px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">';
-h+='<div><div style="font-size:10px;font-weight:700;color:#166534;text-transform:uppercase;margin-bottom:2px">Total indt&aelig;gt (periode)</div>';
-h+='<div style="font-size:32px;font-weight:800;color:#15803d">'+Math.round(total).toLocaleString('da-DK')+' <span style="font-size:16px;font-weight:500">kr</span></div></div>';
-h+='<div style="text-align:right;font-size:11px;color:#166534">'+rows.length+' rk<br>'+Object.keys(grouped).length+' markeder</div></div>';
-h+='<table style="width:100%;border-collapse:collapse;font-size:12px">';
-h+='<thead><tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0">';
-['Marked','MWh','Kapacitet (kr)','Aktivering (kr)','Total (kr)'].forEach(function(c){h+='<th style="padding:6px 10px;text-align:left;font-size:11px;font-weight:700;color:#64748b">'+c+'</th>';});
-h+='</tr></thead><tbody>';
-var ord=['mFRR Kapacitet','mFRR Extra','aFRR Kapacitet','aFRR Energi','mFRR Energi','Balancemarked'];
-Object.entries(grouped).sort(function(a,b){var ai=ord.indexOf(a[0]),bi=ord.indexOf(b[0]);return(ai<0?99:ai)-(bi<0?99:bi);}).forEach(function(kv,i){
-var n=kv[0],v=kv[1];var t=v.kap+v.act;
-var c=n.includes('aFRR')?'#1d4ed8':n.includes('Extra')?'#7c3aed':n==='Balancemarked'?'#6b7280':'#059669';
-h+='<tr style="border-bottom:1px solid #f1f5f9;background:'+(i%2===0?'#fff':'#fafafa')+'">';
-h+='<td style="padding:6px 10px"><span style="background:'+c+'18;color:'+c+';padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600">'+n+'</span></td>';
-h+='<td style="padding:6px 10px;color:#374151">'+v.mwh.toFixed(2)+'</td>';
-h+='<td style="padding:6px 10px">'+Math.round(v.kap).toLocaleString('da-DK')+'</td>';
-h+='<td style="padding:6px 10px">'+Math.round(v.act).toLocaleString('da-DK')+'</td>';
-h+='<td style="padding:6px 10px;font-weight:700;color:'+(t>=0?'#15803d':'#dc2626')+'">'+Math.round(t).toLocaleString('da-DK')+'</td>';
-h+='</tr>';
-});
-h+='</tbody></table>';
-h+='<div style="margin-top:6px;font-size:11px;color:var(--text3)">Centrica/NEAS Energy - '+new Date().toLocaleTimeString('da-DK')+'</div>';
-el.innerHTML=h;
-}catch(e2){el.innerHTML='<p style="color:var(--text3)">Fejl: '+e2.message+'</p>';}
+function renderRevenue(xml, sf, ef){
+  var el=document.getElementById('revenue-panel');
+  if(!el) return;
+  try{
+    var doc=new DOMParser().parseFromString(xml,'text/xml');
+    var rows=Array.from(doc.querySelectorAll('RevenueReportData'));
+    var nm={
+      'BalanceMarket':'Balancemarked',
+      'ManualReserveAvailable':'mFRR Kapacitet',
+      'ManualReserveExtra':'mFRR Extra',
+      'AFRRCapacity15':'aFRR Kapacitet',
+      'AFRREnergy15':'aFRR Energi',
+      'MFRREnergy15':'mFRR Energi'
+    };
+    var grouped={};
+    var total=0;
+    rows.forEach(function(r){
+      var bt=r.querySelector('Bidtype')?.textContent||'Andet';
+      var mwh=parseFloat(r.querySelector('BidMWh')?.textContent||0);
+      var actPr=parseFloat(r.querySelector('BidActivationPricePrMWh')?.textContent||0);
+      var bidPr=parseFloat(r.querySelector('BidPricePrMWh')?.textContent||0);
+      // Korrekt formel (matchende Centrica): total = |mwh| * actPr
+      // Kapacitet = |mwh| * bidPr, Aktivering = |mwh| * (actPr - bidPr)
+      var absMwh=Math.abs(mwh);
+      var kapRev=absMwh*bidPr;
+      var actRev=absMwh*(actPr-bidPr);
+      var rowTotal=absMwh*actPr;
+      var n=nm[bt]||bt;
+      if(!grouped[n]) grouped[n]={mwh:0,kap:0,act:0,total:0};
+      grouped[n].mwh+=mwh;
+      grouped[n].kap+=kapRev;
+      grouped[n].act+=actRev;
+      grouped[n].total+=rowTotal;
+      total+=rowTotal;
+    });
+    // Dato-label
+    var datoStr='';
+    if(sf){
+      var d=new Date(sf);
+      datoStr=d.toLocaleDateString('da-DK',{weekday:'short',day:'numeric',month:'short'});
+    }
+    var h='<div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #86efac;border-radius:10px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">';
+    h+='<div>';
+    h+='<div style="font-size:10px;font-weight:700;color:#166534;text-transform:uppercase;margin-bottom:2px">Daglig indt&aelig;gt'+( datoStr?' - '+datoStr:'')+' ('+rows.length+' poster)</div>';
+    h+='<div style="font-size:32px;font-weight:800;color:#15803d">'+Math.round(total).toLocaleString('da-DK')+' <span style="font-size:16px;font-weight:500">kr</span></div>';
+    h+='</div>';
+    h+='<div style="text-align:right;font-size:12px;color:#166534;font-weight:600">'+Object.keys(grouped).length+' markeder</div>';
+    h+='</div>';
+    h+='<table style="width:100%;border-collapse:collapse;font-size:12px">';
+    h+='<thead><tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0">';
+    ['Marked','MWh','Kapacitet (kr)','Aktivering (kr)','Total (kr)'].forEach(function(c){
+      h+='<th style="padding:6px 10px;text-align:left;font-size:11px;font-weight:700;color:#64748b">'+c+'</th>';
+    });
+    h+='</tr></thead><tbody>';
+    var ord=['mFRR Kapacitet','mFRR Extra','aFRR Kapacitet','aFRR Energi','mFRR Energi','Balancemarked'];
+    Object.entries(grouped).sort(function(a,b){
+      var ai=ord.indexOf(a[0]),bi=ord.indexOf(b[0]);
+      return (ai<0?99:ai)-(bi<0?99:bi);
+    }).forEach(function(kv,i){
+      var n=kv[0],v=kv[1];
+      var c=n.includes('aFRR')?'#1d4ed8':n.includes('Extra')?'#7c3aed':n==='Balancemarked'?'#6b7280':'#059669';
+      h+='<tr style="border-bottom:1px solid #f1f5f9;background:'+(i%2===0?'#fff':'#fafafa')+'">';
+      h+='<td style="padding:6px 10px"><span style="background:'+c+'18;color:'+c+';padding:2px 7px;border-radius:4px;font-size:11px;font-weight:600">'+n+'</span></td>';
+      h+='<td style="padding:6px 10px;color:#374151">'+v.mwh.toFixed(2)+'</td>';
+      h+='<td style="padding:6px 10px">'+Math.round(v.kap).toLocaleString('da-DK')+'</td>';
+      h+='<td style="padding:6px 10px">'+Math.round(v.act).toLocaleString('da-DK')+'</td>';
+      h+='<td style="padding:6px 10px;font-weight:700;color:'+(v.total>=0?'#15803d':'#dc2626')+'">'+Math.round(v.total).toLocaleString('da-DK')+'</td>';
+      h+='</tr>';
+    });
+    h+='</tbody></table>';
+    h+='<div style="margin-top:6px;font-size:11px;color:var(--text3)">Kilde: Centrica/NEAS - opdateret '+new Date().toLocaleTimeString('da-DK')+'</div>';
+    el.innerHTML=h;
+  }catch(e2){el.innerHTML='<p style="color:var(--text3)">Fejl: '+e2.message+'</p>';}
 }
 function blokLabel(mw){
   if(mw===0) return 'Ingen deltagelse';
