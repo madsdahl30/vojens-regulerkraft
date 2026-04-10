@@ -1499,7 +1499,7 @@ window.fetchCentrica=async function(days){
 window.renderCentrica=function(data,days){
   const rev=function(t){return data.filter(function(r){return r.Bidtype===t;}).reduce(function(s,r){return s+Math.abs(r.BidMWh)*r.BidActivationPricePrMWh;},0);};
   const cnt=function(t){return data.filter(function(r){return r.Bidtype===t;}).length;};
-  const avg=function(t,f){const rs=data.filter(function(r){return r.Bidtype===t;});return rs.length?Math.round(rs.reduce(function(s,r){return s+f(r);},0)/rs.length):0;};
+  const avg=function(t,f){const rs=data.filter(function(r){return r.Bidtype===t;});return rs.length?Math.round(rs.reduce(function(s,r){return s+parseFloat(f(r)||0);},0)/rs.length):0;};
   const total=['ManualReserveAvailable','AFRRCapacity15','ManualReserveExtra','AFRREnergy15','MFRREnergy15'].reduce(function(s,t){return s+rev(t);},0);
   document.getElementById('c-period').textContent='Seneste '+days+' dage';
   document.getElementById('c-metrics').innerHTML=
