@@ -927,10 +927,11 @@ function hentPlanning(tok){
   var SITE='844439ef-b88a-4859-9752-5f680c6d7317';
   // Centrica bruger midnat CET: UTC+2 om sommeren = 22:00 UTC dagen foer
   var now=new Date();
-  var cetOffset=2; // CEST (sommertid)
-  var cetMidnat=new Date(now.getFullYear(),now.getMonth(),now.getDate(),0,0,0);
-  var s=new Date(cetMidnat.getTime()-cetOffset*3600000);
-  var e=new Date(s.getTime()+24*3600000);
+  // CET/CEST midnat = 22:00 UTC (CEST, UTC+2) dagen foer
+  // Brug UTC-datoen og traek 2 timer for at ramme 22:00 UTC
+  var utcMidnat=Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate(),0,0,0);
+  var s=new Date(utcMidnat-2*3600000); // 22:00 UTC foregaaende dag
+  var e=new Date(utcMidnat+22*3600000); // 22:00 UTC dags dato
   var sf=s.toISOString(); var ef=e.toISOString();
   document.getElementById('planning-panel').innerHTML='<div style="padding:12px;color:var(--text3)">Henter...</div>';
   document.getElementById('revenue-panel').innerHTML='<div style="padding:12px;color:var(--text3)">Henter...</div>';
