@@ -1458,75 +1458,87 @@ window.fetchCentrica=async function(days){
       setSt('ok','');return;
     }
     const PROXY='https://vojens-regulerkraft.madsdahl30.workers.dev';
-    const today=new Date(),start=new Date(today);start.setDate(start.getDate()-days);
-    const fmt=d=>d.toISOString().split('.')[0];
-    const resp=await fetch(PROXY+'/v1/Chp/siteReport/revenue?siteId=844439ef-b88a-4859-9752-5f680c6d7317&from='+fmt(start)+'&to='+fmt(today),
-      {headers:{'Authorization':'Bearer '+token,'Accept':'application/json'}});
+    // Korrekt CET tidsperiode: midnat dansk tid = 22:00 UTC
+    const now=new Date();
+    const todayUtcMidnat=Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate(),0,0,0);
+    const toUtc=new Date(todayUtcMidnat+22*3600000);   // i dag 22:00 UTC
+    const fromUtc=new Date(toUtc.getTime()-days*24*3600000); // days dage tilbage
+    const fmt=d=>d.toISOString();
+    const resp=await fetch(PROXY+'/v1/Chp/siteReport/revenue?siteId=844439ef-b88a-4859-9752-5f680c6d7317&from='+encodeURIComponent(fmt(fromUtc))+'&to='+encodeURIComponent(fmt(toUtc)),
+      {headers:{'Authorization':'Bearer '+token}});
     if(resp.status===401){
       localStorage.removeItem('centrica_token');
-      // Auto-forsg: hent token fra Centrica-tab via extension
-    document.getElementById('c-metrics').innerHTML='<div class="info-box amber" style="grid-column:1/-1"><div class="ibtag">Henter token...</div><p>Forsger automatisk login...</p></div>';
-    setSt('ok','');
-    autoHentToken();
-    return;
+      document.getElementById('c-metrics').innerHTML='<div class="info-box amber" style="grid-column:1/-1"><div class="ibtag">Henter token...</div><p>Forsger automatisk login...</p></div>';
+      setSt('ok',''); autoHentToken(); return;
     }
     const xml=await resp.text();
-    let data;
-    try{data=JSON.parse(xml);}catch(e){
-      // Centrica svarer XML: ArrayOfRevenueReportData > RevenueReportData
-      const p=new DOMParser(),doc=p.parseFromString(xml,'text/xml');
-      const ns='http://schemas.datacontract.org/2004/07/Neas.ReportApi.Models.Report';
-      const items=doc.getElementsByTagNameNS(ns,'RevenueReportData');
-      data=Array.from(items).map(function(el){
-        const o={};
-        Array.from(el.children).forEach(function(c){o[c.localName]=c.textContent;});
-        return o;
-      });
-      if(!data.length) data=[{_xml:xml.slice(0,200)}];
+    // Robust XML-parsing uden namespace
+    const doc=new DOMParser().parseFromString(xml,'text/xml');
+    const items=doc.querySelectorAll('RevenueReportData');
+    const data=Array.from(items).map(function(el){
+      return {
+        Bidtype: el.querySelector('Bidtype')?.textContent||'',
+        BidMWh: parseFloat(el.querySelector('BidMWh')?.textContent||0),
+        BidActivationPricePrMWh: parseFloat(el.querySelector('BidActivationPricePrMWh')?.textContent||0),
+        BidPricePrMWh: parseFloat(el.querySelector('BidPricePrMWh')?.textContent||0),
+        FromUtc: el.querySelector('FromUtc')?.textContent||'',
+        UnitName: el.querySelector('UnitName')?.textContent||''
+      };
+    });
+    if(!data.length){
+      document.getElementById('c-metrics').innerHTML='<div class="info-box amber" style="grid-column:1/-1"><p>Ingen data for perioden</p></div>';
+      setSt('ok',''); return;
     }
     window.renderCentrica(data,days);
-    setSt('ok',S?'Opdateret '+S.at:'');
+    setSt('ok','');
   }catch(e){
     document.getElementById('c-metrics').innerHTML='<div class="info-box red" style="grid-column:1/-1"><div class="ibtag">Fejl</div><p>'+e.message+'</p></div>';
     setSt('ok','');
   }
 };
 window.renderCentrica=function(data,days){
-  const rev=t=>data.filter(r=>r.Bidtype===t).reduce((s,r)=>s+r.BidMWh*r.BidActivationPricePrMWh,0);
-  const cnt=t=>data.filter(r=>r.Bidtype===t).length;
-  const avg=(t,f)=>{const rs=data.filter(r=>r.Bidtype===t);return rs.length?Math.round(rs.reduce((s,r)=>s+f(r),0)/rs.length):0;};
-  const total=['ManualReserveAvailable','AFRRCapacity15','ManualReserveExtra','AFRREnergy15','MFRREnergy15'].reduce((s,t)=>s+rev(t),0);
+  const rev=function(t){return data.filter(function(r){return r.Bidtype===t;}).reduce(function(s,r){return s+Math.abs(r.BidMWh)*r.BidActivationPricePrMWh;},0);};
+  const cnt=function(t){return data.filter(function(r){return r.Bidtype===t;}).length;};
+  const avg=function(t,f){const rs=data.filter(function(r){return r.Bidtype===t;});return rs.length?Math.round(rs.reduce(function(s,r){return s+f(r);},0)/rs.length):0;};
+  const total=['ManualReserveAvailable','AFRRCapacity15','ManualReserveExtra','AFRREnergy15','MFRREnergy15'].reduce(function(s,t){return s+rev(t);},0);
   document.getElementById('c-period').textContent='Seneste '+days+' dage';
   document.getElementById('c-metrics').innerHTML=
     '<div class="metric"><div class="ml">Total omsaetning</div><div class="mv">'+fmtRev(total)+'</div><div class="ms">alle markeder</div></div>'+
     '<div class="metric"><div class="ml">Dagligt snit</div><div class="mv">'+fmtRev(total/days)+'</div><div class="ms">pr. dag</div></div>'+
-    '<div class="metric"><div class="ml">aFRR beredskab</div><div class="mv" style="color:var(--afrr)">'+fmtRev(rev('AFRRCapacity15'))+'</div><div class="ms">'+cnt('AFRRCapacity15')+' timer  '+avg('AFRRCapacity15',r=>r.BidActivationPricePrMWh)+' kr./MW</div></div>'+
-    '<div class="metric"><div class="ml">mFRR beredskab</div><div class="mv" style="color:var(--mfrr)">'+fmtRev(rev('ManualReserveAvailable'))+'</div><div class="ms">'+cnt('ManualReserveAvailable')+' timer  '+avg('ManualReserveAvailable',r=>r.BidActivationPricePrMWh)+' kr./MW</div></div>'+
+    '<div class="metric"><div class="ml">aFRR beredskab</div><div class="mv" style="color:var(--afrr)">'+fmtRev(rev('AFRRCapacity15'))+'</div><div class="ms">'+cnt('AFRRCapacity15')+' timer</div></div>'+
+    '<div class="metric"><div class="ml">mFRR beredskab</div><div class="mv" style="color:var(--mfrr)">'+fmtRev(rev('ManualReserveAvailable'))+'</div><div class="ms">'+cnt('ManualReserveAvailable')+' timer</div></div>'+
     '<div class="metric"><div class="ml">mFRR Extra</div><div class="mv" style="color:var(--extra)">'+fmtRev(rev('ManualReserveExtra'))+'</div><div class="ms">'+cnt('ManualReserveExtra')+' vundne timer</div></div>'+
     '<div class="metric"><div class="ml">Aktiveringer</div><div class="mv" style="color:#7C3AED">'+fmtRev(rev('AFRREnergy15')+rev('MFRREnergy15'))+'</div><div class="ms">'+(cnt('AFRREnergy15')+cnt('MFRREnergy15'))+' aktiveringer</div></div>';
   const byDay={};
-  data.forEach(r=>{const day=r.FromUtc.split('T')[0];if(!byDay[day])byDay[day]={a:0,m:0,x:0,e:0};
-    const v=r.BidMWh*r.BidActivationPricePrMWh;
-    if(r.Bidtype==='AFRRCapacity15')byDay[day].a+=v;else if(r.Bidtype==='ManualReserveAvailable')byDay[day].m+=v;
-    else if(r.Bidtype==='ManualReserveExtra')byDay[day].x+=v;else byDay[day].e+=v;});
+  data.forEach(function(r){
+    const day=r.FromUtc.split('T')[0];
+    if(!byDay[day])byDay[day]={a:0,m:0,x:0,e:0};
+    const v=Math.abs(r.BidMWh)*r.BidActivationPricePrMWh;
+    if(r.Bidtype==='AFRRCapacity15')byDay[day].a+=v;
+    else if(r.Bidtype==='ManualReserveAvailable')byDay[day].m+=v;
+    else if(r.Bidtype==='ManualReserveExtra')byDay[day].x+=v;
+    else byDay[day].e+=v;
+  });
   const ds=Object.keys(byDay).sort();
-  document.getElementById('c-chart-card').style.display='block';document.getElementById('c-perf-card').style.display='block';
+  document.getElementById('c-chart-card').style.display='block';
+  document.getElementById('c-perf-card').style.display='block';
   if(cChart)cChart.destroy();
-  cChart=new Chart(document.getElementById('cChart'),{type:'bar',data:{labels:ds.map(d=>d.slice(5)),datasets:[
-    {label:'aFRR',data:ds.map(d=>Math.round(byDay[d].a)),backgroundColor:'rgba(37,99,235,0.75)',stack:'s'},
-    {label:'mFRR',data:ds.map(d=>Math.round(byDay[d].m)),backgroundColor:'rgba(5,150,105,0.75)',stack:'s'},
-    {label:'Extra',data:ds.map(d=>Math.round(byDay[d].x)),backgroundColor:'rgba(217,119,6,0.75)',stack:'s'},
-    {label:'Aktiv.',data:ds.map(d=>Math.round(byDay[d].e)),backgroundColor:'rgba(124,58,237,0.75)',stack:'s'}
+  cChart=new Chart(document.getElementById('cChart'),{type:'bar',data:{labels:ds.map(function(d){return d.slice(5);}),datasets:[
+    {label:'aFRR',data:ds.map(function(d){return Math.round(byDay[d].a);}),backgroundColor:'rgba(37,99,235,0.75)',stack:'s'},
+    {label:'mFRR',data:ds.map(function(d){return Math.round(byDay[d].m);}),backgroundColor:'rgba(5,150,105,0.75)',stack:'s'},
+    {label:'Extra',data:ds.map(function(d){return Math.round(byDay[d].x);}),backgroundColor:'rgba(217,119,6,0.75)',stack:'s'},
+    {label:'Aktiv.',data:ds.map(function(d){return Math.round(byDay[d].e);}),backgroundColor:'rgba(124,58,237,0.75)',stack:'s'}
   ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
     scales:{x:{stacked:true,ticks:{font:{size:9},maxRotation:45,autoSkip:true,maxTicksLimit:20}},
-            y:{stacked:true,ticks:{font:{size:10},callback:v=>Math.round(v/1000)+'k'}}}}});
+            y:{stacked:true,ticks:{font:{size:10},callback:function(v){return Math.round(v/1000)+'k';}}}}}});
   const lbl={'ManualReserveAvailable':'mFRR beredskab','AFRRCapacity15':'aFRR beredskab','ManualReserveExtra':'mFRR Extra'};
-  const rows=['ManualReserveAvailable','AFRRCapacity15','ManualReserveExtra'].filter(t=>cnt(t)>0).map(t=>
-    '<tr><td style="font-weight:500">'+lbl[t]+'</td><td>'+cnt(t)+' timer</td>'+
-    '<td style="color:var(--text3)">'+avg(t,r=>r.BidPricePrMWh)+' kr./MW</td>'+
-    '<td style="color:var(--text3)">'+avg(t,r=>r.BidActivationPricePrMWh)+' kr./MW</td>'+
-    '<td style="font-weight:600;color:#059669">+'+(avg(t,r=>r.BidActivationPricePrMWh)-avg(t,r=>r.BidPricePrMWh))+' kr./MW</td>'+
-    '<td style="color:var(--text3)">'+fmtRev(rev(t))+'</td></tr>');
+  const rows=['ManualReserveAvailable','AFRRCapacity15','ManualReserveExtra'].filter(function(t){return cnt(t)>0;}).map(function(t){
+    return '<tr><td style="font-weight:500">'+lbl[t]+'</td><td>'+cnt(t)+' timer</td>'+
+      '<td style="color:var(--text3)">'+avg(t,function(r){return r.BidPricePrMWh;})+' kr./MW</td>'+
+      '<td style="color:var(--text3)">'+avg(t,function(r){return r.BidActivationPricePrMWh;})+' kr./MW</td>'+
+      '<td style="font-weight:600;color:#059669">+'+(avg(t,function(r){return r.BidActivationPricePrMWh;})-avg(t,function(r){return r.BidPricePrMWh;}))+' kr./MW</td>'+
+      '<td style="color:var(--text3)">'+fmtRev(rev(t))+'</td></tr>';
+  });
   document.getElementById('c-table').innerHTML='<thead><tr><th>Marked</th><th>Timer</th><th>Din budpris</th><th>Clearing</th><th>Gevinst pr. MW</th><th>Total</th></tr></thead><tbody>'+rows.join('')+'</tbody>';
 };
 
