@@ -367,7 +367,7 @@ function fetchLiveMarked() {
   });
 }
 
-function fetchAll() {
+async function fetchAll() {
   setSt('loading','Henter 90 dages data...');
   try {
     const today = new Date();
