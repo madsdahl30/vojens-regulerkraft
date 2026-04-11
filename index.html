@@ -134,19 +134,18 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
     <span style="font-size:11px;font-weight:400;color:var(--text3);margin-left:4px">DK1 kapacitetspriser</span>
     <button onclick="fetchLiveMarked()" style="margin-left:auto;padding:3px 10px;font-size:11px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text2)">↻ Opdater</button>
   </div>
-  <div id="live-metrics" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
+  <div id="live-metrics" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px">
     <div class="metric"><div class="ml">aFRR ↑ seneste time</div><div class="mv" id="lm-afrr-up">–</div><div class="ms" id="lm-afrr-time">henter...</div></div>
     <div class="metric"><div class="ml">mFRR ↑ seneste time</div><div class="mv" id="lm-mfrr-up">–</div><div class="ms" id="lm-mfrr-time">henter...</div></div>
-    <div class="metric"><div class="ml">aFRR ↓ seneste time</div><div class="mv" id="lm-afrr-down" style="color:var(--text2)">–</div><div class="ms">ned-regulering</div></div>
+    <div class="ms">ned-regulering</div></div>
   </div>
   <div style="overflow-x:auto"><table class="rt" id="live-table">
     <thead><tr>
       <th>Time</th>
       <th style="color:var(--afrr)">aFRR ↑ kr./MW</th>
-      <th style="color:var(--afrr)">aFRR ↓ kr./MW</th>
       <th style="color:var(--mfrr)">mFRR ↑ kr./MW</th>
-      <th>aFRR MW</th>
-      <th>mFRR MW</th>
+      <th style="color:var(--text3);font-size:11px">aFRR MW</th>
+      <th style="color:var(--text3);font-size:11px">mFRR MW</th>
     </tr></thead>
     <tbody id="live-tbody"><tr><td colspan="6" style="text-align:center;padding:16px;color:var(--text3)">Henter live data...</td></tr></tbody>
   </table></div>
@@ -272,97 +271,91 @@ let selHour = 17; // default valgt time
 
 function fetchLiveMarked() {
   var API = 'https://api.energidataservice.dk/dataset';
-  var today = new Date();
-  var yesterday = new Date(today); yesterday.setDate(today.getDate()-1);
+  var now = new Date();
+  // Dansk dato i dag som YYYY-MM-DD - brug dansk lokal tid
+  var todayDK = now.toLocaleDateString('sv-SE', {timeZone:'Europe/Copenhagen'});
+  var currentHDK = parseInt(now.toLocaleTimeString('da-DK', {timeZone:'Europe/Copenhagen', hour:'2-digit', hour12:false}));
+
+  // Hent 2 dage for at fange alle DK-timer inkl. sommertidsforskydning
+  var twoDaysAgo = new Date(now); twoDaysAgo.setDate(now.getDate()-2);
   var fmt = function(d){ return d.toISOString().split('T')[0]; };
   var enc = encodeURIComponent;
 
   Promise.all([
-    fetch(API+'/AfrrReservesNordic?limit=48&filter='+enc('{"PriceArea":"DK1"}')+'&start='+fmt(yesterday)+'&sort=TimeDK%20DESC').then(function(r){return r.json();}),
-    fetch(API+'/mFRRCapacityMarket?limit=48&filter='+enc('{"PriceArea":"DK1"}')+'&start='+fmt(yesterday)+'&sort=TimeDK%20DESC').then(function(r){return r.json();})
+    fetch(API+'/AfrrReservesNordic?limit=60&filter='+enc('{"PriceArea":"DK1"}')+'&start='+fmt(twoDaysAgo)+'&sort=TimeDK%20DESC').then(function(r){return r.json();}),
+    fetch(API+'/mFRRCapacityMarket?limit=60&filter='+enc('{"PriceArea":"DK1"}')+'&start='+fmt(twoDaysAgo)+'&sort=TimeDK%20DESC').then(function(r){return r.json();})
   ]).then(function(res) {
     var aRecs = res[0].records || [];
     var mRecs = res[1].records || [];
 
-    // Filter til kun dagens timer (dansk tid)
-    var todayStr = today.toLocaleDateString('sv-SE'); // YYYY-MM-DD
-    var aTod = aRecs.filter(function(r){ return r.TimeDK && r.TimeDK.startsWith(todayStr); });
-    var mTod = mRecs.filter(function(r){ return r.TimeDK && r.TimeDK.startsWith(todayStr); });
+    // Filtrer til kun records hvor TimeDK starter med dagens dato (stringsammenligning - ingen tidszone-problemer)
+    var aTod = aRecs.filter(function(r){ return r.TimeDK && r.TimeDK.substring(0,10) === todayDK; });
+    var mTod = mRecs.filter(function(r){ return r.TimeDK && r.TimeDK.substring(0,10) === todayDK; });
 
-    // Byg lookup mFRR pr time
-    var mByHour = {};
-    mTod.forEach(function(r){
-      var h = new Date(r.TimeDK).getHours();
-      mByHour[h] = r;
-    });
+    // Byg lookup pr. DK-time (hent time direkte fra string: "2026-04-12T17:00:00" -> 17)
+    var aByHour = {}, mByHour = {};
+    aTod.forEach(function(r){ aByHour[parseInt(r.TimeDK.substring(11,13))] = r; });
+    mTod.forEach(function(r){ mByHour[parseInt(r.TimeDK.substring(11,13))] = r; });
 
-    // Seneste aFRR
-    var latest = aTod[0] || aRecs[0];
-    if (latest) {
-      var latestH = new Date(latest.TimeDK).getHours();
-      var aUp = Math.round(latest.UpPriceDKK);
-      var aDown = Math.round(latest.DownPriceDKK);
-      var timeLabel = 'kl. ' + latestH + ':00–' + (latestH+1) + ':00';
-      // Farv aFRR op-pris: grøn hvis god, rød hvis under 5
-      var aUpColor = aUp >= 50 ? '#059669' : aUp >= 20 ? '#d97706' : '#dc2626';
-      document.getElementById('lm-afrr-up').innerHTML = '<span style="color:'+aUpColor+'">' + aUp + ' kr.</span>';
-      document.getElementById('lm-afrr-time').textContent = timeLabel;
-      document.getElementById('lm-afrr-down').textContent = aDown + ' kr.';
-      // mFRR seneste
-      var mLatest = mByHour[latestH] || mTod[0] || mRecs[0];
-      if (mLatest) {
-        var mUp = Math.round(mLatest.UpPriceDKK);
-        var mUpColor = mUp >= 50 ? '#059669' : mUp >= 20 ? '#d97706' : '#dc2626';
-        document.getElementById('lm-mfrr-up').innerHTML = '<span style="color:'+mUpColor+'">' + mUp + ' kr.</span>';
-        document.getElementById('lm-mfrr-time').textContent = timeLabel;
-      }
+    // Seneste kendte time - hoejeste time-noegle
+    var aHours = Object.keys(aByHour).map(Number);
+    var latestH = aHours.length ? Math.max.apply(null, aHours) : currentHDK;
+    var latestA = aByHour[latestH];
+    var latestM = mByHour[latestH];
+
+    // Opdater metric-bokse - kun aFRR op og mFRR op
+    if (latestA) {
+      var aUp = Math.round(latestA.UpPriceDKK);
+      var timeLabel = 'kl. ' + String(latestH).padStart(2,'0') + ':00–00-59';
+      var aUpColor = aUp >= 100 ? '#059669' : aUp >= 30 ? '#d97706' : '#dc2626';
+      document.getElementById('lm-afrr-up').innerHTML = '<span style="color:'+aUpColor+';font-size:24px;font-weight:700">' + aUp + ' kr.</span>';
+      document.getElementById('lm-afrr-time').textContent = 'kl. ' + String(latestH).padStart(2,'0') + ':00';
+    }
+    if (latestM) {
+      var mUp = Math.round(latestM.UpPriceDKK);
+      var mUpColor = mUp >= 100 ? '#059669' : mUp >= 30 ? '#d97706' : '#dc2626';
+      document.getElementById('lm-mfrr-up').innerHTML = '<span style="color:'+mUpColor+';font-size:24px;font-weight:700">' + mUp + ' kr.</span>';
+      document.getElementById('lm-mfrr-time').textContent = 'kl. ' + String(latestH).padStart(2,'0') + ':00';
     }
 
-    // Byg tabel - alle dagens timer, nyeste øverst
-    var tbody = '';
-    var now = new Date();
-    var currentH = now.getHours();
-
-    // Opbyg array med alle kendte timer
+    // Byg tabel - alle kendte timer i dag, nyeste oeverst
     var allHours = {};
-    aTod.forEach(function(r){ var h=new Date(r.TimeDK).getHours(); allHours[h]={a:r}; });
-    Object.keys(mByHour).forEach(function(h){ if(!allHours[h]) allHours[h]={}; allHours[h].m=mByHour[h]; });
-
+    aHours.forEach(function(h){ allHours[h] = true; });
+    Object.keys(mByHour).map(Number).forEach(function(h){ allHours[h] = true; });
     var hours = Object.keys(allHours).map(Number).sort(function(a,b){return b-a;});
-    if (hours.length === 0) {
-      tbody = '<tr><td colspan="6" style="text-align:center;padding:12px;color:var(--text3)">Ingen data for i dag endnu</td></tr>';
+
+    var tbody = '';
+    if (!hours.length) {
+      tbody = '<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--text3)">Ingen data for i dag endnu</td></tr>';
     } else {
       hours.forEach(function(h) {
-        var a = allHours[h].a;
-        var m = allHours[h].m;
-        var isCurrent = (h === currentH);
-        var aUp   = a ? Math.round(a.UpPriceDKK)   : '–';
-        var aDown = a ? Math.round(a.DownPriceDKK) : '–';
-        var mUp   = m ? Math.round(m.UpPriceDKK)   : '–';
-        var aMW   = a ? Math.round(a.UpProcuredMW)  : '–';
-        var mMW   = m ? Math.round(m.UpProcuredMW)  : '–';
+        var a = aByHour[h];
+        var m = mByHour[h];
+        var isCurrent = (h === currentHDK);
+        var aUp  = a ? Math.round(a.UpPriceDKK)  : '–';
+        var mUp  = m ? Math.round(m.UpPriceDKK)  : '–';
+        var aMW  = a ? Math.round(a.UpProcuredMW) : '–';
+        var mMW  = m ? Math.round(m.UpProcuredMW) : '–';
 
-        // Farv op-pris celler
-        var aUpStyle = typeof aUp==='number' ? (aUp>=50?'color:#059669;font-weight:600':aUp>=20?'color:#d97706':'color:#dc2626;font-weight:600') : '';
-        var mUpStyle = typeof mUp==='number' ? (mUp>=50?'color:#059669;font-weight:600':mUp>=20?'color:#d97706':'color:#dc2626;font-weight:600') : '';
+        var aUpStyle = typeof aUp==='number' ? (aUp>=100?'color:#059669;font-weight:600':aUp>=30?'color:#d97706;font-weight:600':'color:#dc2626;font-weight:600') : '';
+        var mUpStyle = typeof mUp==='number' ? (mUp>=100?'color:#059669;font-weight:600':mUp>=30?'color:#d97706;font-weight:600':'color:#dc2626;font-weight:600') : '';
 
         var rowStyle = isCurrent ? 'background:#eff6ff;' : '';
         var timeStr = 'kl. ' + String(h).padStart(2,'0') + ':00';
-        var curBadge = isCurrent ? ' <span style="font-size:9px;background:#2563eb;color:#fff;padding:1px 5px;border-radius:4px">nu</span>' : '';
+        var curBadge = isCurrent ? ' <span style="font-size:9px;background:#2563eb;color:#fff;padding:1px 5px;border-radius:4px;vertical-align:middle">nu</span>' : '';
 
         tbody += '<tr style="'+rowStyle+'">';
         tbody += '<td style="padding:6px 10px;font-weight:'+(isCurrent?'700':'400')+'">'+timeStr+curBadge+'</td>';
         tbody += '<td style="padding:6px 10px;'+aUpStyle+'">'+aUp+'</td>';
-        tbody += '<td style="padding:6px 10px;color:var(--text2)">'+aDown+'</td>';
         tbody += '<td style="padding:6px 10px;'+mUpStyle+'">'+mUp+'</td>';
-        tbody += '<td style="padding:6px 10px;color:var(--text3)">'+aMW+'</td>';
-        tbody += '<td style="padding:6px 10px;color:var(--text3)">'+mMW+'</td>';
+        tbody += '<td style="padding:6px 10px;color:var(--text3);font-size:12px">'+aMW+'</td>';
+        tbody += '<td style="padding:6px 10px;color:var(--text3);font-size:12px">'+mMW+'</td>';
         tbody += '</tr>';
       });
     }
     document.getElementById('live-tbody').innerHTML = tbody;
   }).catch(function(e){
-    document.getElementById('live-tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#dc2626;padding:12px">Fejl: '+e.message+'</td></tr>';
+    document.getElementById('live-tbody').innerHTML = '<tr><td colspan="5" style="text-align:center;color:#dc2626;padding:12px">Fejl: '+e.message+'</td></tr>';
   });
 }
 
