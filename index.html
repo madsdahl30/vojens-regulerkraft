@@ -1110,13 +1110,13 @@ function blokPris(p50,p75,blok,total,extraSats){
   // Blok 3+4: P75-baseret ved Extra-satsning, ellers P50
   var satsBlok=extraSats&&blok>=Math.max(3,total-1);
   var base=satsBlok?p75:p50;
-  if(total===1) return base;
-  if(total===2) return blok===1?Math.round(p50*.95):Math.round(base*1.05);
-  if(total===3) return blok===1?Math.round(p50*.95):blok===2?p50:Math.round(base*1.05);
+  if(total===1) return Math.max(5,base);
+  if(total===2) return blok===1?Math.max(5,Math.round(p50*.95)):Math.max(5,Math.round(base*1.05));
+  if(total===3) return blok===1?Math.max(5,Math.round(p50*.95)):blok===2?Math.max(5,p50):Math.max(5,Math.round(base*1.05));
   // 4 blokke: blok1=P50-7%, blok2=P50, blok3=base+5%, blok4=base+8%
   var blokBase=blok<=2?p50:base;
   var f=[.93,1.0,1.05,1.08];
-  return Math.round(blokBase*(f[blok-1]||1.08));
+  return Math.max(5,Math.round(blokBase*(f[blok-1]||1.08)));
 }
 
 
@@ -1175,6 +1175,7 @@ function renderBudstrategi(data){
 
   // DATO-LOGIK: Fr kl 09:00 = +1 dag, fra kl 09:00 = +2 dage
   var now=new Date();
+  var TOTAL_MW=(now>=new Date('2025-05-01'))?20:18;
   var daysAhead=now.getHours()>=9?2:1;
   var targetDate=new Date(now);
   targetDate.setDate(targetDate.getDate()+daysAhead);
@@ -1286,9 +1287,9 @@ function renderBudstrategi(data){
     }
 
     // MW-SCENARIER
-    var aMwOptions=[0,4,8,12,18];
+    var aMwOptions=TOTAL_MW===20?[0,4,8,12,16,20]:[0,4,8,12,18];
     var scenarier=aMwOptions.map(function(a){
-      return {a:a,m:18-a,aBlok:a===18?4:a/4,mBlok:(18-a)/4};
+      return {a:a,m:TOTAL_MW-a,aBlok:a===TOTAL_MW?4:a/4,mBlok:(TOTAL_MW-a)/4};
     });
     var scResults=scenarier.map(function(sc){
       var dagA=0,dagM=0,dagX=0;
@@ -1322,7 +1323,7 @@ function renderBudstrategi(data){
     topHtml+='<span style="font-size:10px;background:#f0fdf4;color:#065f46;padding:2px 8px;border-radius:10px">Prisjustering: '+Math.round(prisJustering*100)+'% af historisk snit</span>';
     topHtml+='<span id="vind-badge" style="font-size:10px;background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:10px">Vind: henter</span>';
     topHtml+='</div>';
-    topHtml+='<div style="font-size:11px;color:#3b82f6;margin-bottom:14px">18 MW  EDS DK1 90 dage  Ugedags- og ssonfaktorer fra 365d historisk analyse</div>';
+    topHtml+='<div style="font-size:11px;color:#3b82f6;margin-bottom:14px">'+TOTAL_MW+' MW ← EDS DK1 90 dage  Ugedags- og ssonfaktorer fra 365d historisk analyse</div>';
 
     topHtml+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">';
     topHtml+='<div style="background:#fff;border-radius:8px;padding:12px;border:2px solid #2563eb">';
@@ -1397,7 +1398,7 @@ function renderBudstrategi(data){
       tbody+='<td style="font-weight:700;font-size:12px;padding:7px 8px;white-space:nowrap">kl. '+String(h).padStart(2,'0')+'</td>';
       for(var b=1;b<=nABlok;b++){
         var pr=blokPris(a.p50,a.p75,b,nABlok,extraSats);
-        var tdMW=(b===nABlok&&nABlok>3&&bestSc.a===18)?'6 MW':'4 MW';
+        var tdMW=(b===nABlok&&nABlok>3&&bestSc.a===TOTAL_MW)?'6 MW':'4 MW';
         tbody+='<td style="font-weight:'+(b===1?'700':'400')+';color:var(--afrr);padding:7px 6px">'+pr+' kr.<br><span style="font-size:9px;color:var(--text3);font-weight:400">'+tdMW+'</span></td>';
       }
       for(var b=1;b<=nMBlok;b++){
