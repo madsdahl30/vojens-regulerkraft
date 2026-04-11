@@ -1175,7 +1175,7 @@ function renderBudstrategi(data){
 
   // DATO-LOGIK: Fr kl 09:00 = +1 dag, fra kl 09:00 = +2 dage
   var now=new Date();
-  var TOTAL_MW=(now>=new Date('2025-05-01'))?20:18;
+  var TOTAL_MW=(now>=new Date('2026-05-01'))?20:18;
   var daysAhead=now.getHours()>=9?2:1;
   var targetDate=new Date(now);
   targetDate.setDate(targetDate.getDate()+daysAhead);
