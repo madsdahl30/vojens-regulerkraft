@@ -128,6 +128,29 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
 
   <!-- PRISKORT -->
   <div id="panel-heatmap" class="panel active">
+    <div class="card" id="live-marked-card" style="margin-bottom:16px">
+  <div class="ct">
+    ⚡ Live marked – i dag
+    <span style="font-size:11px;font-weight:400;color:var(--text3);margin-left:4px">DK1 kapacitetspriser</span>
+    <button onclick="fetchLiveMarked()" style="margin-left:auto;padding:3px 10px;font-size:11px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text2)">↻ Opdater</button>
+  </div>
+  <div id="live-metrics" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
+    <div class="metric"><div class="ml">aFRR ↑ seneste time</div><div class="mv" id="lm-afrr-up">–</div><div class="ms" id="lm-afrr-time">henter...</div></div>
+    <div class="metric"><div class="ml">mFRR ↑ seneste time</div><div class="mv" id="lm-mfrr-up">–</div><div class="ms" id="lm-mfrr-time">henter...</div></div>
+    <div class="metric"><div class="ml">aFRR ↓ seneste time</div><div class="mv" id="lm-afrr-down" style="color:var(--text2)">–</div><div class="ms">ned-regulering</div></div>
+  </div>
+  <div style="overflow-x:auto"><table class="rt" id="live-table">
+    <thead><tr>
+      <th>Time</th>
+      <th style="color:var(--afrr)">aFRR ↑ kr./MW</th>
+      <th style="color:var(--afrr)">aFRR ↓ kr./MW</th>
+      <th style="color:var(--mfrr)">mFRR ↑ kr./MW</th>
+      <th>aFRR MW</th>
+      <th>mFRR MW</th>
+    </tr></thead>
+    <tbody id="live-tbody"><tr><td colspan="6" style="text-align:center;padding:16px;color:var(--text3)">Henter live data...</td></tr></tbody>
+  </table></div>
+</div>
     <div class="card">
       <div class="ct">Gennemsnitlig clearing-pris pr. time  seneste 90 dage  DK1</div>
 <div class="card" style="margin-top:16px">
@@ -247,7 +270,104 @@ let plan = Array.from({length:24}, (_,h) => ({
 
 let selHour = 17; // default valgt time
 
-async function fetchAll() {
+async 
+function fetchLiveMarked() {
+  var API = 'https://api.energidataservice.dk/dataset';
+  var today = new Date();
+  var yesterday = new Date(today); yesterday.setDate(today.getDate()-1);
+  var fmt = function(d){ return d.toISOString().split('T')[0]; };
+  var enc = encodeURIComponent;
+
+  Promise.all([
+    fetch(API+'/AfrrReservesNordic?limit=48&filter='+enc('{"PriceArea":"DK1"}')+'&start='+fmt(yesterday)+'&sort=TimeDK%20DESC').then(function(r){return r.json();}),
+    fetch(API+'/mFRRCapacityMarket?limit=48&filter='+enc('{"PriceArea":"DK1"}')+'&start='+fmt(yesterday)+'&sort=TimeDK%20DESC').then(function(r){return r.json();})
+  ]).then(function(res) {
+    var aRecs = res[0].records || [];
+    var mRecs = res[1].records || [];
+
+    // Filter til kun dagens timer (dansk tid)
+    var todayStr = today.toLocaleDateString('sv-SE'); // YYYY-MM-DD
+    var aTod = aRecs.filter(function(r){ return r.TimeDK && r.TimeDK.startsWith(todayStr); });
+    var mTod = mRecs.filter(function(r){ return r.TimeDK && r.TimeDK.startsWith(todayStr); });
+
+    // Byg lookup mFRR pr time
+    var mByHour = {};
+    mTod.forEach(function(r){
+      var h = new Date(r.TimeDK).getHours();
+      mByHour[h] = r;
+    });
+
+    // Seneste aFRR
+    var latest = aTod[0] || aRecs[0];
+    if (latest) {
+      var latestH = new Date(latest.TimeDK).getHours();
+      var aUp = Math.round(latest.UpPriceDKK);
+      var aDown = Math.round(latest.DownPriceDKK);
+      var timeLabel = 'kl. ' + latestH + ':00–' + (latestH+1) + ':00';
+      // Farv aFRR op-pris: grøn hvis god, rød hvis under 5
+      var aUpColor = aUp >= 50 ? '#059669' : aUp >= 20 ? '#d97706' : '#dc2626';
+      document.getElementById('lm-afrr-up').innerHTML = '<span style="color:'+aUpColor+'">' + aUp + ' kr.</span>';
+      document.getElementById('lm-afrr-time').textContent = timeLabel;
+      document.getElementById('lm-afrr-down').textContent = aDown + ' kr.';
+      // mFRR seneste
+      var mLatest = mByHour[latestH] || mTod[0] || mRecs[0];
+      if (mLatest) {
+        var mUp = Math.round(mLatest.UpPriceDKK);
+        var mUpColor = mUp >= 50 ? '#059669' : mUp >= 20 ? '#d97706' : '#dc2626';
+        document.getElementById('lm-mfrr-up').innerHTML = '<span style="color:'+mUpColor+'">' + mUp + ' kr.</span>';
+        document.getElementById('lm-mfrr-time').textContent = timeLabel;
+      }
+    }
+
+    // Byg tabel - alle dagens timer, nyeste øverst
+    var tbody = '';
+    var now = new Date();
+    var currentH = now.getHours();
+
+    // Opbyg array med alle kendte timer
+    var allHours = {};
+    aTod.forEach(function(r){ var h=new Date(r.TimeDK).getHours(); allHours[h]={a:r}; });
+    Object.keys(mByHour).forEach(function(h){ if(!allHours[h]) allHours[h]={}; allHours[h].m=mByHour[h]; });
+
+    var hours = Object.keys(allHours).map(Number).sort(function(a,b){return b-a;});
+    if (hours.length === 0) {
+      tbody = '<tr><td colspan="6" style="text-align:center;padding:12px;color:var(--text3)">Ingen data for i dag endnu</td></tr>';
+    } else {
+      hours.forEach(function(h) {
+        var a = allHours[h].a;
+        var m = allHours[h].m;
+        var isCurrent = (h === currentH);
+        var aUp   = a ? Math.round(a.UpPriceDKK)   : '–';
+        var aDown = a ? Math.round(a.DownPriceDKK) : '–';
+        var mUp   = m ? Math.round(m.UpPriceDKK)   : '–';
+        var aMW   = a ? Math.round(a.UpProcuredMW)  : '–';
+        var mMW   = m ? Math.round(m.UpProcuredMW)  : '–';
+
+        // Farv op-pris celler
+        var aUpStyle = typeof aUp==='number' ? (aUp>=50?'color:#059669;font-weight:600':aUp>=20?'color:#d97706':'color:#dc2626;font-weight:600') : '';
+        var mUpStyle = typeof mUp==='number' ? (mUp>=50?'color:#059669;font-weight:600':mUp>=20?'color:#d97706':'color:#dc2626;font-weight:600') : '';
+
+        var rowStyle = isCurrent ? 'background:#eff6ff;' : '';
+        var timeStr = 'kl. ' + String(h).padStart(2,'0') + ':00';
+        var curBadge = isCurrent ? ' <span style="font-size:9px;background:#2563eb;color:#fff;padding:1px 5px;border-radius:4px">nu</span>' : '';
+
+        tbody += '<tr style="'+rowStyle+'">';
+        tbody += '<td style="padding:6px 10px;font-weight:'+(isCurrent?'700':'400')+'">'+timeStr+curBadge+'</td>';
+        tbody += '<td style="padding:6px 10px;'+aUpStyle+'">'+aUp+'</td>';
+        tbody += '<td style="padding:6px 10px;color:var(--text2)">'+aDown+'</td>';
+        tbody += '<td style="padding:6px 10px;'+mUpStyle+'">'+mUp+'</td>';
+        tbody += '<td style="padding:6px 10px;color:var(--text3)">'+aMW+'</td>';
+        tbody += '<td style="padding:6px 10px;color:var(--text3)">'+mMW+'</td>';
+        tbody += '</tr>';
+      });
+    }
+    document.getElementById('live-tbody').innerHTML = tbody;
+  }).catch(function(e){
+    document.getElementById('live-tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#dc2626;padding:12px">Fejl: '+e.message+'</td></tr>';
+  });
+}
+
+function fetchAll() {
   setSt('loading','Henter 90 dages data...');
   try {
     const today = new Date();
@@ -633,12 +753,14 @@ function sw(id,el){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('panel-'+id).classList.add('active');
   el.classList.add('active');
-  if(id==='budstrategi'){renderBudstrategi(window._centricaData||[]);}
+  if(id==='heatmap'){fetchLiveMarked();}
+    if(id==='budstrategi'){renderBudstrategi(window._centricaData||[]);}
     if(id==='resultater'&&!document.getElementById('c-chart-card').style.display.includes('block')) fetchCentricaWithActive(30,document.querySelector('.centrica-period-btn'));
     if(id==='fordeling') setTimeout(()=>{updateFordelingChart();},50);
 }
 
 fetchAll();
+fetchLiveMarked();
 
 
 // Auto token refresh
