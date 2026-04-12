@@ -780,7 +780,9 @@ async function refreshCentricaToken() {
   const rt = localStorage.getItem('centrica_refresh_token');
   if (!rt) return false;
   try {
-    const resp = await fetch('https://vojens-regulerkraft.madsdahl30.workers.dev/tok?rt=' + encodeURIComponent(rt));
+    const resp = await fetch('https://vojens-regulerkraft.madsdahl30.workers.dev/refresh', {
+      headers: {'X-RT': rt}
+    });
     if (!resp.ok) return false;
     const d = await resp.json();
     if (d.access_token) {
