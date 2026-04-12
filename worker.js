@@ -1,11 +1,11 @@
-// v12 - GET /refresh med Authorization: Bearer header
+// v13 - GET /refresh uden headers, bruger password grant
 addEventListener("fetch", event => {
   event.respondWith(handleRequest(event.request));
 });
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+  "Access-Control-Allow-Methods": "GET,OPTIONS",
   "Access-Control-Allow-Headers": "*"
 };
 
@@ -16,13 +16,10 @@ async function handleRequest(request) {
   const url = new URL(request.url);
 
   if (url.pathname === "/refresh") {
-    const auth = request.headers.get("Authorization") || "";
-    const rt = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-    if (!rt) return new Response(JSON.stringify({error:"no rt"}), {status:400, headers:{...CORS,"Content-Type":"application/json"}});
     const resp = await fetch("https://identity.neasenergy.com/auth/realms/neas/protocol/openid-connect/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: "grant_type=refresh_token&client_id=neas-chp-webapp&refresh_token=" + encodeURIComponent(rt)
+      body: "grant_type=password&client_id=neas-chp-webapp&username=ulrik%40nykobbel.dk&password=Qwerty123"
     });
     return new Response(await resp.text(), {
       status: resp.status,
@@ -45,7 +42,7 @@ async function handleRequest(request) {
     });
   }
 
-  return new Response(JSON.stringify({ ok: true, v: 12 }), {
+  return new Response(JSON.stringify({ ok: true, v: 13 }), {
     headers: { ...CORS, "Content-Type": "application/json" }
   });
 }
