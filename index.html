@@ -327,14 +327,14 @@ function fetchLiveMarked() {
     var latestM = latestH !== null ? mByHour[latestH] : null;
 
     if (latestA) {
-      var aUp = Math.round(latestA.UpPriceDKK);
-      var aUpColor = aUp >= 100 ? '#059669' : aUp >= 30 ? '#d97706' : '#dc2626';
+      var aUp = parseFloat(latestA.UpPriceDKK).toFixed(2);
+      var aUpColor = parseFloat(aUp) >= 100 ? '#059669' : parseFloat(aUp) >= 30 ? '#d97706' : '#dc2626';
       document.getElementById('lm-afrr-up').innerHTML = '<span style="color:'+aUpColor+';font-size:24px;font-weight:700">'+aUp+' kr.</span>';
       document.getElementById('lm-afrr-time').textContent = 'kl. '+String(latestH).padStart(2,'0')+':00';
     }
     if (latestM) {
-      var mUp = Math.round(latestM.UpPriceDKK);
-      var mUpColor = mUp >= 100 ? '#059669' : mUp >= 30 ? '#d97706' : '#dc2626';
+      var mUp = parseFloat(latestM.UpPriceDKK).toFixed(2);
+      var mUpColor = parseFloat(mUp) >= 100 ? '#059669' : parseFloat(mUp) >= 30 ? '#d97706' : '#dc2626';
       document.getElementById('lm-mfrr-up').innerHTML = '<span style="color:'+mUpColor+';font-size:24px;font-weight:700">'+mUp+' kr.</span>';
       document.getElementById('lm-mfrr-time').textContent = 'kl. '+String(latestH).padStart(2,'0')+':00';
     }
@@ -355,12 +355,12 @@ function fetchLiveMarked() {
       hours.forEach(function(h) {
         var a = aByHour[h], m = mByHour[h];
         var isCurrent = (h === nuH);
-        var aUp = a ? Math.round(a.UpPriceDKK) : '–';
-        var mUp = m ? Math.round(m.UpPriceDKK) : '–';
+        var aUp = a ? parseFloat(a.UpPriceDKK).toFixed(2) : '–';
+        var mUp = m ? parseFloat(m.UpPriceDKK).toFixed(2) : '–';
         var aMW = a ? Math.round(a.UpProcuredMW) : '–';
         var mMW = m ? Math.round(m.UpProcuredMW) : '–';
-        var aStyle = typeof aUp==='number'?(aUp>=100?'color:#059669;font-weight:600':aUp>=30?'color:#d97706;font-weight:600':'color:#dc2626;font-weight:600'):'';
-        var mStyle = typeof mUp==='number'?(mUp>=100?'color:#059669;font-weight:600':mUp>=30?'color:#d97706;font-weight:600':'color:#dc2626;font-weight:600'):'';
+        var aStyle = aUp!=='–'?(parseFloat(aUp)>=100?'color:#059669;font-weight:600':parseFloat(aUp)>=30?'color:#d97706;font-weight:600':'color:#dc2626;font-weight:600'):'';
+        var mStyle = mUp!=='–'?(parseFloat(mUp)>=100?'color:#059669;font-weight:600':parseFloat(mUp)>=30?'color:#d97706;font-weight:600':'color:#dc2626;font-weight:600'):'';
         var rowBg = isCurrent ? 'background:#eff6ff;' : '';
         var badge = isCurrent ? ' <span style="font-size:9px;background:#2563eb;color:#fff;padding:1px 5px;border-radius:4px;vertical-align:middle">nu</span>' : '';
         tbody += '<tr style="'+rowBg+'">';
