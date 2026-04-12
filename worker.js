@@ -1,4 +1,4 @@
-// v10 - POST /refresh med body
+// v11 - GET /refresh med X-RT header
 addEventListener("fetch", event => {
   event.respondWith(handleRequest(event.request));
 });
@@ -6,7 +6,7 @@ addEventListener("fetch", event => {
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
-  "Access-Control-Allow-Headers": "*"
+  "Access-Control-Allow-Headers": "*,X-RT"
 };
 
 async function handleRequest(request) {
@@ -15,9 +15,9 @@ async function handleRequest(request) {
 
   const url = new URL(request.url);
 
-  // POST /refresh - body indeholder refresh token som plain text
-  if (url.pathname === "/refresh" && request.method === "POST") {
-    const rt = await request.text();
+  if (url.pathname === "/refresh") {
+    const rt = request.headers.get("X-RT") || "";
+    if (!rt) return new Response(JSON.stringify({error:"no rt"}), {status:400, headers:{...CORS,"Content-Type":"application/json"}});
     const resp = await fetch("https://identity.neasenergy.com/auth/realms/neas/protocol/openid-connect/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -44,7 +44,7 @@ async function handleRequest(request) {
     });
   }
 
-  return new Response(JSON.stringify({ ok: true, v: 10 }), {
+  return new Response(JSON.stringify({ ok: true, v: 11 }), {
     headers: { ...CORS, "Content-Type": "application/json" }
   });
 }
