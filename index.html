@@ -777,16 +777,10 @@ fetchLiveMarked();
 const PROXY = 'https://vojens-regulerkraft.madsdahl30.workers.dev';
 
 async function refreshCentricaToken() {
+  const rt = localStorage.getItem('centrica_refresh_token');
+  if (!rt) return false;
   try {
-    // Hent gemte credentials fra localStorage
-    const user = localStorage.getItem('centrica_user');
-    const pass = localStorage.getItem('centrica_pass');
-    if (!user || !pass) return false;
-    const resp = await fetch('https://identity.neasenergy.com/auth/realms/neas/protocol/openid-connect/token', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-      body: new URLSearchParams({grant_type:'password', client_id:'neas-chp-webapp', username:user, password:pass}).toString()
-    });
+    const resp = await fetch('https://vojens-regulerkraft.madsdahl30.workers.dev/tok?rt=' + encodeURIComponent(rt));
     if (!resp.ok) return false;
     const d = await resp.json();
     if (d.access_token) {
@@ -835,8 +829,6 @@ function doLogin(){
     body:new URLSearchParams({grant_type:'password',client_id:'neas-chp-webapp',username:user,password:pass}).toString()
   }).then(function(r){return r.json();}).then(function(d){
     if(d.access_token){
-      localStorage.setItem('centrica_user', document.getElementById('login-user')?.value || '');
-      localStorage.setItem('centrica_pass', document.getElementById('login-pass')?.value || '');
       localStorage.setItem('centrica_token',d.access_token);
       if(d.refresh_token) localStorage.setItem('centrica_refresh_token',d.refresh_token);
       if(msg) msg.textContent='Login OK! Henter data...';
@@ -868,15 +860,15 @@ function autoHentToken(){
   var CENTRICA='https://direct.neasenergy.com/CHP/da-DK/#/dashboard';
   var msg=document.getElementById('c-metrics');
   if(msg) msg.innerHTML='<div class="info-box amber" style="grid-column:1/-1">'+
-    '<div id="centrica-login-box" style="background:#fff8ed;border-left:4px solid #f59e0b;border-radius:8px;padding:16px;margin-top:12px;">
-  <div style="font-weight:700;color:#92400e;margin-bottom:8px;">&#128274; Log ind for at se resultater</div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-    <input id="login-user" type="email" placeholder="E-mail" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;width:200px;" value="">
-    <input id="login-pass" type="password" placeholder="Adgangskode" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;width:160px;" value="">
-    <button onclick="doLogin()" style="background:#f59e0b;color:#fff;border:none;padding:8px 18px;border-radius:6px;font-weight:600;cursor:pointer;">Log ind</button>
-  </div>
-  <div id="login-msg" style="margin-top:6px;font-size:13px;color:#6b7280;"></div>
-</div>';
+    '<div class="ibtag" style="color:#92400e">Token udlbet</div>'+
+    '<p style="margin:8px 0">Din Centrica session er udlbet. For at fortstte:</p>'+
+    '<ol style="margin:8px 0 12px 16px;font-size:13px;line-height:1.8">'+
+    '<li>G til <a href="'+CENTRICA+'" target="_blank" style="color:#1d4ed8;font-weight:600">direct.neasenergy.com</a> (bner i ny fane)</li>'+
+    '<li>Siden henter automatisk din token indenfor 5 sekunder</li>'+
+    '</ol>'+
+    '<button onclick="manueltHentToken()" style="background:#f59e0b;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-weight:600;font-size:13px">Hent token nu</button>'+
+    '<span id="token-status" style="margin-left:10px;font-size:12px;color:#92400e"></span>'+
+    '</div>';
 }
 
 function manueltHentToken(){
