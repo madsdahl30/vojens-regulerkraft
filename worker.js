@@ -1,4 +1,4 @@
-// v5 - GET refresh
+// v6 - api.neasenergy.com token endpoint
 export default {
   async fetch(request, env, ctx) {
     const CORS = {
@@ -11,16 +11,14 @@ export default {
 
     const url = new URL(request.url);
 
-    // Token refresh via GET med rt query param
     if (url.pathname === "/refresh-token") {
       const rt = url.searchParams.get("rt") || "";
       if (!rt) return new Response(JSON.stringify({error:"no rt"}), {status:400, headers:{...CORS,"Content-Type":"application/json"}});
       const params = new URLSearchParams({
         grant_type: "refresh_token",
-        client_id: "neas-chp-webapp",
         refresh_token: rt
       });
-      const resp = await fetch("https://identity.neasenergy.com/auth/realms/neas/protocol/openid-connect/token", {
+      const resp = await fetch("https://api.neasenergy.com/token", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: params.toString()
@@ -46,7 +44,7 @@ export default {
       });
     }
 
-    return new Response(JSON.stringify({ ok: true, v: 5 }), {
+    return new Response(JSON.stringify({ ok: true, v: 6 }), {
       headers: { ...CORS, "Content-Type": "application/json" }
     });
   }
