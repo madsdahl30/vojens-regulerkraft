@@ -1,4 +1,4 @@
-// v9 - service worker format
+// v10 - POST /refresh med body
 addEventListener("fetch", event => {
   event.respondWith(handleRequest(event.request));
 });
@@ -15,8 +15,9 @@ async function handleRequest(request) {
 
   const url = new URL(request.url);
 
-  if (url.pathname.startsWith("/tok/")) {
-    const rt = decodeURIComponent(url.pathname.slice(5));
+  // POST /refresh - body indeholder refresh token som plain text
+  if (url.pathname === "/refresh" && request.method === "POST") {
+    const rt = await request.text();
     const resp = await fetch("https://identity.neasenergy.com/auth/realms/neas/protocol/openid-connect/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -43,7 +44,7 @@ async function handleRequest(request) {
     });
   }
 
-  return new Response(JSON.stringify({ ok: true, v: 9 }), {
+  return new Response(JSON.stringify({ ok: true, v: 10 }), {
     headers: { ...CORS, "Content-Type": "application/json" }
   });
 }
