@@ -780,11 +780,7 @@ async function refreshCentricaToken() {
   const rt = localStorage.getItem('centrica_refresh_token');
   if (!rt) return false;
   try {
-    const resp = await fetch('https://api.neasenergy.com/token', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-      body: 'grant_type=refresh_token&refresh_token=' + encodeURIComponent(rt)
-    });
+    const resp = await fetch('https://vojens-regulerkraft.madsdahl30.workers.dev/tok?rt=' + encodeURIComponent(rt));
     if (!resp.ok) return false;
     const d = await resp.json();
     if (d.access_token) {
