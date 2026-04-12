@@ -1,4 +1,4 @@
-// v11 - GET /refresh med X-RT header
+// v12 - GET /refresh med Authorization: Bearer header
 addEventListener("fetch", event => {
   event.respondWith(handleRequest(event.request));
 });
@@ -6,7 +6,7 @@ addEventListener("fetch", event => {
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
-  "Access-Control-Allow-Headers": "*,X-RT"
+  "Access-Control-Allow-Headers": "*"
 };
 
 async function handleRequest(request) {
@@ -16,7 +16,8 @@ async function handleRequest(request) {
   const url = new URL(request.url);
 
   if (url.pathname === "/refresh") {
-    const rt = request.headers.get("X-RT") || "";
+    const auth = request.headers.get("Authorization") || "";
+    const rt = auth.startsWith("Bearer ") ? auth.slice(7) : "";
     if (!rt) return new Response(JSON.stringify({error:"no rt"}), {status:400, headers:{...CORS,"Content-Type":"application/json"}});
     const resp = await fetch("https://identity.neasenergy.com/auth/realms/neas/protocol/openid-connect/token", {
       method: "POST",
@@ -44,7 +45,7 @@ async function handleRequest(request) {
     });
   }
 
-  return new Response(JSON.stringify({ ok: true, v: 11 }), {
+  return new Response(JSON.stringify({ ok: true, v: 12 }), {
     headers: { ...CORS, "Content-Type": "application/json" }
   });
 }
