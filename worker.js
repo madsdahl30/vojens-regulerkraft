@@ -1,4 +1,4 @@
-// v7
+// v8 - path-based token
 export default {
   async fetch(request, env, ctx) {
     const CORS = {
@@ -11,8 +11,9 @@ export default {
 
     const url = new URL(request.url);
 
-    if (url.pathname === "/tok") {
-      const rt = url.searchParams.get("rt") || "";
+    // /tok/REFRESH_TOKEN
+    if (url.pathname.startsWith("/tok/")) {
+      const rt = url.pathname.slice(5);
       if (!rt) return new Response(JSON.stringify({error:"no rt"}), {status:400, headers:{...CORS,"Content-Type":"application/json"}});
       const resp = await fetch("https://identity.neasenergy.com/auth/realms/neas/protocol/openid-connect/token", {
         method: "POST",
@@ -32,6 +33,6 @@ export default {
       return new Response(await resp.text(), {status: resp.status, headers: {...CORS, "Content-Type": resp.headers.get("Content-Type") || "application/json"}});
     }
 
-    return new Response(JSON.stringify({ok:true,v:7}), {headers:{...CORS,"Content-Type":"application/json"}});
+    return new Response(JSON.stringify({ok:true,v:8}), {headers:{...CORS,"Content-Type":"application/json"}});
   }
 };
