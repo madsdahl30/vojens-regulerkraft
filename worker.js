@@ -1,4 +1,4 @@
-// v6 - api.neasenergy.com token endpoint
+// v7
 export default {
   async fetch(request, env, ctx) {
     const CORS = {
@@ -11,41 +11,27 @@ export default {
 
     const url = new URL(request.url);
 
-    if (url.pathname === "/refresh-token") {
+    if (url.pathname === "/tok") {
       const rt = url.searchParams.get("rt") || "";
       if (!rt) return new Response(JSON.stringify({error:"no rt"}), {status:400, headers:{...CORS,"Content-Type":"application/json"}});
-      const params = new URLSearchParams({
-        grant_type: "refresh_token",
-        refresh_token: rt
-      });
-      const resp = await fetch("https://api.neasenergy.com/token", {
+      const resp = await fetch("https://identity.neasenergy.com/auth/realms/neas/protocol/openid-connect/token", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: params.toString()
+        body: new URLSearchParams({grant_type:"refresh_token", client_id:"neas-chp-webapp", refresh_token:rt}).toString()
       });
-      return new Response(await resp.text(), {
-        status: resp.status,
-        headers: { ...CORS, "Content-Type": "application/json" }
-      });
+      return new Response(await resp.text(), {status: resp.status, headers: {...CORS, "Content-Type": "application/json"}});
     }
 
     if (url.pathname.startsWith("/v1/") || url.pathname.startsWith("/BidApi/")) {
       const headers = new Headers(request.headers);
-      headers.delete("origin");
-      headers.delete("referer");
+      headers.delete("origin"); headers.delete("referer");
       const resp = await fetch("https://api.neasenergy.com" + url.pathname + url.search, {
-        method: request.method,
-        headers: headers,
+        method: request.method, headers: headers,
         body: request.method !== "GET" ? request.body : undefined
       });
-      return new Response(await resp.text(), {
-        status: resp.status,
-        headers: { ...CORS, "Content-Type": resp.headers.get("Content-Type") || "application/json" }
-      });
+      return new Response(await resp.text(), {status: resp.status, headers: {...CORS, "Content-Type": resp.headers.get("Content-Type") || "application/json"}});
     }
 
-    return new Response(JSON.stringify({ ok: true, v: 6 }), {
-      headers: { ...CORS, "Content-Type": "application/json" }
-    });
+    return new Response(JSON.stringify({ok:true,v:7}), {headers:{...CORS,"Content-Type":"application/json"}});
   }
 };
