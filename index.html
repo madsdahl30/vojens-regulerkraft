@@ -1760,43 +1760,12 @@ function hentVind() {
 
 function hentUdfald() {
   const el = document.getElementById('udfald-indhold');
-  if (el) el.innerHTML = '<span style="color:#888">Henter...</span>';
   const today = new Date();
   const pad = n => String(n).padStart(2,'0');
-  const dato = today.getFullYear() + pad(today.getMonth()+1) + pad(today.getDate());
-  const url = `https://web-api.tp.entsoe.eu/api?documentType=A77&biddingZone_Domain=10YDK-1--------W&periodStart=${dato}0000&periodEnd=${dato}2300&securityToken=52ebf0eb-9f97-4ff4-8b04-bd4bffa98e89`;
-  fetch(url).then(r => r.text()).then(xml => {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(xml, 'text/xml');
-    const units = doc.querySelectorAll('TimeSeries');
-    if (!units.length) {
-      if(el) el.innerHTML = '<div style="color:#4CAF50;font-size:13px">✅ Ingen registrerede udfald i DK1 i dag</div>';
-      return;
-    }
-    const rows = Array.from(units).map(ts => {
-      const name = ts.querySelector('registeredResource\.name')?.textContent || ts.querySelector('mRID')?.textContent || '–';
-      const status = ts.querySelector('businessType')?.textContent || '–';
-      const reason = ts.querySelector('reason code')?.textContent || '';
-      const cap = ts.querySelector('quantity')?.textContent || '–';
-      return `<tr style="border-bottom:1px solid #f0f0f0">
-        <td style="padding:6px 8px;font-size:13px">${name}</td>
-        <td style="padding:6px 8px;text-align:center"><span style="background:#ffebee;color:#c62828;padding:2px 8px;border-radius:12px;font-size:11px">⚡ Ude</span></td>
-        <td style="padding:6px 8px;font-size:12px;color:#666">${cap} MW</td>
-      </tr>`;
-    }).join('');
-    if(el) el.innerHTML = `
-      <table style="width:100%;border-collapse:collapse">
-        <thead><tr style="background:#f5f5f5">
-          <th style="padding:6px 8px;text-align:left;font-size:11px;color:#888;font-weight:600">ENHED</th>
-          <th style="padding:6px 8px;text-align:center;font-size:11px;color:#888;font-weight:600">STATUS</th>
-          <th style="padding:6px 8px;text-align:left;font-size:11px;color:#888;font-weight:600">KAPACITET</th>
-        </tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-    `;
-  }).catch(e => {
-    if(el) el.innerHTML = '<div style="color:#888;font-size:13px">ENTSO-E data ikke tilgængelig – <a href="https://transparency.entsoe.eu/outages/productionAndGeneration?appState=%7B%22sa%22%3A%5B%22BZN%7C10YDK-1--------W%22%5D%2C%22st%22%3A%22BZN%22%7D" target="_blank" style="color:#1a73e8">Åbn ENTSO-E ↗</a></div>';
-  });
+  const iso = today.getFullYear() + '-' + pad(today.getMonth()+1) + '-' + pad(today.getDate());
+  const isoEnc = encodeURIComponent('"' + iso + '"');
+  const url = 'https://transparency.entsoe.eu/outages/productionAndGeneration?appState=%7B%22sa%22%3A%5B%22BZN%7C10YDK-1--------W%22%5D%2C%22st%22%3A%22BZN%22%2C%22mm%22%3Atrue%2C%22ma%22%3Afalse%2C%22sp%22%3A%22HALF%22%2C%22dt%22%3A%22TABLE%22%2C%22df%22%3A%5B%22' + iso + '%22%2C%22' + iso + '%22%5D%2C%22tz%22%3A%22CET%22%7D';
+  if(el) el.innerHTML = '<div style="font-size:13px;color:#555;margin-bottom:10px">ENTSO-E API tillader ikke direkte browser-kald (CORS). Klik nedenfor for at se dagens udfald i DK1.</div><a href="' + url + '" target="_blank" style="display:inline-block;background:#1a73e8;color:white;padding:8px 16px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600">⚡ Se DK1 udfald på ENTSO-E (' + iso + ') ↗</a>';
 }
 
 // Auto-hent når indsigter-tab vises
