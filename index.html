@@ -224,10 +224,32 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
   </div>
 
   <!-- INDSIGTER -->
-  <div id="panel-indsigt" class="panel"><div id="indsigt-vind"><div class="card"><div class="ct"> Vindforhold - Esbjerg</div><p style="color:var(--text3);padding:12px">Klik p Indsigter for at hente aktuel vinddata</p></div></div>
-    <div id="insights"></div>
+  <div id="panel-indsigt" class="panel">
+
+  <!-- VIND WIDGET -->
+  <div class="card" id="vind-card" style="margin-bottom:12px">
+    <div class="ct" style="display:flex;justify-content:space-between;align-items:center">
+      <span>🌬️ Vindforhold – Esbjerg (DK1)</span>
+      <button onclick="hentVind()" style="font-size:11px;padding:3px 10px;border-radius:6px;border:1px solid #ccc;background:#f5f5f5;cursor:pointer">↻ Opdater</button>
+    </div>
+    <div id="vind-indhold" style="padding:8px 0;color:#888;font-size:13px">Henter vinddata...</div>
   </div>
-  <div id="panel-budstrategi" class="panel"><div class="card"><div class="ct">Budstrategi <span class="badge ba">Seneste 90 dage</span><span style="font-size:11px;color:var(--text3);margin-left:8px">Baseret p dine egne vundne bud</span></div><div id="bs-summary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px"></div></div><div class="card"><div class="ct">Anbefalet budpris pr. time <span style="font-size:11px;font-weight:400;color:var(--text3)"> hv budpris &nbsp; ok &nbsp; for hjt</span></div><div style="overflow-x:auto"><table class="rt" id="bs-table"></table></div></div><div class="card" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-color:#86efac"><div class="ct" style="color:#166534"> Potentiel gevinst ved optimerede budpriser</div><div id="bs-gain"></div></div></div>
+
+  <!-- DK1 UDFALD -->
+  <div class="card" id="udfald-card" style="margin-bottom:12px">
+    <div class="ct" style="display:flex;justify-content:space-between;align-items:center">
+      <span>⚡ DK1 Produktionsudfald – i dag</span>
+      <button onclick="hentUdfald()" style="font-size:11px;padding:3px 10px;border-radius:6px;border:1px solid #ccc;background:#f5f5f5;cursor:pointer">↻ Opdater</button>
+    </div>
+    <div id="udfald-indhold" style="padding:8px 0;color:#888;font-size:13px">Henter udfald...</div>
+  </div>
+
+  <!-- EKSISTERENDE MARKEDSANALYSE -->
+  <div id="insights"></div>
+
+</div>
+
+<div id="panel-budstrategi" class="panel"><div class="card"><div class="ct">Budstrategi <span class="badge ba">Seneste 90 dage</span><span style="font-size:11px;color:var(--text3);margin-left:8px">Baseret p dine egne vundne bud</span></div><div id="bs-summary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px"></div></div><div class="card"><div class="ct">Anbefalet budpris pr. time <span style="font-size:11px;font-weight:400;color:var(--text3)"> hv budpris &nbsp; ok &nbsp; for hjt</span></div><div style="overflow-x:auto"><table class="rt" id="bs-table"></table></div></div><div class="card" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-color:#86efac"><div class="ct" style="color:#166534"> Potentiel gevinst ved optimerede budpriser</div><div id="bs-gain"></div></div></div>
   <div id="panel-resultater" class="panel">
 <div class="card" style="margin-bottom:12px">
   <div class="ct">&#127942; Accepterede bud - i dag <span style="font-size:11px;color:var(--text3);margin-left:8px">Fra Centrica Planning</span></div>
@@ -1690,6 +1712,103 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(el) el.innerHTML='<span style="color:#059669">&#10003; Centrica klar</span>';
   }
 });
+
+
+// ========== INDSIGTER: VIND + UDFALD ==========
+
+function hentVind() {
+  const el = document.getElementById('vind-indhold');
+  if (el) el.innerHTML = '<span style="color:#888">Henter...</span>';
+  const url = 'https://api.open-meteo.com/v1/forecast?latitude=55.47&longitude=8.45&current=temperature_2m,windspeed_10m,windspeed_80m,windgusts_10m,winddirection_10m,weathercode&wind_speed_unit=ms&timezone=Europe/Copenhagen';
+  fetch(url).then(r => r.json()).then(d => {
+    const c = d.current;
+    const ws10 = c.windspeed_10m, ws80 = c.windspeed_80m, gust = c.windgusts_10m;
+    const dir = c.winddirection_10m, temp = c.temperature_2m;
+    const wc = c.weathercode;
+    const dirs = ['N','NNØ','NØ','ØNØ','Ø','ØSØ','SØ','SSØ','S','SSV','SV','VSV','V','VNV','NV','NNV'];
+    const dirStr = dirs[Math.round(dir/22.5) % 16];
+    const vejr = (wc<=1)?'☀️ Klart':(wc<=3)?'🌤️ Delvist skyet':(wc<=48)?'☁️ Overskyet/tåge':(wc<=67)?'🌧️ Regn':(wc<=77)?'❄️ Sne':'⛈️ Torden';
+    const vindFarve = ws10 > 14 ? '#2196F3' : ws10 > 8 ? '#FF9800' : '#4CAF50';
+    const budTip = ws80 > 12 ? '📈 Høj vind → øget regulerbehov → <b>hæv budpris</b>' : ws80 < 5 ? '📉 Lav vind → lavt regulerbehov → <b>sænk budpris</b>' : '➡️ Moderat vind – normalt regulerbehov';
+    if (el) el.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px">
+        <div style="background:#f8f8f8;border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:11px;color:#888;margin-bottom:2px">VIND 10m</div>
+          <div style="font-size:22px;font-weight:700;color:${vindFarve}">${ws10.toFixed(1)}</div>
+          <div style="font-size:11px;color:#888">m/s</div>
+        </div>
+        <div style="background:#f8f8f8;border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:11px;color:#888;margin-bottom:2px">VIND 80m</div>
+          <div style="font-size:22px;font-weight:700;color:${vindFarve}">${ws80.toFixed(1)}</div>
+          <div style="font-size:11px;color:#888">m/s</div>
+        </div>
+        <div style="background:#f8f8f8;border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:11px;color:#888;margin-bottom:2px">VINDSTØD</div>
+          <div style="font-size:22px;font-weight:700;color:#e74c3c">${gust.toFixed(1)}</div>
+          <div style="font-size:11px;color:#888">m/s</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;font-size:13px;flex-wrap:wrap">
+        <span>🧭 Retning: <b>${dirStr} (${dir}°)</b></span>
+        <span>🌡️ Temp: <b>${temp}°C</b></span>
+        <span>${vejr}</span>
+      </div>
+      <div style="margin-top:10px;padding:8px 12px;background:${ws80>12?'#e3f2fd':ws80<5?'#fff8e1':'#f1f8e9'};border-radius:8px;font-size:13px">${budTip}</div>
+    `;
+  }).catch(e => { if(el) el.innerHTML = '<span style="color:red">Fejl: ' + e.message + '</span>'; });
+}
+
+function hentUdfald() {
+  const el = document.getElementById('udfald-indhold');
+  if (el) el.innerHTML = '<span style="color:#888">Henter...</span>';
+  const today = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const dato = today.getFullYear() + pad(today.getMonth()+1) + pad(today.getDate());
+  const url = `https://web-api.tp.entsoe.eu/api?documentType=A77&biddingZone_Domain=10YDK-1--------W&periodStart=${dato}0000&periodEnd=${dato}2300&securityToken=52ebf0eb-9f97-4ff4-8b04-bd4bffa98e89`;
+  fetch(url).then(r => r.text()).then(xml => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(xml, 'text/xml');
+    const units = doc.querySelectorAll('TimeSeries');
+    if (!units.length) {
+      if(el) el.innerHTML = '<div style="color:#4CAF50;font-size:13px">✅ Ingen registrerede udfald i DK1 i dag</div>';
+      return;
+    }
+    const rows = Array.from(units).map(ts => {
+      const name = ts.querySelector('registeredResource\.name')?.textContent || ts.querySelector('mRID')?.textContent || '–';
+      const status = ts.querySelector('businessType')?.textContent || '–';
+      const reason = ts.querySelector('reason code')?.textContent || '';
+      const cap = ts.querySelector('quantity')?.textContent || '–';
+      return `<tr style="border-bottom:1px solid #f0f0f0">
+        <td style="padding:6px 8px;font-size:13px">${name}</td>
+        <td style="padding:6px 8px;text-align:center"><span style="background:#ffebee;color:#c62828;padding:2px 8px;border-radius:12px;font-size:11px">⚡ Ude</span></td>
+        <td style="padding:6px 8px;font-size:12px;color:#666">${cap} MW</td>
+      </tr>`;
+    }).join('');
+    if(el) el.innerHTML = `
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr style="background:#f5f5f5">
+          <th style="padding:6px 8px;text-align:left;font-size:11px;color:#888;font-weight:600">ENHED</th>
+          <th style="padding:6px 8px;text-align:center;font-size:11px;color:#888;font-weight:600">STATUS</th>
+          <th style="padding:6px 8px;text-align:left;font-size:11px;color:#888;font-weight:600">KAPACITET</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+  }).catch(e => {
+    if(el) el.innerHTML = '<div style="color:#888;font-size:13px">ENTSO-E data ikke tilgængelig – <a href="https://transparency.entsoe.eu/outages/productionAndGeneration?appState=%7B%22sa%22%3A%5B%22BZN%7C10YDK-1--------W%22%5D%2C%22st%22%3A%22BZN%22%7D" target="_blank" style="color:#1a73e8">Åbn ENTSO-E ↗</a></div>';
+  });
+}
+
+// Auto-hent når indsigter-tab vises
+(function() {
+  const origSkift = window.skiftPanel || null;
+  document.addEventListener('click', function(e) {
+    if(e.target && e.target.dataset && e.target.dataset.panel === 'indsigt') {
+      setTimeout(() => { hentVind(); hentUdfald(); }, 100);
+    }
+  });
+})();
+
 </script>
 </body>
 </html>
