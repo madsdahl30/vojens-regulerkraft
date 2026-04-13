@@ -138,6 +138,7 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
     <div class="metric"><div class="ml">aFRR ↑ seneste time</div><div class="mv" id="lm-afrr-up">–</div><div class="ms" id="lm-afrr-time">henter...</div></div>
     <div class="metric"><div class="ml">mFRR ↑ seneste time</div><div class="mv" id="lm-mfrr-up">–</div><div class="ms" id="lm-mfrr-time">henter...</div></div>
   </div>
+  <div id="dato-nav" style="display:flex;align-items:center;justify-content:space-between;padding:8px 4px 12px"><button onclick="skiftDag(-1)" id="btn-prev" style="padding:6px 16px;border-radius:8px;border:1px solid #ddd;background:#f5f5f5;cursor:pointer;font-size:14px">&#8592; Forrige</button><div style="text-align:center"><div id="dato-label" style="font-weight:700;font-size:15px"></div><div id="dato-sub" style="font-size:11px;color:#888">i dag</div></div><button onclick="skiftDag(1)" id="btn-next" style="padding:6px 16px;border-radius:8px;border:1px solid #ddd;background:#f5f5f5;cursor:pointer;font-size:14px">N&#230;ste &#8594;</button></div>
   <div style="overflow-x:auto"><table class="rt" id="live-table">
     <thead><tr>
       <th>Time</th>
@@ -1778,6 +1779,65 @@ function hentUdfald() {
   });
 })();
 
+</script>
+
+<script>
+window.valgtDagOffset=0;
+window._allAfrr=[];
+window._allMfrr=[];
+window._allExtra=[];
+function getDatoForOffset(o){var d=new Date();d.setDate(d.getDate()+o);return d;}
+function formatDato(d){var da=["son","man","tirs","ons","tors","fre","lor"];return da[d.getDay()]+". "+d.getDate()+"/"+(d.getMonth()+1);}
+function opdaterDatoNav(){
+  var d=getDatoForOffset(window.valgtDagOffset);
+  var lbl=document.getElementById("dato-label");
+  var sub=document.getElementById("dato-sub");
+  var pBtn=document.getElementById("btn-prev");
+  var nBtn=document.getElementById("btn-next");
+  var prefix=window.valgtDagOffset===1?"Naeste: ":window.valgtDagOffset===0?"I dag: ":"";
+  if(lbl)lbl.textContent=prefix+formatDato(d);
+  if(sub)sub.textContent=window.valgtDagOffset===1?"naeste driftsogn":window.valgtDagOffset===0?"i dag":Math.abs(window.valgtDagOffset)+" dage siden";
+  if(pBtn)pBtn.disabled=window.valgtDagOffset<=-6;
+  if(nBtn)nBtn.disabled=window.valgtDagOffset>=1;
+}
+function visValgDag(){
+  var d=getDatoForOffset(window.valgtDagOffset);
+  var iso=d.toISOString().slice(0,10);
+  var af=(window._allAfrr||[]).filter(function(r){return(r.HourDK||r.HourUTC||"").slice(0,10)===iso;});
+  var mf=(window._allMfrr||[]).filter(function(r){return(r.HourDK||r.HourUTC||"").slice(0,10)===iso;});
+  var ef=(window._allExtra||[]).filter(function(r){return(r.HourDK||r.HourUTC||"").slice(0,10)===iso;});
+  if(af.length>0||mf.length>0){renderRecTable(af,mf,ef);fetchLiveMarked(af,mf);}
+}
+function skiftDag(delta){
+  var ny=window.valgtDagOffset+delta;
+  if(ny<-6||ny>1)return;
+  window.valgtDagOffset=ny;
+  opdaterDatoNav();
+  visValgDag();
+}
+(function(){
+  var orig=window.fetchAll;
+  window.fetchAll=function(){
+    var oF=window.fetch;
+    window.fetch=function(url,opts){
+      var p=oF.call(this,url,opts);
+      if(typeof url==="string"){
+        if(url.indexOf("AfrrReservesNordic")>-1){
+          p.then(function(r){return r.clone().json();}).then(function(j){window._allAfrr=j.records||[];}).catch(function(){});
+        } else if(url.indexOf("MfrrCapacityMarketExtra")>-1){
+          p.then(function(r){return r.clone().json();}).then(function(j){window._allExtra=j.records||[];}).catch(function(){});
+        } else if(url.indexOf("mFRRCapacityMarket")>-1){
+          p.then(function(r){return r.clone().json();}).then(function(j){window._allMfrr=j.records||[];}).catch(function(){});
+        }
+      }
+      return p;
+    };
+    var res=orig.apply(this,arguments);
+    setTimeout(function(){window.fetch=oF;opdaterDatoNav();},4000);
+    return res;
+  };
+})();
+setTimeout(function(){opdaterDatoNav();},600);
 </script>
 </body>
 </html>
