@@ -774,13 +774,13 @@ fetchLiveMarked();
 
 
 // Auto token refresh
-const PROXY = 'https://vojens-proxy.madsdahl30.workers.dev';
+const PROXY = 'https://vojens-regulerkraft.madsdahl30.workers.dev';
 
 async function refreshCentricaToken() {
   const rt = localStorage.getItem('centrica_refresh_token');
   if (!rt) return false;
   try {
-    const resp = await fetch('https://vojens-proxy.madsdahl30.workers.dev/tok?rt=' + encodeURIComponent(rt));
+    const resp = await fetch('https://vojens-regulerkraft.madsdahl30.workers.dev/tok?rt=' + encodeURIComponent(rt));
     if (!resp.ok) return false;
     const d = await resp.json();
     if (d.access_token) {
@@ -838,7 +838,7 @@ function doLogin(){
     }
   }).catch(function(e){
     // CORS blokerer direkte - prv via Worker
-    fetch('https://vojens-proxy.madsdahl30.workers.dev/login',{
+    fetch('https://vojens-regulerkraft.madsdahl30.workers.dev/login',{
       method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({username:user,password:pass})
     }).then(function(r){return r.json();}).then(function(d){
@@ -1064,9 +1064,9 @@ function hentPlanning(tok){
   document.getElementById('planning-panel').innerHTML='<div style="padding:12px;color:var(--text3)">Henter...</div>';
   document.getElementById('revenue-panel').innerHTML='<div style="padding:12px;color:var(--text3)">Henter...</div>';
   Promise.all([
-    fetch('https://vojens-proxy.madsdahl30.workers.dev/BidApi/v3/assets/sites/bids?ids='+SITE+'&start='+encodeURIComponent(sf)+'&end='+encodeURIComponent(ef)+'&bidtypes=0&mergeBids=true',
+    fetch('https://vojens-regulerkraft.madsdahl30.workers.dev/BidApi/v3/assets/sites/bids?ids='+SITE+'&start='+encodeURIComponent(sf)+'&end='+encodeURIComponent(ef)+'&bidtypes=0&mergeBids=true',
       {headers:{Authorization:'Bearer '+tok}}).then(function(r){return r.text();}),
-    fetch('https://vojens-proxy.madsdahl30.workers.dev/v1/Chp/siteReport/revenue?siteId='+SITE+'&from='+encodeURIComponent(sf)+'&to='+encodeURIComponent(ef),
+    fetch('https://vojens-regulerkraft.madsdahl30.workers.dev/v1/Chp/siteReport/revenue?siteId='+SITE+'&from='+encodeURIComponent(sf)+'&to='+encodeURIComponent(ef),
       {headers:{Authorization:'Bearer '+tok}}).then(function(r){return r.text();})
   ]).then(function(res){
     renderPlanning(res[0]);
@@ -1274,7 +1274,7 @@ function renderBudstrategi(data){
       var tok=localStorage.getItem('centrica_token');
       var t=new Date(),s=new Date(t);s.setDate(s.getDate()-90);
       var fmt=function(d){return d.toISOString().split('.')[0];};
-      fetch('https://vojens-proxy.madsdahl30.workers.dev/v1/Chp/siteReport/revenue?siteId=844439ef-b88a-4859-9752-5f680c6d7317&from='+fmt(s)+'&to='+fmt(t),
+      fetch('https://vojens-regulerkraft.madsdahl30.workers.dev/v1/Chp/siteReport/revenue?siteId=844439ef-b88a-4859-9752-5f680c6d7317&from='+fmt(s)+'&to='+fmt(t),
         {headers:{'Authorization':'Bearer '+tok}}).then(function(r){return r.text();}).then(function(xml){
         // Parse XML til array af objekter
         var parser=new DOMParser();
@@ -1586,7 +1586,7 @@ window.fetchCentrica=async function(days){
       document.getElementById('c-metrics').innerHTML='<div class="info-box amber" style="grid-column:1/-1"><div class="ibtag">Token udlbet</div><p style="margin:8px 0">G til <a href="https://direct.neasenergy.com/CHP/da-DK/#/dashboard" target="_blank" style="color:#1d4ed8;font-weight:600">direct.neasenergy.com</a>, klik derefter <strong>Hent token nu</strong> herunder.</p><button onclick="manueltHentToken()" style="background:#f59e0b;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;font-weight:600;font-size:13px">Hent token nu</button><span id="token-status" style="margin-left:10px;font-size:12px;color:#92400e"></span></div>';
       setSt('ok','');return;
     }
-    const PROXY='https://vojens-proxy.madsdahl30.workers.dev';
+    const PROXY='https://vojens-regulerkraft.madsdahl30.workers.dev';
     // Korrekt CET tidsperiode: midnat dansk tid = 22:00 UTC
     const now=new Date();
     const todayUtcMidnat=Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate(),0,0,0);
