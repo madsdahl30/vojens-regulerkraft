@@ -1839,5 +1839,55 @@ function skiftDag(delta){
 })();
 setTimeout(function(){opdaterDatoNav();},600);
 </script>
+
+<script>
+window.valgtDagOffset=0;
+window._allAfrr=[];window._allMfrr=[];window._allExtra=[];
+window._overrideAfrr=null;window._overrideMfrr=null;
+function getDatoForOffset(o){var d=new Date();d.setDate(d.getDate()+o);return d;}
+function formatDato(d){var da=["son","man","tirs","ons","tors","fre","lor"];return da[d.getDay()]+". "+d.getDate()+"/"+(d.getMonth()+1);}
+function opdaterDatoNav(){var d=getDatoForOffset(window.valgtDagOffset);var lbl=document.getElementById("dato-label");var sub=document.getElementById("dato-sub");var pBtn=document.getElementById("btn-prev");var nBtn=document.getElementById("btn-next");var prefix=window.valgtDagOffset===1?"Naeste: ":window.valgtDagOffset===0?"I dag: ":"";if(lbl)lbl.textContent=prefix+formatDato(d);if(sub)sub.textContent=window.valgtDagOffset===1?"naeste driftsogn":window.valgtDagOffset===0?"i dag":Math.abs(window.valgtDagOffset)+" dage siden";if(pBtn)pBtn.disabled=window.valgtDagOffset<=-6;if(nBtn)nBtn.disabled=window.valgtDagOffset>=1;}
+function visValgDag(){var d=getDatoForOffset(window.valgtDagOffset);var iso=d.toISOString().slice(0,10);var today=new Date().toISOString().slice(0,10);var tomorrow=new Date(Date.now()+86400000).toISOString().slice(0,10);if(iso===today||iso===tomorrow){window._overrideAfrr=null;window._overrideMfrr=null;window._origRenderRecTable&&window._origRenderRecTable();return;}var af=(window._allAfrr||[]).filter(function(r){return(r.TimeDK||"").slice(0,10)===iso;});var mf=(window._allMfrr||[]).filter(function(r){return(r.TimeDK||"").slice(0,10)===iso;});if(af.length>0){window._overrideAfrr=af;window._overrideMfrr=mf;window.renderRecTable();}else{var tbody=document.getElementById("live-tbody");if(tbody)tbody.innerHTML="<tr><td colspan=5 style=text-align:center;padding:20px;color:#999>Ingen data for "+iso+"</td></tr>";}}
+function skiftDag(delta){var ny=window.valgtDagOffset+delta;if(ny<-6||ny>1)return;window.valgtDagOffset=ny;opdaterDatoNav();visValgDag();}
+(function(){
+var origRRT=window.renderRecTable;
+window._origRenderRecTable=origRRT;
+window.renderRecTable=function(){
+if(window._overrideAfrr&&window._overrideAfrr.length>0){
+var af=window._overrideAfrr,mf=window._overrideMfrr||[];
+var tbody=document.getElementById("live-tbody");if(!tbody)return;
+var html="";
+for(var i=0;i<af.length;i++){var a=af[i],m=mf[i]||{};
+var time=(a.TimeDK||"").slice(11,16);
+var aP=a.UpPriceDKK||0,mP=m.UpPriceDKK||0;
+var aC=aP>=400?"#dc2626":aP>=100?"#ea580c":aP>=50?"#d97706":"#16a34a";
+var mC=mP>=1000?"#dc2626":mP>=500?"#ea580c":mP>=100?"#d97706":"#16a34a";
+html+="<tr><td>kl. "+time+"</td><td style=color:"+aC+";font-weight:600>"+aP.toFixed(2)+"</td><td style=color:"+mC+";font-weight:600>"+mP.toFixed(2)+"</td><td>"+(a.UpProcuredMW||0)+"</td><td>"+(m.UpProcuredMW||0)+"</td></tr>";}
+tbody.innerHTML=html;
+var la=af[af.length-1],lm=mf[mf.length-1]||{};
+var ea=document.getElementById("lm-afrr-up"),em=document.getElementById("lm-mfrr-up");
+var eat=document.getElementById("lm-afrr-time"),emt=document.getElementById("lm-mfrr-time");
+if(ea&&la)ea.textContent=la.UpPriceDKK.toFixed(2)+" kr.";
+if(em&&lm)em.textContent=(lm.UpPriceDKK||0).toFixed(2)+" kr.";
+if(eat&&la)eat.textContent="kl. "+(la.TimeDK||"").slice(11,16);
+if(emt&&lm)emt.textContent="kl. "+(lm.TimeDK||"").slice(11,16);
+}else{return origRRT.apply(this,arguments);}
+};
+var origFA=window.fetchAll;
+window.fetchAll=function(){
+var oF=window.fetch;
+window.fetch=function(url,opts){
+var p=oF.call(this,url,opts);
+if(typeof url==="string"){
+if(url.indexOf("AfrrReservesNordic")>-1){p.then(function(r){return r.clone().json();}).then(function(j){window._allAfrr=j.records||[];}).catch(function(){});}
+else if(url.indexOf("MfrrCapacityMarketExtra")>-1){p.then(function(r){return r.clone().json();}).then(function(j){window._allExtra=j.records||[];}).catch(function(){});}
+else if(url.indexOf("mFRRCapacityMarket")>-1){p.then(function(r){return r.clone().json();}).then(function(j){window._allMfrr=j.records||[];}).catch(function(){});}
+}return p;};
+var res=origFA.apply(this,arguments);
+setTimeout(function(){window.fetch=oF;opdaterDatoNav();},5000);
+return res;};
+})();
+setTimeout(function(){opdaterDatoNav();},600);
+</script>
 </body>
 </html>
