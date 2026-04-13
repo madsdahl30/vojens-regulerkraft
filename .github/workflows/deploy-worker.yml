@@ -18,35 +18,8 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-      - name: Fix Access and subdomain
+      - name: Fix Access and enable subdomain
         env:
           CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: |
-          python3 << 'PYEOF'
-          import urllib.request, json, os
-          token = os.environ['CF_TOKEN']
-          account = os.environ['CF_ACCOUNT']
-          headers = {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'}
-
-          # List Access apps
-          req = urllib.request.Request(f'https://api.cloudflare.com/client/v4/accounts/{account}/access/apps', headers=headers)
-          with urllib.request.urlopen(req) as r:
-              data = json.loads(r.read())
-          apps = data.get('result', [])
-          print('All apps:', [(a.get('id'), a.get('name'), a.get('domain')) for a in apps])
-
-          # Delete vojens-proxy Access app
-          for app in apps:
-              if 'vojens-proxy' in app.get('domain', '') or 'vojens-proxy' in app.get('name', ''):
-                  app_id = app['id']
-                  req = urllib.request.Request(f'https://api.cloudflare.com/client/v4/accounts/{account}/access/apps/{app_id}', headers=headers, method='DELETE')
-                  with urllib.request.urlopen(req) as r:
-                      print('Deleted:', r.read())
-
-          # Enable workers.dev subdomain
-          payload = json.dumps({'enabled': True}).encode()
-          req = urllib.request.Request(f'https://api.cloudflare.com/client/v4/accounts/{account}/workers/scripts/vojens-proxy/subdomain', data=payload, headers=headers, method='PUT')
-          with urllib.request.urlopen(req) as r:
-              print('Subdomain result:', r.read())
-          PYEOF
+        run: python3 fix_access.py
