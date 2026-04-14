@@ -403,14 +403,14 @@ function fetchLiveMarked() {
 async function fetchAll() {
   setSt('loading','Henter 90 dages data...');
   try {
-    const today = new Date();
+    const today = new Date(); const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate()+1);
     const start = new Date(today); start.setDate(start.getDate()-90);
     const fmt = d => d.toISOString().split('T')[0];
     const enc = encodeURIComponent;
     const [a,m,x] = await Promise.all([
-      fetch(`${API}/AfrrReservesNordic?limit=5000&filter=${enc('{"PriceArea":"DK1"}')}&start=${fmt(start)}&end=${fmt(today)}`).then(r=>r.json()),
-      fetch(`${API}/mFRRCapacityMarket?limit=5000&filter=${enc('{"PriceArea":"DK1"}')}&start=${fmt(start)}&end=${fmt(today)}`).then(r=>r.json()),
-      fetch(`${API}/MfrrCapacityMarketExtra?limit=5000&filter=${enc('{"PriceArea":"DK1"}')}&start=${fmt(start)}&end=${fmt(today)}`).then(r=>r.json())
+      fetch(`${API}/AfrrReservesNordic?limit=5000&filter=${enc('{"PriceArea":"DK1"}')}&start=${fmt(start)}&end=${fmt(tomorrow)}`).then(r=>r.json()),
+      fetch(`${API}/mFRRCapacityMarket?limit=5000&filter=${enc('{"PriceArea":"DK1"}')}&start=${fmt(start)}&end=${fmt(tomorrow)}`).then(r=>r.json()),
+      fetch(`${API}/MfrrCapacityMarketExtra?limit=5000&filter=${enc('{"PriceArea":"DK1"}')}&start=${fmt(start)}&end=${fmt(tomorrow)}`).then(r=>r.json())
     ]);
     S = {
       afrr: cStats(a.records),
