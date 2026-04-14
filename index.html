@@ -1862,7 +1862,7 @@ if(idx>=dates.length){window._overrideAfrr=null;window._overrideMfrr=null;window
 var iso=dates[idx];
 var af=(window._allAfrr||[]).filter(function(r){return(r.TimeDK||"").slice(0,10)===iso;}).sort(function(a,b){return a.TimeDK<b.TimeDK?-1:1;});
 var mf=(window._allMfrr||[]).filter(function(r){return(r.TimeDK||"").slice(0,10)===iso;}).sort(function(a,b){return a.TimeDK<b.TimeDK?-1:1;});
-if(af.length>0){window._overrideAfrr=af;window._overrideMfrr=mf;window.renderRecTable();}
+if(af.length>0){window._overrideAfrr=af;window._overrideMfrr=mf;window.renderRecTable();window.renderHeatmap();}
 else{var tbody=document.getElementById("live-tbody");if(tbody)tbody.innerHTML="<tr><td colspan=5 style=text-align:center;padding:20px;color:#999>Ingen data for "+iso+"</td></tr>";}}
 function skiftDag(delta){var ny=window._datoIdx+delta;var maxIdx=window._datoDates.length+1;if(ny<0||ny>maxIdx)return;window._datoIdx=ny;opdaterDatoNav();visValgDag();}
 function initDatoNav(){
@@ -1975,6 +1975,55 @@ window._origRenderExtraCompare=origREC;
 window.renderExtraCompare=function(){
 if(window._extraDatoIdx===-1){return origREC.apply(this,arguments);}
 else{visExtraDag();}
+};
+})();
+(function(){
+var origRH=window.renderHeatmap;
+window._origRenderHeatmap=origRH;
+window.renderHeatmap=function(){
+if(!window._overrideAfrr||!window._overrideAfrr.length){return origRH.apply(this,arguments);}
+var af=window._overrideAfrr||[];
+var mf=window._overrideMfrr||[];
+var ef=(window._allExtra||[]).filter(function(r){return af.length&&(r.TimeDK||"").slice(0,10)===(af[0].TimeDK||"").slice(0,10);});
+var mkts=[{k:"afrr",data:af,l:"aFRR",r:37,g:99,b:235},{k:"mfrr",data:mf,l:"mFRR",r:5,g:150,b:105},{k:"extra",data:ef,l:"Extra",r:217,g:119,b:6}];
+var hlabels=document.getElementById("hlabels");
+var heatDiv=document.getElementById("heatmap");
+if(!hlabels||!heatDiv)return;
+hlabels.innerHTML=mkts.map(function(m){return"<span style=\"color:rgb("+m.r+","+m.g+","+m.b+");font-weight:700;font-size:12px\">"+m.l+"</span>";}).join("");
+heatDiv.innerHTML="";
+mkts.forEach(function(mkt){
+  var byHour={};
+  mkt.data.forEach(function(r){
+    var h=parseInt((r.TimeDK||"00:00").slice(11,13));
+    if(!isNaN(h))byHour[h]={price:+(r.UpPriceDKK||0),mw:+(r.UpProcuredMW||0)};
+  });
+  var maxP=Math.max.apply(null,Object.values(byHour).map(function(v){return v.price;})||[1]);
+  var row=document.createElement("div");
+  row.style.cssText="display:flex;gap:2px;margin-bottom:3px;";
+  for(var h=0;h<24;h++){
+    var v=byHour[h]||{price:0,mw:0};
+    var intensity=maxP>0?v.price/maxP:0;
+    var cell=document.createElement("div");
+    cell.style.cssText="width:20px;height:28px;border-radius:3px;cursor:pointer;background:rgba("+mkt.r+","+mkt.g+","+mkt.b+","+intensity.toFixed(2)+");border:1px solid rgba("+mkt.r+","+mkt.g+","+mkt.b+",0.2)";
+    cell.title="kl. "+(h<10?"0":"")+h+":00 "+mkt.l+": "+v.price.toFixed(2)+" kr./MW ("+v.mw+" MW)";
+    row.appendChild(cell);
+  }
+  heatDiv.appendChild(row);
+});
+var iso=af.length?(af[0].TimeDK||"").slice(0,10):"";
+var hm=document.getElementById("heat-metrics");
+if(hm){
+  var afPrices=af.map(function(r){return+(r.UpPriceDKK||0);}).filter(function(p){return p>0;});
+  var mfPrices=mf.map(function(r){return+(r.UpPriceDKK||0);}).filter(function(p){return p>0;});
+  var afMax=afPrices.length?Math.max.apply(null,afPrices):0;
+  var mfMax=mfPrices.length?Math.max.apply(null,mfPrices):0;
+  var afAvg=afPrices.length?afPrices.reduce(function(a,b){return a+b;},0)/afPrices.length:0;
+  var mfAvg=mfPrices.length?mfPrices.reduce(function(a,b){return a+b;},0)/mfPrices.length:0;
+  hm.innerHTML="<div class=metric><span class=lbl>aFRR max</span><span class=val>"+afMax.toFixed(0)+" kr.</span></div>"+
+    "<div class=metric><span class=lbl>aFRR snit</span><span class=val>"+afAvg.toFixed(0)+" kr.</span></div>"+
+    "<div class=metric><span class=lbl>mFRR max</span><span class=val>"+mfMax.toFixed(0)+" kr.</span></div>"+
+    "<div class=metric><span class=lbl>mFRR snit</span><span class=val>"+mfAvg.toFixed(0)+" kr.</span></div>";
+}
 };
 })();
 </script>
