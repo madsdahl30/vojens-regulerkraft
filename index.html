@@ -1854,14 +1854,14 @@ if(pBtn)pBtn.disabled=(idx<=0);
 if(nBtn)nBtn.disabled=(idx>=dates.length);
 if(idx===dates.length){
   var iso=getIsoOffset(1);
-  if(lbl)lbl.textContent="Naeste: "+formatDatoStr(iso);
-  if(sub)sub.textContent="naeste driftsogn";
+  if(lbl)lbl.textContent="Næste: "+formatDatoStr(iso);
+  if(sub)sub.textContent="næste driftsøgn";
 }else{
   var iso=dates[idx];
   var today=getIsoOffset(0);
   var daysAgo=Math.round((new Date(today)-new Date(iso))/86400000);
   if(lbl)lbl.textContent=(daysAgo===0?"I dag: ":"")+formatDatoStr(iso);
-  if(sub)sub.textContent=daysAgo===0?"i dag":daysAgo===1?"i gar":daysAgo+" dage siden";
+  if(sub)sub.textContent=daysAgo===0?"i dag":daysAgo===1?"i går":daysAgo+" dage siden";
 }}
 function visValgDag(){
 var dates=window._datoDates;var idx=window._datoIdx;
@@ -1906,9 +1906,9 @@ var maxIdx=dates&&dates.length?dates.length+1:1;
 if(pBtn)pBtn.disabled=(idx<=-1);
 if(nBtn)nBtn.disabled=(idx>=maxIdx);
 if(idx===-1){if(lbl)lbl.textContent="90 dage";if(sub)sub.textContent="historik";}
-else if(idx===maxIdx){var iso=getIsoOffset(1);if(lbl)lbl.textContent="Naeste: "+formatDatoStr(iso);if(sub)sub.textContent="naeste driftsogn";}
+else if(idx===maxIdx){var iso=getIsoOffset(1);if(lbl)lbl.textContent="Næste: "+formatDatoStr(iso);if(sub)sub.textContent="næste driftsøgn";}
 else if(idx===(dates?dates.length:0)){var iso=getIsoOffset(0);if(lbl)lbl.textContent="I dag: "+formatDatoStr(iso);if(sub)sub.textContent="i dag";}
-else if(dates&&dates[idx]){var iso=dates[idx];var daysAgo=Math.round((new Date(getIsoOffset(0))-new Date(iso))/86400000);if(lbl)lbl.textContent=formatDatoStr(iso);if(sub)sub.textContent=daysAgo===1?"i gar":daysAgo+" dage siden";}
+else if(dates&&dates[idx]){var iso=dates[idx];var daysAgo=Math.round((new Date(getIsoOffset(0))-new Date(iso))/86400000);if(lbl)lbl.textContent=formatDatoStr(iso);if(sub)sub.textContent=daysAgo===1?"i går":daysAgo+" dage siden";}
 }
 function visExtraDag(){
 var dates=window._datoDates;var idx=window._extraDatoIdx;
@@ -1951,6 +1951,30 @@ window._extraDatoIdx=ny;
 opdaterExtraDatoNav();
 visExtraDag();
 }
+
+// fetchAll wrap - fanger data og kalder initDatoNav
+(function(){
+var origFA=window.fetchAll;
+window.fetchAll=function(){
+var oF=window.fetch;
+window._fetchDone=0;
+window.fetch=function(url,opts){
+var p=oF.call(this,url,opts);
+if(typeof url==="string"){
+if(url.indexOf("AfrrReservesNordic")>-1){
+p.then(function(r){return r.clone().json();}).then(function(j){window._allAfrr=j.records||[];window._fetchDone++;if(window._fetchDone>=2)setTimeout(initDatoNav,300);}).catch(function(){});
+}else if(url.indexOf("MfrrCapacityMarketExtra")>-1){
+p.then(function(r){return r.clone().json();}).then(function(j){window._allExtra=j.records||[];}).catch(function(){});
+}else if(url.indexOf("mFRRCapacityMarket")>-1){
+p.then(function(r){return r.clone().json();}).then(function(j){window._allMfrr=j.records||[];window._fetchDone++;if(window._fetchDone>=2)setTimeout(initDatoNav,300);}).catch(function(){});
+}}
+return p;};
+var res=origFA.apply(this,arguments);
+setTimeout(function(){window.fetch=oF;},8000);
+return res;};
+// Auto-kald ved load
+setTimeout(function(){fetchAll();},1000);
+})();
 (function(){
 var origREC=window.renderExtraCompare;
 window._origRenderExtraCompare=origREC;
