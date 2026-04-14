@@ -1868,7 +1868,7 @@ function skiftDag(delta){var ny=window._datoIdx+delta;var maxIdx=window._datoDat
 function initDatoNav(){
 var dates=[...new Set(window._allAfrr.map(function(r){return(r.TimeDK||"").slice(0,10);}))].filter(Boolean).sort();
 var today=getIsoOffset(0);
-dates=dates.filter(function(d){return d<=today;}).slice(-7);
+dates=dates.filter(function(d){return d<today;}).slice(-5);
 window._datoDates=dates;
 window._datoIdx=dates.length+1;
 opdaterDatoNav();}
