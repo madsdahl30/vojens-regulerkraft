@@ -1888,12 +1888,11 @@ if(ny<0||ny>window._datoDates.length)return;
 window._datoIdx=ny;opdaterDatoNav();visValgDag();
 }
 function initDatoNav(){
-var dates=[...new Set(window._allAfrr.map(function(r){return(r.TimeDK||"").slice(0,10);}))].filter(Boolean).sort();
-dates=dates.slice(-6);
-window._datoDates=dates;
-window._datoIdx=dates.length-1;
-opdaterDatoNav();
+var all=[...new Set(window._allAfrr.map(function(r){return(r.TimeDK||"").slice(0,10);}))].filter(Boolean).sort();
+window._datoDates=all.slice(-6);
+window._datoIdx=window._datoDates.length;
 visValgDag();
+opdaterDatoNav();
 }
 function opdaterExtraDatoNav(){
 var dates=window._datoDates;
