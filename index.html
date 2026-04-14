@@ -1845,7 +1845,7 @@ window._allAfrr=[];window._allMfrr=[];window._allExtra=[];
 window._overrideAfrr=null;window._overrideMfrr=null;
 window._datoDates=[];window._datoIdx=0;
 function formatDatoStr(iso){var d=new Date(iso+"T12:00:00");var da=["son","man","tirs","ons","tors","fre","lor"];return da[d.getDay()]+". "+d.getDate()+"/"+(d.getMonth()+1);}
-function getIsoOffset(offset){var d=new Date();d.setDate(d.getDate()+offset);return d.toISOString().slice(0,10);}
+function getIsoOffset(o){var d=new Date();d.setDate(d.getDate()+o);return d.toISOString().slice(0,10);}
 function opdaterDatoNav(){
 var dates=window._datoDates;var idx=window._datoIdx;
 var lbl=document.getElementById("dato-label");var sub=document.getElementById("dato-sub");
@@ -1853,39 +1853,22 @@ var pBtn=document.getElementById("btn-prev");var nBtn=document.getElementById("b
 var maxIdx=dates.length+1;
 if(pBtn)pBtn.disabled=(idx<=0);
 if(nBtn)nBtn.disabled=(idx>=maxIdx);
-if(idx===maxIdx){
-  var iso=getIsoOffset(1);
-  if(lbl)lbl.textContent="Naeste: "+formatDatoStr(iso);
-  if(sub)sub.textContent="naeste driftsogn";
-}else if(idx===dates.length){
-  var iso=getIsoOffset(0);
-  if(lbl)lbl.textContent="I dag: "+formatDatoStr(iso);
-  if(sub)sub.textContent="i dag";
-}else{
-  var iso=dates[idx];
-  var daysAgo=Math.round((new Date(getIsoOffset(0))-new Date(iso))/86400000);
-  if(lbl)lbl.textContent=formatDatoStr(iso);
-  if(sub)sub.textContent=daysAgo===1?"i gar":daysAgo+" dage siden";
-}}
+if(idx===maxIdx){var iso=getIsoOffset(1);if(lbl)lbl.textContent="Naeste: "+formatDatoStr(iso);if(sub)sub.textContent="naeste driftsogn";}
+else if(idx===dates.length){var iso=getIsoOffset(0);if(lbl)lbl.textContent="I dag: "+formatDatoStr(iso);if(sub)sub.textContent="i dag";}
+else{var iso=dates[idx];var daysAgo=Math.round((new Date(getIsoOffset(0))-new Date(iso))/86400000);if(lbl)lbl.textContent=formatDatoStr(iso);if(sub)sub.textContent=daysAgo===1?"i gar":daysAgo+" dage siden";}}
 function visValgDag(){
-var dates=window._datoDates;var idx=window._datoIdx;var maxIdx=dates.length+1;
-if(idx>=dates.length){
-  window._overrideAfrr=null;window._overrideMfrr=null;
-  window._origRenderRecTable&&window._origRenderRecTable();
-}else{
-  var iso=dates[idx];
-  var af=(window._allAfrr||[]).filter(function(r){return(r.TimeDK||"").slice(0,10)===iso;});
-  var mf=(window._allMfrr||[]).filter(function(r){return(r.TimeDK||"").slice(0,10)===iso;});
-  if(af.length>0){window._overrideAfrr=af;window._overrideMfrr=mf;window.renderRecTable();}
-  else{var tbody=document.getElementById("live-tbody");if(tbody)tbody.innerHTML="<tr><td colspan=5 style=text-align:center;padding:20px;color:#999>Ingen data for "+iso+"</td></tr>";}
-}}
-function skiftDag(delta){
-var ny=window._datoIdx+delta;
-var maxIdx=window._datoDates.length+1;
-if(ny<0||ny>maxIdx)return;
-window._datoIdx=ny;opdaterDatoNav();visValgDag();}
+var dates=window._datoDates;var idx=window._datoIdx;
+if(idx>=dates.length){window._overrideAfrr=null;window._overrideMfrr=null;window._origRenderRecTable&&window._origRenderRecTable();return;}
+var iso=dates[idx];
+var af=(window._allAfrr||[]).filter(function(r){return(r.TimeDK||"").slice(0,10)===iso;}).sort(function(a,b){return a.TimeDK<b.TimeDK?-1:1;});
+var mf=(window._allMfrr||[]).filter(function(r){return(r.TimeDK||"").slice(0,10)===iso;}).sort(function(a,b){return a.TimeDK<b.TimeDK?-1:1;});
+if(af.length>0){window._overrideAfrr=af;window._overrideMfrr=mf;window.renderRecTable();}
+else{var tbody=document.getElementById("live-tbody");if(tbody)tbody.innerHTML="<tr><td colspan=5 style=text-align:center;padding:20px;color:#999>Ingen data for "+iso+"</td></tr>";}}
+function skiftDag(delta){var ny=window._datoIdx+delta;var maxIdx=window._datoDates.length+1;if(ny<0||ny>maxIdx)return;window._datoIdx=ny;opdaterDatoNav();visValgDag();}
 function initDatoNav(){
 var dates=[...new Set(window._allAfrr.map(function(r){return(r.TimeDK||"").slice(0,10);}))].filter(Boolean).sort();
+var today=getIsoOffset(0);
+dates=dates.filter(function(d){return d<=today;}).slice(-7);
 window._datoDates=dates;
 window._datoIdx=dates.length+1;
 opdaterDatoNav();}
@@ -1893,22 +1876,27 @@ opdaterDatoNav();}
 var origRRT=window.renderRecTable;window._origRenderRecTable=origRRT;
 window.renderRecTable=function(){
 if(window._overrideAfrr&&window._overrideAfrr.length>0){
-var af=window._overrideAfrr,mf=window._overrideMfrr||[];
+var af=window._overrideAfrr.slice().sort(function(a,b){return a.TimeDK>b.TimeDK?-1:1;});
+var mfMap={};
+(window._overrideMfrr||[]).forEach(function(r){mfMap[(r.TimeDK||"").slice(11,16)]=r;});
 var tbody=document.getElementById("live-tbody");if(!tbody)return;
 var rows="";
-for(var i=0;i<af.length;i++){var a=af[i],m=mf[i]||{};
+for(var i=0;i<af.length;i++){
+var a=af[i];
 var time=(a.TimeDK||"").slice(11,16);
+var m=mfMap[time]||{};
 var aP=+(a.UpPriceDKK||0),mP=+(m.UpPriceDKK||0);
 var aC=aP>=400?"#dc2626":aP>=100?"#ea580c":aP>=50?"#d97706":"#16a34a";
 var mC=mP>=1000?"#dc2626":mP>=500?"#ea580c":mP>=100?"#d97706":"#16a34a";
-rows+="<tr><td>kl. "+time+"</td><td style=color:"+aC+";font-weight:600>"+aP.toFixed(2)+"</td><td style=color:"+mC+";font-weight:600>"+mP.toFixed(2)+"</td><td>"+(a.UpProcuredMW||0)+"</td><td>"+(m.UpProcuredMW||0)+"</td></tr>";}
+var aMW=a.UpProcuredMW||0,mMW=m.UpProcuredMW||"-";
+rows+="<tr><td>kl. "+time+"</td><td style=color:"+aC+";font-weight:600>"+aP.toFixed(2)+"</td><td style=color:"+mC+";font-weight:600>"+mP.toFixed(2)+"</td><td>"+aMW+"</td><td>"+mMW+"</td></tr>";}
 tbody.innerHTML=rows;
-var la=af[af.length-1],lm=mf.length?mf[mf.length-1]:{};
+var la=af[0],lm=mfMap[(af[0].TimeDK||"").slice(11,16)]||{};
 var ea=document.getElementById("lm-afrr-up"),em=document.getElementById("lm-mfrr-up");
 var eat=document.getElementById("lm-afrr-time"),emt=document.getElementById("lm-mfrr-time");
 if(ea)ea.textContent=(+(la.UpPriceDKK||0)).toFixed(2)+" kr.";
-if(em&&lm.UpPriceDKK!==undefined)em.textContent=(+(lm.UpPriceDKK||0)).toFixed(2)+" kr.";
-if(eat)eat.textContent="kl. "+(la.TimeDK||"").slice(11,16);
+if(em)em.textContent=(+(lm.UpPriceDKK||0)).toFixed(2)+" kr.";
+if(eat)eat.textContent="kl. "+time;
 if(emt&&lm.TimeDK)emt.textContent="kl. "+(lm.TimeDK||"").slice(11,16);
 }else{return origRRT.apply(this,arguments);}};
 var origFA=window.fetchAll;
@@ -1919,8 +1907,8 @@ window.fetch=function(url,opts){var p=oF.call(this,url,opts);
 if(typeof url==="string"){
 if(url.indexOf("AfrrReservesNordic")>-1){p.then(function(r){return r.clone().json();}).then(function(j){window._allAfrr=j.records||[];}).catch(function(){});}
 else if(url.indexOf("MfrrCapacityMarketExtra")>-1){p.then(function(r){return r.clone().json();}).then(function(j){window._allExtra=j.records||[];}).catch(function(){});}
-else if(url.indexOf("mFRRCapacityMarket")>-1){p.then(function(r){return r.clone().json();}).then(function(j){window._allMfrr=j.records||[];setTimeout(initDatoNav,300);}).catch(function(){});}
-}return p;};
+else if(url.indexOf("mFRRCapacityMarket")>-1&&url.indexOf("Extra")<0){p.then(function(r){return r.clone().json();}).then(function(j){window._allMfrr=j.records||[];setTimeout(initDatoNav,300);}).catch(function(){});}}
+return p;};
 var res=origFA.apply(this,arguments);setTimeout(function(){window.fetch=oF;},7000);return res;};
 setTimeout(function(){fetchAll();},1200);
 })();
