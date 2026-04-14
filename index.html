@@ -220,7 +220,7 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
     </div>
     <div class="card">
       <div class="ct">Extra vs. aFRR sammenligning <span class="badge bx">Hvornr betaler det sig at satse p Extra?</span></div>
-      <table class="rt" id="extra-compare"></table>
+      <div id="extra-dato-nav" style="display:flex;align-items:center;justify-content:space-between;padding:8px 4px 12px"><button onclick="skiftExtraDag(-1)" id="extra-btn-prev" style="padding:6px 16px;border-radius:8px;border:1px solid #ddd;background:#f5f5f5;cursor:pointer;font-size:14px">&#8592; Forrige</button><div style="text-align:center"><div id="extra-dato-label" style="font-weight:700;font-size:15px">90 dage</div><div id="extra-dato-sub" style="font-size:11px;color:#888">historik</div></div><button onclick="skiftExtraDag(1)" id="extra-btn-next" style="padding:6px 16px;border-radius:8px;border:1px solid #ddd;background:#f5f5f5;cursor:pointer;font-size:14px">N&#230;ste &#8594;</button></div><table class="rt" id="extra-compare"></table>
     </div>
   </div>
 
@@ -1911,6 +1911,71 @@ else if(url.indexOf("mFRRCapacityMarket")>-1&&url.indexOf("Extra")<0){p.then(fun
 return p;};
 var res=origFA.apply(this,arguments);setTimeout(function(){window.fetch=oF;},7000);return res;};
 setTimeout(function(){fetchAll();},1200);
+})();
+window._extraDatoIdx=-1;
+function opdaterExtraDatoNav(){
+var dates=window._datoDates;
+var idx=window._extraDatoIdx;
+var lbl=document.getElementById("extra-dato-label");
+var sub=document.getElementById("extra-dato-sub");
+var pBtn=document.getElementById("extra-btn-prev");
+var nBtn=document.getElementById("extra-btn-next");
+var maxIdx=dates&&dates.length?dates.length+1:1;
+if(pBtn)pBtn.disabled=(idx<=-1);
+if(nBtn)nBtn.disabled=(idx>=maxIdx);
+if(idx===-1){if(lbl)lbl.textContent="90 dage";if(sub)sub.textContent="historik";}
+else if(idx===maxIdx){var iso=getIsoOffset(1);if(lbl)lbl.textContent="Naeste: "+formatDatoStr(iso);if(sub)sub.textContent="naeste driftsogn";}
+else if(idx===(dates?dates.length:0)){var iso=getIsoOffset(0);if(lbl)lbl.textContent="I dag: "+formatDatoStr(iso);if(sub)sub.textContent="i dag";}
+else if(dates&&dates[idx]){var iso=dates[idx];var daysAgo=Math.round((new Date(getIsoOffset(0))-new Date(iso))/86400000);if(lbl)lbl.textContent=formatDatoStr(iso);if(sub)sub.textContent=daysAgo===1?"i gar":daysAgo+" dage siden";}
+}
+function visExtraDag(){
+var dates=window._datoDates;var idx=window._extraDatoIdx;
+var maxIdx=dates&&dates.length?dates.length+1:1;
+if(idx===-1){
+  window._origRenderExtraCompare&&window._origRenderExtraCompare();
+  return;
+}
+var iso;
+if(idx>=maxIdx)iso=getIsoOffset(1);
+else if(idx>=(dates?dates.length:0))iso=getIsoOffset(0);
+else iso=dates&&dates[idx]?dates[idx]:getIsoOffset(0);
+var ef=(window._allExtra||[]).filter(function(r){return(r.TimeDK||"").slice(0,10)===iso;}).sort(function(a,b){return a.TimeDK<b.TimeDK?1:-1;});
+var af=(window._allAfrr||[]).filter(function(r){return(r.TimeDK||"").slice(0,10)===iso;}).sort(function(a,b){return a.TimeDK<b.TimeDK?1:-1;});
+var aMap={};af.forEach(function(r){aMap[(r.TimeDK||"").slice(11,16)]=r;});
+var tbl=document.getElementById("extra-compare");if(!tbl)return;
+var hdr="<thead><tr><th>TIME</th><th>EXTRA AKTIV</th><th>aFRR PRIS</th><th>EXTRA PRIS</th><th>FORSKEL</th><th>ANBEFALING</th></tr></thead>";
+var body="<tbody>";
+for(var h=23;h>=0;h--){
+  var time=(h<10?"0":"")+h+":00";
+  var e=ef.find(function(r){return(r.TimeDK||"").slice(11,13)===(h<10?"0":"")+h;})||{};
+  var a=aMap[time]||{};
+  var eP=+(e.UpPriceDKK||0),aP=+(a.UpPriceDKK||0);
+  var hasExtra=e.UpProcuredMW>0;
+  var diff=eP-aP;
+  var diffStr=diff>0?"+"+diff.toFixed(0)+" kr.":diff.toFixed(0)+" kr.";
+  var diffCol=diff>100?"#16a34a":diff>0?"#d97706":"#6b7280";
+  var anb=hasExtra?(diff>200?"Overvej Extra-bud":"Behold normal aFRR-pris"):"Ikke aktiv";
+  body+="<tr><td>Kl. "+time+"</td><td>"+(hasExtra?"<span style=color:#d97706;font-weight:600>"+e.UpProcuredMW+" MW</span>":"–")+"</td><td>"+aP.toFixed(2)+" kr.</td><td>"+(hasExtra?eP.toFixed(2)+" kr.":"–")+"</td><td style=color:"+diffCol+";font-weight:600>"+(hasExtra?diffStr:"–")+"</td><td>"+anb+"</td></tr>";
+}
+body+="</tbody>";
+tbl.innerHTML=hdr+body;
+}
+function skiftExtraDag(delta){
+var dates=window._datoDates;
+var maxIdx=dates&&dates.length?dates.length+1:1;
+var ny=window._extraDatoIdx+delta;
+if(ny<-1||ny>maxIdx)return;
+window._extraDatoIdx=ny;
+opdaterExtraDatoNav();
+visExtraDag();
+}
+(function(){
+var origREC=window.renderExtraCompare;
+window._origRenderExtraCompare=origREC;
+window.renderExtraCompare=function(){
+if(window._extraDatoIdx===-1){return origREC.apply(this,arguments);}
+else{visExtraDag();}
+};
 })();
 </script>
 </body>
