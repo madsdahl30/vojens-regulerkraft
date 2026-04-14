@@ -1951,6 +1951,37 @@ opdaterExtraDatoNav();
 visExtraDag();
 }
 
+// renderRecTable wrap
+(function(){
+var origRRT=window.renderRecTable;
+window._origRenderRecTable=origRRT;
+window.renderRecTable=function(){
+if(window._overrideAfrr&&window._overrideAfrr.length>0){
+var af=window._overrideAfrr;
+var mf=window._overrideMfrr||[];
+var mfMap={};mf.forEach(function(r){mfMap[(r.TimeDK||"").slice(11,16)]=r;});
+var tbody=document.getElementById("live-tbody");if(!tbody)return;
+var rows="";
+for(var i=0;i<af.length;i++){
+var a=af[i];
+var time=(a.TimeDK||"").slice(11,16);
+var m=mfMap[time]||{};
+var aP=+(a.UpPriceDKK||0),mP=+(m.UpPriceDKK||0);
+var aC=aP>=400?"#dc2626":aP>=100?"#ea580c":aP>=50?"#d97706":"#16a34a";
+var mC=mP>=1000?"#dc2626":mP>=500?"#ea580c":mP>=100?"#d97706":"#16a34a";
+rows+="<tr><td>kl. "+time+"</td><td style=color:"+aC+";font-weight:600>"+aP.toFixed(2)+"</td><td style=color:"+mC+";font-weight:600>"+mP.toFixed(2)+"</td><td>"+(a.UpProcuredMW||0)+"</td><td>"+(m.UpProcuredMW||"-")+"</td></tr>";
+}
+tbody.innerHTML=rows;
+var la=af[0],lm=mfMap[(af[0].TimeDK||"").slice(11,16)]||{};
+var ea=document.getElementById("lm-afrr-up"),em=document.getElementById("lm-mfrr-up");
+var eat=document.getElementById("lm-afrr-time"),emt=document.getElementById("lm-mfrr-time");
+if(ea)ea.textContent=(+(la.UpPriceDKK||0)).toFixed(2)+" kr.";
+if(em)em.textContent=(+(lm.UpPriceDKK||0)).toFixed(2)+" kr.";
+if(eat)eat.textContent="kl. "+(la.TimeDK||"").slice(11,16);
+if(emt&&lm.TimeDK)emt.textContent="kl. "+(lm.TimeDK||"").slice(11,16);
+}else{return origRRT.apply(this,arguments);}
+};
+})();
 // fetchAll wrap - fanger data og kalder initDatoNav
 (function(){
 var origFA=window.fetchAll;
