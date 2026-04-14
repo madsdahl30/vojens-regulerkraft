@@ -151,7 +151,7 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
   </table></div>
 </div>
     <div class="card">
-      <div class="ct">Gennemsnitlig clearing-pris pr. time  seneste 90 dage  DK1</div>
+      <div class="ct" id="heatmap-title">Gennemsnitlig clearing-pris pr. time – seneste 90 dage DK1</div>
 <div class="card" style="margin-top:16px">
   <div class="ct" style="display:flex;align-items:center">
     <span>&#9889; ENTSO-E Outages DK1</span>
@@ -1981,48 +1981,58 @@ else{visExtraDag();}
 var origRH=window.renderHeatmap;
 window._origRenderHeatmap=origRH;
 window.renderHeatmap=function(){
-if(!window._overrideAfrr||!window._overrideAfrr.length){return origRH.apply(this,arguments);}
+if(!window._overrideAfrr||!window._overrideAfrr.length){
+  var t=document.getElementById("heatmap-title");
+  if(t)t.textContent="Gennemsnitlig clearing-pris pr. time - seneste 90 dage DK1";
+  return origRH.apply(this,arguments);}
 var af=window._overrideAfrr||[];
 var mf=window._overrideMfrr||[];
-var ef=(window._allExtra||[]).filter(function(r){return af.length&&(r.TimeDK||"").slice(0,10)===(af[0].TimeDK||"").slice(0,10);});
-var mkts=[{k:"afrr",data:af,l:"aFRR",r:37,g:99,b:235},{k:"mfrr",data:mf,l:"mFRR",r:5,g:150,b:105},{k:"extra",data:ef,l:"Extra",r:217,g:119,b:6}];
+var iso=af.length?(af[0].TimeDK||"").slice(0,10):"";
+var t=document.getElementById("heatmap-title");
+if(t&&iso){var d=new Date(iso+"T12:00:00");var da=["son","man","tirs","ons","tors","fre","lor"];t.textContent="Clearing-pris pr. time - "+da[d.getDay()]+". "+d.getDate()+"/"+(d.getMonth()+1)+" DK1";}
+var ef=(window._allExtra||[]).filter(function(r){return(r.TimeDK||"").slice(0,10)===iso;});
+function buildMap(data){var m={};data.forEach(function(r){var h=parseInt((r.TimeDK||"").slice(11,13));if(!isNaN(h))m[h]={price:+(r.UpPriceDKK||0),mw:+(r.UpProcuredMW||0)};});return m;}
+var maps={afrr:buildMap(af),mfrr:buildMap(mf),extra:buildMap(ef)};
+var mkts=[{k:"afrr",l:"aFRR",r:37,g:99,b:235},{k:"mfrr",l:"mFRR",r:5,g:150,b:105},{k:"extra",l:"Extra",r:217,g:119,b:6}];
 var hlabels=document.getElementById("hlabels");
+if(hlabels){hlabels.innerHTML="<span style=\"width:40px;display:inline-block\">&nbsp;</span>"+Array.from({length:24},function(_,i){return"<span style=\"width:20px;text-align:center;display:inline-block;font-size:10px;color:#888\">"+i+"</span>";}).join("");}
 var heatDiv=document.getElementById("heatmap");
-if(!hlabels||!heatDiv)return;
-hlabels.innerHTML=mkts.map(function(m){return"<span style=\"color:rgb("+m.r+","+m.g+","+m.b+");font-weight:700;font-size:12px\">"+m.l+"</span>";}).join("");
+if(!heatDiv)return;
 heatDiv.innerHTML="";
 mkts.forEach(function(mkt){
-  var byHour={};
-  mkt.data.forEach(function(r){
-    var h=parseInt((r.TimeDK||"00:00").slice(11,13));
-    if(!isNaN(h))byHour[h]={price:+(r.UpPriceDKK||0),mw:+(r.UpProcuredMW||0)};
-  });
-  var maxP=Math.max.apply(null,Object.values(byHour).map(function(v){return v.price;})||[1]);
+  var map=maps[mkt.k];
+  var prices=Object.values(map).map(function(v){return v.price;});
+  var maxP=prices.length?Math.max.apply(null,prices):1;
   var row=document.createElement("div");
-  row.style.cssText="display:flex;gap:2px;margin-bottom:3px;";
+  row.style.cssText="display:flex;align-items:center;gap:2px;margin-bottom:3px;";
+  var lbl=document.createElement("span");
+  lbl.style.cssText="width:40px;font-size:11px;font-weight:700;color:rgb("+mkt.r+","+mkt.g+","+mkt.b+")";
+  lbl.textContent=mkt.l;
+  row.appendChild(lbl);
   for(var h=0;h<24;h++){
-    var v=byHour[h]||{price:0,mw:0};
-    var intensity=maxP>0?v.price/maxP:0;
+    var v=map[h]||{price:0,mw:0};
+    var intensity=maxP>0&&v.price>0?0.15+0.85*(v.price/maxP):0.05;
     var cell=document.createElement("div");
-    cell.style.cssText="width:20px;height:28px;border-radius:3px;cursor:pointer;background:rgba("+mkt.r+","+mkt.g+","+mkt.b+","+intensity.toFixed(2)+");border:1px solid rgba("+mkt.r+","+mkt.g+","+mkt.b+",0.2)";
-    cell.title="kl. "+(h<10?"0":"")+h+":00 "+mkt.l+": "+v.price.toFixed(2)+" kr./MW ("+v.mw+" MW)";
-    row.appendChild(cell);
-  }
+    cell.style.cssText="width:20px;height:28px;border-radius:3px;cursor:pointer;background:rgba("+mkt.r+","+mkt.g+","+mkt.b+","+(v.price>0?intensity:0.05)+");";
+    cell.title="kl. "+(h<10?"0":"")+h+":00 "+mkt.l+": "+(v.price>0?v.price.toFixed(2)+" kr./MW ("+v.mw+" MW)":"0 kr.");
+    row.appendChild(cell);}
   heatDiv.appendChild(row);
 });
-var iso=af.length?(af[0].TimeDK||"").slice(0,10):"";
 var hm=document.getElementById("heat-metrics");
 if(hm){
-  var afPrices=af.map(function(r){return+(r.UpPriceDKK||0);}).filter(function(p){return p>0;});
-  var mfPrices=mf.map(function(r){return+(r.UpPriceDKK||0);}).filter(function(p){return p>0;});
-  var afMax=afPrices.length?Math.max.apply(null,afPrices):0;
-  var mfMax=mfPrices.length?Math.max.apply(null,mfPrices):0;
-  var afAvg=afPrices.length?afPrices.reduce(function(a,b){return a+b;},0)/afPrices.length:0;
-  var mfAvg=mfPrices.length?mfPrices.reduce(function(a,b){return a+b;},0)/mfPrices.length:0;
-  hm.innerHTML="<div class=metric><span class=lbl>aFRR max</span><span class=val>"+afMax.toFixed(0)+" kr.</span></div>"+
+  var afP=af.map(function(r){return+(r.UpPriceDKK||0);});
+  var mfP=mf.map(function(r){return+(r.UpPriceDKK||0);});
+  var afMax=afP.length?Math.max.apply(null,afP):0;
+  var mfMax=mfP.length?Math.max.apply(null,mfP):0;
+  var afAvg=afP.length?afP.reduce(function(a,b){return a+b;},0)/afP.length:0;
+  var mfAvg=mfP.length?mfP.reduce(function(a,b){return a+b;},0)/mfP.length:0;
+  var bestH=0,bestP=0;
+  af.forEach(function(r){var p=+(r.UpPriceDKK||0),h=parseInt((r.TimeDK||"").slice(11,13));if(p>bestP){bestP=p;bestH=h;}});
+  hm.innerHTML=
+    "<div class=metric><span class=lbl>aFRR max</span><span class=val>"+afMax.toFixed(0)+" kr.</span></div>"+
     "<div class=metric><span class=lbl>aFRR snit</span><span class=val>"+afAvg.toFixed(0)+" kr.</span></div>"+
     "<div class=metric><span class=lbl>mFRR max</span><span class=val>"+mfMax.toFixed(0)+" kr.</span></div>"+
-    "<div class=metric><span class=lbl>mFRR snit</span><span class=val>"+mfAvg.toFixed(0)+" kr.</span></div>";
+    "<div class=metric><span class=lbl>Bedste time</span><span class=val>Kl. "+(bestH<10?"0":"")+bestH+"</span></div>";
 }
 };
 })();
