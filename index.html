@@ -130,20 +130,20 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
   <div id="panel-heatmap" class="panel active">
     <div class="card" id="live-marked-card" style="margin-bottom:16px">
   <div class="ct">
-    Ã¢ÂÂ¡ Live marked
-    <span style="font-size:11px;font-weight:400;color:var(--text3);margin-left:4px">DK1 kapacitetspriser Ã¢ÂÂ henter...</span>
-    <button onclick="fetchLiveMarked()" style="margin-left:auto;padding:3px 10px;font-size:11px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text2)">Ã¢ÂÂ» Opdater</button>
+    ⚡ Live marked
+    <span style="font-size:11px;font-weight:400;color:var(--text3);margin-left:4px">DK1 kapacitetspriser – henter...</span>
+    <button onclick="fetchLiveMarked()" style="margin-left:auto;padding:3px 10px;font-size:11px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text2)">↻ Opdater</button>
   </div>
   <div id="live-metrics" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px">
-    <div class="metric"><div class="ml">aFRR Ã¢ÂÂ seneste time</div><div class="mv" id="lm-afrr-up">Ã¢ÂÂ</div><div class="ms" id="lm-afrr-time">henter...</div></div>
-    <div class="metric"><div class="ml">mFRR Ã¢ÂÂ seneste time</div><div class="mv" id="lm-mfrr-up">Ã¢ÂÂ</div><div class="ms" id="lm-mfrr-time">henter...</div></div>
+    <div class="metric"><div class="ml">aFRR ↑ seneste time</div><div class="mv" id="lm-afrr-up">–</div><div class="ms" id="lm-afrr-time">henter...</div></div>
+    <div class="metric"><div class="ml">mFRR ↑ seneste time</div><div class="mv" id="lm-mfrr-up">–</div><div class="ms" id="lm-mfrr-time">henter...</div></div>
   </div>
   <div id="dato-nav" style="display:flex;align-items:center;justify-content:space-between;padding:8px 4px 12px"><button onclick="skiftDag(-1)" id="btn-prev" style="padding:6px 16px;border-radius:8px;border:1px solid #ddd;background:#f5f5f5;cursor:pointer;font-size:14px">&#8592; Forrige</button><div style="text-align:center"><div id="dato-label" style="font-weight:700;font-size:15px"></div><div id="dato-sub" style="font-size:11px;color:#888">i dag</div></div><button onclick="skiftDag(1)" id="btn-next" style="padding:6px 16px;border-radius:8px;border:1px solid #ddd;background:#f5f5f5;cursor:pointer;font-size:14px">N&#230;ste &#8594;</button></div>
   <div style="overflow-x:auto"><table class="rt" id="live-table">
     <thead><tr>
       <th>Time</th>
-      <th style="color:var(--afrr)">aFRR Ã¢ÂÂ kr./MW</th>
-      <th style="color:var(--mfrr)">mFRR Ã¢ÂÂ kr./MW</th>
+      <th style="color:var(--afrr)">aFRR ↑ kr./MW</th>
+      <th style="color:var(--mfrr)">mFRR ↑ kr./MW</th>
       <th style="color:var(--text3);font-size:11px">aFRR MW</th>
       <th style="color:var(--text3);font-size:11px">mFRR MW</th>
     </tr></thead>
@@ -151,7 +151,7 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
   </table></div>
 </div>
     <div class="card">
-      <div class="ct" id="heatmap-title">Gennemsnitlig clearing-pris pr. time Ã¢ÂÂ seneste 90 dage DK1</div>
+      <div class="ct" id="heatmap-title">Gennemsnitlig clearing-pris pr. time – seneste 90 dage DK1</div>
 <div class="card" style="margin-top:16px">
   <div class="ct" style="display:flex;align-items:center">
     <span>&#9889; ENTSO-E Outages DK1</span>
@@ -230,8 +230,8 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
   <!-- VIND WIDGET -->
   <div class="card" id="vind-card" style="margin-bottom:12px">
     <div class="ct" style="display:flex;justify-content:space-between;align-items:center">
-      <span>Ã°ÂÂÂ¬Ã¯Â¸Â Vindforhold Ã¢ÂÂ Esbjerg (DK1)</span>
-      <button onclick="hentVind()" style="font-size:11px;padding:3px 10px;border-radius:6px;border:1px solid #ccc;background:#f5f5f5;cursor:pointer">Ã¢ÂÂ» Opdater</button>
+      <span>🌬️ Vindforhold – Esbjerg (DK1)</span>
+      <button onclick="hentVind()" style="font-size:11px;padding:3px 10px;border-radius:6px;border:1px solid #ccc;background:#f5f5f5;cursor:pointer">↻ Opdater</button>
     </div>
     <div id="vind-indhold" style="padding:8px 0;color:#888;font-size:13px">Henter vinddata...</div>
   </div>
@@ -239,8 +239,8 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
   <!-- DK1 UDFALD -->
   <div class="card" id="udfald-card" style="margin-bottom:12px">
     <div class="ct" style="display:flex;justify-content:space-between;align-items:center">
-      <span>Ã¢ÂÂ¡ DK1 Produktionsudfald Ã¢ÂÂ i dag</span>
-      <button onclick="hentUdfald()" style="font-size:11px;padding:3px 10px;border-radius:6px;border:1px solid #ccc;background:#f5f5f5;cursor:pointer">Ã¢ÂÂ» Opdater</button>
+      <span>⚡ DK1 Produktionsudfald – i dag</span>
+      <button onclick="hentUdfald()" style="font-size:11px;padding:3px 10px;border-radius:6px;border:1px solid #ccc;background:#f5f5f5;cursor:pointer">↻ Opdater</button>
     </div>
     <div id="udfald-indhold" style="padding:8px 0;color:#888;font-size:13px">Henter udfald...</div>
   </div>
@@ -250,7 +250,7 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
 
 </div>
 
-<div id="panel-budstrategi" class="panel"><div class="card"><div class="ct">Budstrategi <span class="badge ba">Seneste 90 dage</span><span style="font-size:11px;color:var(--text3);margin-left:8px">Baseret pÃ¥ historiske markedsclearingspriser (EDS DK1)</span></div><div id="bs-summary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px"></div></div><div class="card"><div class="ct">Anbefalet budpris pr. time <span style="font-size:11px;font-weight:400;color:var(--text3)"> hv budpris &nbsp; ok &nbsp; for hjt</span></div><div style="overflow-x:auto"><table class="rt" id="bs-table"></table></div></div><div class="card" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-color:#86efac"><div class="ct" style="color:#166534"> Potentiel gevinst ved optimerede budpriser</div><div id="bs-gain"></div></div></div>
+<div id="panel-budstrategi" class="panel"><div class="card"><div class="ct">Budstrategi <span class="badge ba">Seneste 90 dage</span><span style="font-size:11px;color:var(--text3);margin-left:8px">Baseret p� historiske markedsclearingspriser (EDS DK1)</span></div><div id="bs-summary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px"></div></div><div class="card"><div class="ct">Anbefalet budpris pr. time <span style="font-size:11px;font-weight:400;color:var(--text3)"> hv budpris &nbsp; ok &nbsp; for hjt</span></div><div style="overflow-x:auto"><table class="rt" id="bs-table"></table></div></div><div class="card" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-color:#86efac"><div class="ct" style="color:#166534"> Potentiel gevinst ved optimerede budpriser</div><div id="bs-gain"></div></div></div>
   <div id="panel-resultater" class="panel">
 <div class="card" style="margin-bottom:12px">
   <div class="ct">&#127942; Accepterede bud - i dag <span style="font-size:11px;color:var(--text3);margin-left:8px">Fra Centrica Planning</span></div>
@@ -325,7 +325,7 @@ function fetchLiveMarked() {
     mTod.forEach(function(r){ mByHour[parseInt(r.TimeDK.substring(11,13))] = r; });
 
     // Opdater panel-titel med dato og kontekst
-    var dagNavne = ['sÃÂ¸n','man','tirs','ons','tors','fre','lÃÂ¸r'];
+    var dagNavne = ['søn','man','tirs','ons','tors','fre','lør'];
     var showDateObj = new Date(showDate + 'T12:00:00Z');
     var dagNavn = dagNavne[showDateObj.getUTCDay()];
     var datoParts = showDate.split('-');
@@ -334,12 +334,12 @@ function fetchLiveMarked() {
     // Er det i morgen eller i dag (DK-dato)?
     var todayDK = now.toLocaleDateString('sv-SE', {timeZone:'Europe/Copenhagen'});
     var erIMorgen = showDate > todayDK;
-    var kontekst = erIMorgen ? 'NÃÂ¦ste driftsdÃÂ¸gn Ã¢ÂÂ ' + datoLabel : 'I dag Ã¢ÂÂ ' + datoLabel;
+    var kontekst = erIMorgen ? 'Næste driftsdøgn – ' + datoLabel : 'I dag – ' + datoLabel;
     var titleEl = document.querySelector('#live-marked-card .ct');
     if (titleEl) {
-      titleEl.innerHTML = 'Ã¢ÂÂ¡ ' + kontekst +
+      titleEl.innerHTML = '⚡ ' + kontekst +
         '<span style="font-size:11px;font-weight:400;color:var(--text3);margin-left:6px">DK1 kapacitetspriser</span>' +
-        '<button onclick="fetchLiveMarked()" style="margin-left:auto;padding:3px 10px;font-size:11px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text2)">Ã¢ÂÂ» Opdater</button>';
+        '<button onclick="fetchLiveMarked()" style="margin-left:auto;padding:3px 10px;font-size:11px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;cursor:pointer;color:var(--text2)">↻ Opdater</button>';
     }
 
     // Seneste kendte time for metric-bokse
@@ -377,12 +377,12 @@ function fetchLiveMarked() {
       hours.forEach(function(h) {
         var a = aByHour[h], m = mByHour[h];
         var isCurrent = (h === nuH);
-        var aUp = a ? parseFloat(a.UpPriceDKK).toFixed(2) : 'Ã¢ÂÂ';
-        var mUp = m ? parseFloat(m.UpPriceDKK).toFixed(2) : 'Ã¢ÂÂ';
-        var aMW = a ? Math.round(a.UpProcuredMW) : 'Ã¢ÂÂ';
-        var mMW = m ? Math.round(m.UpProcuredMW) : 'Ã¢ÂÂ';
-        var aStyle = aUp!=='Ã¢ÂÂ'?(parseFloat(aUp)>=100?'color:#059669;font-weight:600':parseFloat(aUp)>=30?'color:#d97706;font-weight:600':'color:#dc2626;font-weight:600'):'';
-        var mStyle = mUp!=='Ã¢ÂÂ'?(parseFloat(mUp)>=100?'color:#059669;font-weight:600':parseFloat(mUp)>=30?'color:#d97706;font-weight:600':'color:#dc2626;font-weight:600'):'';
+        var aUp = a ? parseFloat(a.UpPriceDKK).toFixed(2) : '–';
+        var mUp = m ? parseFloat(m.UpPriceDKK).toFixed(2) : '–';
+        var aMW = a ? Math.round(a.UpProcuredMW) : '–';
+        var mMW = m ? Math.round(m.UpProcuredMW) : '–';
+        var aStyle = aUp!=='–'?(parseFloat(aUp)>=100?'color:#059669;font-weight:600':parseFloat(aUp)>=30?'color:#d97706;font-weight:600':'color:#dc2626;font-weight:600'):'';
+        var mStyle = mUp!=='–'?(parseFloat(mUp)>=100?'color:#059669;font-weight:600':parseFloat(mUp)>=30?'color:#d97706;font-weight:600':'color:#dc2626;font-weight:600'):'';
         var rowBg = isCurrent ? 'background:#eff6ff;' : '';
         var badge = isCurrent ? ' <span style="font-size:9px;background:#2563eb;color:#fff;padding:1px 5px;border-radius:4px;vertical-align:middle">nu</span>' : '';
         tbody += '<tr style="'+rowBg+'">';
@@ -1475,7 +1475,7 @@ function renderBudstrategi(data){
     topHtml+='<span style="font-size:10px;background:#f0fdf4;color:#065f46;padding:2px 8px;border-radius:10px">Prisjustering: '+Math.round(prisJustering*100)+'% af historisk snit</span>';
     topHtml+='<span id="vind-badge" style="font-size:10px;background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:10px">Vind: henter</span>';
     topHtml+='</div>';
-    topHtml+='<div style="font-size:11px;color:#3b82f6;margin-bottom:14px">'+TOTAL_MW+' MW Ã¢ÂÂ EDS DK1 90 dage  Ugedags- og ssonfaktorer fra 365d historisk analyse</div>';
+    topHtml+='<div style="font-size:11px;color:#3b82f6;margin-bottom:14px">'+TOTAL_MW+' MW ← EDS DK1 90 dage  Ugedags- og ssonfaktorer fra 365d historisk analyse</div>';
 
     topHtml+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">';
     topHtml+='<div style="background:#fff;border-radius:8px;padding:12px;border:2px solid #2563eb">';
@@ -1559,8 +1559,8 @@ function renderBudstrategi(data){
       }
       tbody+='<td style="padding:7px 6px">'+xIcon(x.pct)+' <strong>'+x.pct+'%</strong><br><span style="font-size:9px;color:var(--text3)">90d: '+x.pct90+'%</span></td>';
       tbody+='<td style="padding:7px 6px;font-size:11px">'+note+'<br><span style="color:#64748b;font-size:10px">'
-      +(S&&S.afrr&&S.afrr[h]&&S.afrr[h].clearPct?'Clearing ≤ bud: '+S.afrr[h].clearPct(blokPris(h,1))+'%':'')
-      +(x&&x.pct>0?'  ·  Extra: '+x.pct+'% avg '+Math.round(x.avgPrice||0)+' kr./MW':'')
+      +(S&&S.afrr&&S.afrr[h]&&S.afrr[h].clearPct?'Clearing d bud: '+S.afrr[h].clearPct(blokPris(h,1))+'%':'')
+      +(x&&x.pct>0?'  �  Extra: '+x.pct+'% avg '+Math.round(x.avgPrice||0)+' kr./MW':'')
       +'</span></td>';
       tbody+='</tr>';
     }
@@ -1730,11 +1730,11 @@ function hentVind() {
     const ws10 = c.windspeed_10m, ws80 = c.windspeed_80m, gust = c.windgusts_10m;
     const dir = c.winddirection_10m, temp = c.temperature_2m;
     const wc = c.weathercode;
-    const dirs = ['N','NNÃÂ','NÃÂ','ÃÂNÃÂ','ÃÂ','ÃÂSÃÂ','SÃÂ','SSÃÂ','S','SSV','SV','VSV','V','VNV','NV','NNV'];
+    const dirs = ['N','NNØ','NØ','ØNØ','Ø','ØSØ','SØ','SSØ','S','SSV','SV','VSV','V','VNV','NV','NNV'];
     const dirStr = dirs[Math.round(dir/22.5) % 16];
-    const vejr = (wc<=1)?'Ã¢ÂÂÃ¯Â¸Â Klart':(wc<=3)?'Ã°ÂÂÂ¤Ã¯Â¸Â Delvist skyet':(wc<=48)?'Ã¢ÂÂÃ¯Â¸Â Overskyet/tÃÂ¥ge':(wc<=67)?'Ã°ÂÂÂ§Ã¯Â¸Â Regn':(wc<=77)?'Ã¢ÂÂÃ¯Â¸Â Sne':'Ã¢ÂÂÃ¯Â¸Â Torden';
+    const vejr = (wc<=1)?'☀️ Klart':(wc<=3)?'🌤️ Delvist skyet':(wc<=48)?'☁️ Overskyet/tåge':(wc<=67)?'🌧️ Regn':(wc<=77)?'❄️ Sne':'⛈️ Torden';
     const vindFarve = ws10 > 14 ? '#2196F3' : ws10 > 8 ? '#FF9800' : '#4CAF50';
-    const budTip = ws80 > 12 ? 'Ã°ÂÂÂ HÃÂ¸j vind Ã¢ÂÂ ÃÂ¸get regulerbehov Ã¢ÂÂ <b>hÃÂ¦v budpris</b>' : ws80 < 5 ? 'Ã°ÂÂÂ Lav vind Ã¢ÂÂ lavt regulerbehov Ã¢ÂÂ <b>sÃÂ¦nk budpris</b>' : 'Ã¢ÂÂ¡Ã¯Â¸Â Moderat vind Ã¢ÂÂ normalt regulerbehov';
+    const budTip = ws80 > 12 ? '📈 Høj vind → øget regulerbehov → <b>hæv budpris</b>' : ws80 < 5 ? '📉 Lav vind → lavt regulerbehov → <b>sænk budpris</b>' : '➡️ Moderat vind – normalt regulerbehov';
     if (el) el.innerHTML = `
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px">
         <div style="background:#f8f8f8;border-radius:8px;padding:10px;text-align:center">
@@ -1748,14 +1748,14 @@ function hentVind() {
           <div style="font-size:11px;color:#888">m/s</div>
         </div>
         <div style="background:#f8f8f8;border-radius:8px;padding:10px;text-align:center">
-          <div style="font-size:11px;color:#888;margin-bottom:2px">VINDSTÃÂD</div>
+          <div style="font-size:11px;color:#888;margin-bottom:2px">VINDSTØD</div>
           <div style="font-size:22px;font-weight:700;color:#e74c3c">${gust.toFixed(1)}</div>
           <div style="font-size:11px;color:#888">m/s</div>
         </div>
       </div>
       <div style="display:flex;gap:12px;font-size:13px;flex-wrap:wrap">
-        <span>Ã°ÂÂ§Â­ Retning: <b>${dirStr} (${dir}ÃÂ°)</b></span>
-        <span>Ã°ÂÂÂ¡Ã¯Â¸Â Temp: <b>${temp}ÃÂ°C</b></span>
+        <span>🧭 Retning: <b>${dirStr} (${dir}°)</b></span>
+        <span>🌡️ Temp: <b>${temp}°C</b></span>
         <span>${vejr}</span>
       </div>
       <div style="margin-top:10px;padding:8px 12px;background:${ws80>12?'#e3f2fd':ws80<5?'#fff8e1':'#f1f8e9'};border-radius:8px;font-size:13px">${budTip}</div>
@@ -1770,10 +1770,10 @@ function hentUdfald() {
   const iso = today.getFullYear() + '-' + pad(today.getMonth()+1) + '-' + pad(today.getDate());
   const isoEnc = encodeURIComponent('"' + iso + '"');
   const url = 'https://transparency.entsoe.eu/outages/productionAndGeneration?appState=%7B%22sa%22%3A%5B%22BZN%7C10YDK-1--------W%22%5D%2C%22st%22%3A%22BZN%22%2C%22mm%22%3Atrue%2C%22ma%22%3Afalse%2C%22sp%22%3A%22HALF%22%2C%22dt%22%3A%22TABLE%22%2C%22df%22%3A%5B%22' + iso + '%22%2C%22' + iso + '%22%5D%2C%22tz%22%3A%22CET%22%7D';
-  if(el) el.innerHTML = '<div style="font-size:13px;color:#555;margin-bottom:10px">ENTSO-E API tillader ikke direkte browser-kald (CORS). Klik nedenfor for at se dagens udfald i DK1.</div><a href="' + url + '" target="_blank" style="display:inline-block;background:#1a73e8;color:white;padding:8px 16px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600">Ã¢ÂÂ¡ Se DK1 udfald pÃÂ¥ ENTSO-E (' + iso + ') Ã¢ÂÂ</a>';
+  if(el) el.innerHTML = '<div style="font-size:13px;color:#555;margin-bottom:10px">ENTSO-E API tillader ikke direkte browser-kald (CORS). Klik nedenfor for at se dagens udfald i DK1.</div><a href="' + url + '" target="_blank" style="display:inline-block;background:#1a73e8;color:white;padding:8px 16px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600">⚡ Se DK1 udfald på ENTSO-E (' + iso + ') ↗</a>';
 }
 
-// Auto-hent nÃÂ¥r indsigter-tab vises
+// Auto-hent når indsigter-tab vises
 (function() {
   const origSkift = window.skiftPanel || null;
   document.addEventListener('click', function(e) {
@@ -1858,14 +1858,14 @@ if(pBtn)pBtn.disabled=(idx<=0);
 if(nBtn)nBtn.disabled=(idx>=dates.length);
 if(idx===dates.length){
   var iso=getIsoOffset(1);
-  if(lbl)lbl.textContent="NÃÂ¦ste: "+formatDatoStr(iso);
-  if(sub)sub.textContent="nÃÂ¦ste driftsÃÂ¸gn";
+  if(lbl)lbl.textContent="Næste: "+formatDatoStr(iso);
+  if(sub)sub.textContent="næste driftsøgn";
 }else{
   var iso=dates[idx];
   var today=getIsoOffset(0);
   var daysAgo=Math.round((new Date(today)-new Date(iso))/86400000);
   if(lbl)lbl.textContent=(daysAgo===0?"I dag: ":"")+formatDatoStr(iso);
-  if(sub)sub.textContent=daysAgo===0?"i dag":daysAgo===1?"i gÃÂ¥r":daysAgo+" dage siden";
+  if(sub)sub.textContent=daysAgo===0?"i dag":daysAgo===1?"i går":daysAgo+" dage siden";
 }}
 function visValgDag(){
 var dates=window._datoDates;var idx=window._datoIdx;
@@ -1909,9 +1909,9 @@ var maxIdx=dates&&dates.length?dates.length+1:1;
 if(pBtn)pBtn.disabled=(idx<=-1);
 if(nBtn)nBtn.disabled=(idx>=maxIdx);
 if(idx===-1){if(lbl)lbl.textContent="90 dage";if(sub)sub.textContent="historik";}
-else if(idx===maxIdx){var iso=getIsoOffset(1);if(lbl)lbl.textContent="NÃÂ¦ste: "+formatDatoStr(iso);if(sub)sub.textContent="nÃÂ¦ste driftsÃÂ¸gn";}
+else if(idx===maxIdx){var iso=getIsoOffset(1);if(lbl)lbl.textContent="Næste: "+formatDatoStr(iso);if(sub)sub.textContent="næste driftsøgn";}
 else if(idx===(dates?dates.length:0)){var iso=getIsoOffset(0);if(lbl)lbl.textContent="I dag: "+formatDatoStr(iso);if(sub)sub.textContent="i dag";}
-else if(dates&&dates[idx]){var iso=dates[idx];var daysAgo=Math.round((new Date(getIsoOffset(0))-new Date(iso))/86400000);if(lbl)lbl.textContent=formatDatoStr(iso);if(sub)sub.textContent=daysAgo===1?"i gÃÂ¥r":daysAgo+" dage siden";}
+else if(dates&&dates[idx]){var iso=dates[idx];var daysAgo=Math.round((new Date(getIsoOffset(0))-new Date(iso))/86400000);if(lbl)lbl.textContent=formatDatoStr(iso);if(sub)sub.textContent=daysAgo===1?"i går":daysAgo+" dage siden";}
 }
 function visExtraDag(){
 var dates=window._datoDates;var idx=window._extraDatoIdx;
@@ -1940,7 +1940,7 @@ for(var h=23;h>=0;h--){
   var diffStr=diff>0?"+"+diff.toFixed(0)+" kr.":diff.toFixed(0)+" kr.";
   var diffCol=diff>100?"#16a34a":diff>0?"#d97706":"#6b7280";
   var anb=hasExtra?(diff>200?"Overvej Extra-bud":"Behold normal aFRR-pris"):"Ikke aktiv";
-  body+="<tr><td>Kl. "+time+"</td><td>"+(hasExtra?"<span style=color:#d97706;font-weight:600>"+e.UpProcuredMW+" MW</span>":"Ã¢ÂÂ")+"</td><td>"+aP.toFixed(2)+" kr.</td><td>"+(hasExtra?eP.toFixed(2)+" kr.":"Ã¢ÂÂ")+"</td><td style=color:"+diffCol+";font-weight:600>"+(hasExtra?diffStr:"Ã¢ÂÂ")+"</td><td>"+anb+"</td></tr>";
+  body+="<tr><td>Kl. "+time+"</td><td>"+(hasExtra?"<span style=color:#d97706;font-weight:600>"+e.UpProcuredMW+" MW</span>":"–")+"</td><td>"+aP.toFixed(2)+" kr.</td><td>"+(hasExtra?eP.toFixed(2)+" kr.":"–")+"</td><td style=color:"+diffCol+";font-weight:600>"+(hasExtra?diffStr:"–")+"</td><td>"+anb+"</td></tr>";
 }
 body+="</tbody>";
 tbl.innerHTML=hdr+body;
