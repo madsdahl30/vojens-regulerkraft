@@ -250,7 +250,7 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
 
 </div>
 
-<div id="panel-budstrategi" class="panel"><div class="card"><div class="ct">Budstrategi <span class="badge ba">Seneste 90 dage</span><span style="font-size:11px;color:var(--text3);margin-left:8px">Baseret p� historiske markedsclearingspriser (EDS DK1)</span></div><div id="bs-summary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px"></div></div><div class="card"><div class="ct">Anbefalet budpris pr. time <span style="font-size:11px;font-weight:400;color:var(--text3)"> hv budpris &nbsp; ok &nbsp; for hjt</span></div><div style="overflow-x:auto"><table class="rt" id="bs-table"></table></div></div><div class="card" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-color:#86efac"><div class="ct" style="color:#166534"> Potentiel gevinst ved optimerede budpriser</div><div id="bs-gain"></div></div></div>
+<div id="panel-budstrategi" class="panel"><div class="card"><div class="ct">Budstrategi <span class="badge ba">Seneste 90 dage</span><span style="font-size:11px;color:var(--text3);margin-left:8px">Baseret på historiske markedsclearingspriser (EDS DK1)</span></div><div id="bs-summary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px"></div></div><div class="card"><div class="ct">Anbefalet budpris pr. time <span style="font-size:11px;font-weight:400;color:var(--text3)"> hv budpris &nbsp; ok &nbsp; for hjt</span></div><div style="overflow-x:auto"><table class="rt" id="bs-table"></table></div></div><div class="card" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-color:#86efac"><div class="ct" style="color:#166534"> Potentiel gevinst ved optimerede budpriser</div><div id="bs-gain"></div></div></div>
   <div id="panel-resultater" class="panel">
 <div class="card" style="margin-bottom:12px">
   <div class="ct">&#127942; Accepterede bud - i dag <span style="font-size:11px;color:var(--text3);margin-left:8px">Fra Centrica Planning</span></div>
@@ -1475,7 +1475,7 @@ function renderBudstrategi(data){
     topHtml+='<span style="font-size:10px;background:#f0fdf4;color:#065f46;padding:2px 8px;border-radius:10px">Prisjustering: '+Math.round(prisJustering*100)+'% af historisk snit</span>';
     topHtml+='<span id="vind-badge" style="font-size:10px;background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:10px">Vind: henter</span>';
     topHtml+='</div>';
-    topHtml+='<div style="font-size:11px;color:#3b82f6;margin-bottom:14px">'+TOTAL_MW+' MW ← EDS DK1 90 dage  Ugedags- og ssonfaktorer fra 365d historisk analyse</div>';
+    topHtml+='<div style="font-size:11px;color:#3b82f6;margin-bottom:14px">'+TOTAL_MW+' MW ← EDS DK1 90 dage  Ugedags- og sæsonfaktorer fra 365d historisk analyse</div>';
 
     topHtml+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">';
     topHtml+='<div style="background:#fff;border-radius:8px;padding:12px;border:2px solid #2563eb">';
@@ -1560,7 +1560,7 @@ function renderBudstrategi(data){
       tbody+='<td style="padding:7px 6px">'+xIcon(x.pct)+' <strong>'+x.pct+'%</strong><br><span style="font-size:9px;color:var(--text3)">90d: '+x.pct90+'%</span></td>';
       tbody+='<td style="padding:7px 6px;font-size:11px">'+note+'<br><span style="color:#64748b;font-size:10px">'
       +(S&&S.afrr&&S.afrr[h]&&S.afrr[h].clearPct?'Clearing d bud: '+S.afrr[h].clearPct(blokPris(h,1))+'%':'')
-      +(x&&x.pct>0?'  �  Extra: '+x.pct+'% avg '+Math.round(x.avgPrice||0)+' kr./MW':'')
+      +(x&&x.pct>0?'  ·  Extra: '+x.pct+'%'+(x.avgPrice>0?' avg '+Math.round(x.avgPrice)+' kr./MW':''):'')
       +'</span></td>';
       tbody+='</tr>';
     }
