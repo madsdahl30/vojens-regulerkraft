@@ -1347,45 +1347,43 @@ function hentVindIndikator(targetDate,callback){
 }
 function renderSammenligning(){
   if(!S||!S.afrr||!S.mfrr||!S.extra){setTimeout(renderSammenligning,500);return;}
-  const CURRENT=[
-    {label:'aFRR BLK 1',market:'afrr',curPris:72,mw:4},
-    {label:'aFRR BLK 2',market:'afrr',curPris:73,mw:4},
-    {label:'aFRR BLK 3',market:'afrr',curPris:74,mw:4},
-    {label:'mFRR rådighedsbud',market:'mfrr',curPris:4.99,mw:6},
-    {label:'mFRR Extra',market:'extra',curPris:99.99,mw:6},
-  ];
+  function avgField(market,field){
+    let sum=0,cnt=0;
+    for(let h=0;h<24;h++){if(S[market][h]&&S[market][h][field]>0){sum+=S[market][h][field];cnt++;}}
+    return cnt?Math.round(sum/cnt):0;
+  }
   function avgClearPct(market,pris){
-    const stat=S[market];if(!stat)return 0;
     let sum=0;
-    for(let h=0;h<24;h++)sum+=stat[h]&&stat[h].clearPct?stat[h].clearPct(pris):0;
+    for(let h=0;h<24;h++) sum+=S[market][h]&&S[market][h].clearPct?S[market][h].clearPct(pris):0;
     return Math.round(sum/24);
   }
-  function avgP50(market){
-    const stat=S[market];if(!stat)return 5;
-    let sum=0,cnt=0;
-    for(let h=0;h<24;h++){if(stat[h]&&stat[h].p50&&stat[h].p50>0){sum+=stat[h].p50;cnt++;}}
-    return cnt?Math.round(sum/cnt):5;
-  }
+  const afrrP25=Math.max(5,avgField('afrr','p25'));
+  const mfrrAvg=Math.max(5,avgField('mfrr','avgPrice'));
+  const ROWS=[
+    {label:'aFRR BLK 1',market:'afrr',curPris:72,mw:4,newPris:afrrP25},
+    {label:'aFRR BLK 2',market:'afrr',curPris:73,mw:4,newPris:afrrP25+1},
+    {label:'aFRR BLK 3',market:'afrr',curPris:74,mw:4,newPris:afrrP25+2},
+    {label:'mFRR rådighedsbud',market:'mfrr',curPris:4.99,mw:6,newPris:mfrrAvg},
+    {label:'mFRR Extra',market:'extra',curPris:99.99,mw:6,newPris:99.99},
+  ];
   let curTotal=0,newTotal=0,rows='';
-  CURRENT.forEach(function(r){
+  ROWS.forEach(function(r){
     const clearCur=avgClearPct(r.market,r.curPris);
-    const p50=Math.max(5,avgP50(r.market));
-    const clearNew=avgClearPct(r.market,p50);
-    const newMw=r.mw;
+    const clearNew=avgClearPct(r.market,r.newPris);
     const curWeek=Math.round(r.curPris*r.mw*(clearCur/100)*168);
-    const newWeek=Math.round(p50*newMw*(clearNew/100)*168);
+    const newWeek=Math.round(r.newPris*r.mw*(clearNew/100)*168);
     const delta=newWeek-curWeek;
     const col=delta>0?'#15803d':delta<0?'#dc2626':'var(--text3)';
     const sign=delta>0?'+':'';
-    curTotal+=curWeek;newTotal+=newWeek;
+    curTotal+=curWeek; newTotal+=newWeek;
     rows+='<tr style="border-bottom:1px solid var(--border)">'
       +'<td style="padding:7px 8px;font-weight:600">'+r.label+'</td>'
       +'<td style="text-align:right;padding:7px 8px">'+r.curPris.toFixed(2)+' kr.</td>'
       +'<td style="text-align:right;padding:7px 8px">'+r.mw+' MW</td>'
       +'<td style="text-align:right;padding:7px 8px">'+clearCur+'%</td>'
       +'<td style="text-align:right;padding:7px 8px">'+curWeek.toLocaleString('da-DK')+' kr.</td>'
-      +'<td style="text-align:right;padding:7px 8px;color:var(--accent)">'+p50+' kr.</td>'
-      +'<td style="text-align:right;padding:7px 8px;color:var(--accent)">'+newMw+' MW</td>'
+      +'<td style="text-align:right;padding:7px 8px;color:var(--accent)">'+r.newPris+' kr.</td>'
+      +'<td style="text-align:right;padding:7px 8px;color:var(--accent)">'+r.mw+' MW</td>'
       +'<td style="text-align:right;padding:7px 8px;color:var(--accent)">'+newWeek.toLocaleString('da-DK')+' kr.</td>'
       +'<td style="text-align:right;padding:7px 8px;font-weight:700;color:'+col+'">'+sign+delta.toLocaleString('da-DK')+' kr.</td>'
       +'</tr>';
