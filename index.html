@@ -124,6 +124,7 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
     <button class="tab" onclick="sw('extra',this)">mFRR Extra</button>
     <button class="tab" onclick="sw('indsigt',this)">Indsigter</button><button class="tab" onclick="sw('budstrategi',this)">Budstrategi</button>
     <button class="tab" onclick="sw('resultater',this)">Mine resultater</button>
+    <button class="tab" onclick="sw('sammenligning',this)">Testuge ⚡</button>
   </div>
 
   <!-- PRISKORT -->
@@ -274,6 +275,58 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
 </div>
 
 <div class="tt" id="tt"></div>
+
+<div id="panel-sammenligning" class="panel" style="display:none">
+  <div class="card" style="margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div>
+        <div style="font-size:16px;font-weight:700">Testuge — Strategi-sammenligning</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">Nuværende faste priser vs. værktøjets anbefalinger · Baseret på historiske clearingspriser (EDS DK1 90 dage)</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px">
+      <div style="background:var(--bg2);border-radius:10px;padding:16px;text-align:center">
+        <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Nuværende strategi</div>
+        <div style="font-size:22px;font-weight:800" id="sam-cur-total">—</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">est. kapacitetsindtægt/uge</div>
+      </div>
+      <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:16px;text-align:center">
+        <div style="font-size:11px;font-weight:600;color:#166534;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Værktøjets strategi</div>
+        <div style="font-size:22px;font-weight:800;color:#15803d" id="sam-new-total">—</div>
+        <div style="font-size:11px;color:#166534;margin-top:4px">est. kapacitetsindtægt/uge</div>
+      </div>
+      <div style="background:var(--bg2);border-radius:10px;padding:16px;text-align:center">
+        <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Forskel</div>
+        <div style="font-size:22px;font-weight:800" id="sam-delta">—</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px" id="sam-delta-pct">—</div>
+      </div>
+    </div>
+    <div style="font-size:12px;font-weight:600;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px">Opdelt per marked</div>
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead>
+        <tr style="border-bottom:2px solid var(--border)">
+          <th style="text-align:left;padding:7px 8px;color:var(--text3)">Marked</th>
+          <th style="text-align:right;padding:7px 8px;color:var(--text3)">Nuv. pris</th>
+          <th style="text-align:right;padding:7px 8px;color:var(--text3)">MW</th>
+          <th style="text-align:right;padding:7px 8px;color:var(--text3)">Clearing %</th>
+          <th style="text-align:right;padding:7px 8px;color:var(--text3)">Nuv. kr./uge</th>
+          <th style="text-align:right;padding:7px 8px;color:var(--text2)">Anb. pris</th>
+          <th style="text-align:right;padding:7px 8px;color:var(--text2)">Anb. MW</th>
+          <th style="text-align:right;padding:7px 8px;color:var(--text2)">Ny kr./uge</th>
+          <th style="text-align:right;padding:7px 8px;color:#15803d">Delta</th>
+        </tr>
+      </thead>
+      <tbody id="sam-tbody"></tbody>
+    </table>
+  </div>
+  <div class="card" style="font-size:11px;color:var(--text3);line-height:1.7">
+    <div style="font-weight:600;margin-bottom:6px;color:var(--text2)">Sådan beregnes estimaterne</div>
+    Kapacitetsindtægt = <strong>pris × MW × clearing% × 168 timer/uge</strong>.<br>
+    Clearing% = andel af historiske timer (90 dage) hvor markedets clearingpris var ≤ din budpris.<br>
+    Nuværende priser er dine faste Centrica-skabeloner. Anbefalede priser er P50-priserne fra Budstrategi-tabben.<br>
+    <strong>Bemærk:</strong> Kun kapacitetsbetaling (CM) — aktiveringsindtægt (EAM) ikke inkluderet.
+  </div>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
@@ -789,6 +842,7 @@ function sw(id,el){
   el.classList.add('active');
   if(id==='heatmap'){fetchLiveMarked();}
     if(id==='budstrategi'){renderBudstrategi(window._centricaData||[]);}
+    if(id==='sammenligning'){renderSammenligning();}
     if(id==='resultater'&&!document.getElementById('c-chart-card').style.display.includes('block')) fetchCentricaWithActive(30,document.querySelector('.centrica-period-btn'));
     if(id==='fordeling') setTimeout(()=>{updateFordelingChart();},50);
 }
@@ -1291,6 +1345,62 @@ function hentVindIndikator(targetDate,callback){
   })
   .catch(function(){callback({ms:0,niveau:'ukendt',harData:false});});
 }
+function renderSammenligning(){
+  if(!S||!S.afrr||!S.mfrr||!S.extra){setTimeout(renderSammenligning,500);return;}
+  const CURRENT=[
+    {label:'aFRR BLK 1',market:'afrr',curPris:72,mw:4},
+    {label:'aFRR BLK 2',market:'afrr',curPris:73,mw:4},
+    {label:'aFRR BLK 3',market:'afrr',curPris:74,mw:4},
+    {label:'mFRR rådighedsbud',market:'mfrr',curPris:4.99,mw:6},
+    {label:'mFRR Extra',market:'extra',curPris:99.99,mw:6},
+  ];
+  function avgClearPct(market,pris){
+    const stat=S[market];if(!stat)return 0;
+    let sum=0;
+    for(let h=0;h<24;h++)sum+=stat[h]&&stat[h].clearPct?stat[h].clearPct(pris):0;
+    return Math.round(sum/24);
+  }
+  function avgP50(market){
+    const stat=S[market];if(!stat)return 5;
+    let sum=0,cnt=0;
+    for(let h=0;h<24;h++){if(stat[h]&&stat[h].p50&&stat[h].p50>0){sum+=stat[h].p50;cnt++;}}
+    return cnt?Math.round(sum/cnt):5;
+  }
+  let curTotal=0,newTotal=0,rows='';
+  CURRENT.forEach(function(r){
+    const clearCur=avgClearPct(r.market,r.curPris);
+    const p50=Math.max(5,avgP50(r.market));
+    const clearNew=avgClearPct(r.market,p50);
+    const newMw=r.mw;
+    const curWeek=Math.round(r.curPris*r.mw*(clearCur/100)*168);
+    const newWeek=Math.round(p50*newMw*(clearNew/100)*168);
+    const delta=newWeek-curWeek;
+    const col=delta>0?'#15803d':delta<0?'#dc2626':'var(--text3)';
+    const sign=delta>0?'+':'';
+    curTotal+=curWeek;newTotal+=newWeek;
+    rows+='<tr style="border-bottom:1px solid var(--border)">'
+      +'<td style="padding:7px 8px;font-weight:600">'+r.label+'</td>'
+      +'<td style="text-align:right;padding:7px 8px">'+r.curPris.toFixed(2)+' kr.</td>'
+      +'<td style="text-align:right;padding:7px 8px">'+r.mw+' MW</td>'
+      +'<td style="text-align:right;padding:7px 8px">'+clearCur+'%</td>'
+      +'<td style="text-align:right;padding:7px 8px">'+curWeek.toLocaleString('da-DK')+' kr.</td>'
+      +'<td style="text-align:right;padding:7px 8px;color:var(--accent)">'+p50+' kr.</td>'
+      +'<td style="text-align:right;padding:7px 8px;color:var(--accent)">'+newMw+' MW</td>'
+      +'<td style="text-align:right;padding:7px 8px;color:var(--accent)">'+newWeek.toLocaleString('da-DK')+' kr.</td>'
+      +'<td style="text-align:right;padding:7px 8px;font-weight:700;color:'+col+'">'+sign+delta.toLocaleString('da-DK')+' kr.</td>'
+      +'</tr>';
+  });
+  document.getElementById('sam-tbody').innerHTML=rows;
+  const delta=newTotal-curTotal;
+  const pct=curTotal?Math.round((delta/curTotal)*100):0;
+  const sign=delta>=0?'+':'';
+  document.getElementById('sam-cur-total').textContent=curTotal.toLocaleString('da-DK')+' kr.';
+  document.getElementById('sam-new-total').textContent=newTotal.toLocaleString('da-DK')+' kr.';
+  document.getElementById('sam-delta').style.color=delta>=0?'#15803d':'#dc2626';
+  document.getElementById('sam-delta').textContent=sign+delta.toLocaleString('da-DK')+' kr.';
+  document.getElementById('sam-delta-pct').textContent=sign+pct+'% ift. nuværende';
+}
+
 function renderBudstrategi(data){
   if(!data||!data.length){
     document.getElementById('bs-summary').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--text3)">Henter Centrica data...</div>';
