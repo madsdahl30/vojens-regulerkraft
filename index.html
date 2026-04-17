@@ -1311,21 +1311,18 @@ function blokLabel(mw){
   // Fallback: vis bare MW
   return mw+' MW';
 }
-function blokPris(p50,p75,blok,total,extraSats){
-  // Blok 1+2: altid P50-baseret (sikre blokke)
-  // Blok 3+4: P75-baseret ved Extra-satsning, ellers P50
-  var satsBlok=extraSats&&blok>=Math.max(3,total-1);
-  var base=satsBlok?p75:p50;
-  if(total===1) return Math.max(5,base);
-  if(total===2) return blok===1?Math.max(5,Math.round(p50*.95)):Math.max(5,Math.round(base*1.05));
-  if(total===3) return blok===1?Math.max(5,Math.round(p50*.95)):blok===2?Math.max(5,p50):Math.max(5,Math.round(base*1.05));
-  // 4 blokke: blok1=P50-7%, blok2=P50, blok3=base+5%, blok4=base+8%
-  var blokBase=blok<=2?p50:base;
-  var f=[.93,1.0,1.05,1.08];
-  return Math.max(5,Math.round(blokBase*(f[blok-1]||1.08)));
+function blokPris(h,blok){
+  var OPT=[
+    [5,150,2000],[5,25,2000],[5,200,2000],[5,10,2000],
+    [5,150,2000],[5,100,2000],[9,400,2000],[9,148,2000],
+    [10,150,2000],[10,264,2000],[10,150,2000],[9,200,2000],
+    [9,200,2000],[9,300,2000],[9,237,2000],[9,300,2000],
+    [44,100,2000],[100,100,2000],[100,532,2000],[71,400,2000],
+    [50,290,2000],[37,198,2000],[9,375,2000],[5,75,2000]
+  ];
+  var row=OPT[h]||OPT[0];
+  return Math.max(5,row[blok-1]||row[2]);
 }
-
-
 function hentVindIndikator(targetDate,callback){
   var dateStr=targetDate.toISOString().split('T')[0];
   fetch('https://api.open-meteo.com/v1/forecast?latitude=55.47&longitude=8.45&hourly=wind_speed_100m&forecast_days=3&timezone=Europe%2FCopenhagen&wind_speed_unit=ms')
@@ -1657,7 +1654,7 @@ function renderBudstrategi(data){
       tbody+='<tr style="background:'+xCol(x.pct)+';border-bottom:1px solid rgba(0,0,0,.04)">';
       tbody+='<td style="font-weight:700;font-size:12px;padding:7px 8px;white-space:nowrap">kl. '+String(h).padStart(2,'0')+'</td>';
       for(var b=1;b<=nABlok;b++){
-        var pr=blokPris(a.p50,a.p75,b,nABlok,extraSats);
+        var pr=blokPris(h,b);
         var tdMW=(b===nABlok&&nABlok>3&&bestSc.a===TOTAL_MW)?'6 MW':'4 MW';
         tbody+='<td style="font-weight:'+(b===1?'700':'400')+';color:var(--afrr);padding:7px 6px">'+pr+' kr.<br><span style="font-size:9px;color:var(--text3);font-weight:400">'+tdMW+'</span></td>';
       }
