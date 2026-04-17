@@ -1302,8 +1302,8 @@ function renderRevenue(xml, sf, ef){
 }
 function blokLabel(mw){
   if(mw===0) return 'Ingen deltagelse';
-  // Srtilflde: 18 MW = 3 blokke  4 MW + 1 blok  6 MW
-  if(mw===18) return '3 blokke  4 MW + 1 blok  6 MW';
+  // 18 MW = tre blokke af 4 MW (aFRR) + en blok af 6 MW (mFRR)
+  if(mw===18) return 'tre blokke af 4 MW (aFRR) + en blok af 6 MW (mFRR)';
   // Standard: MW er et multiplum af 4
   var full=Math.floor(mw/4);
   var rest=mw%4;
