@@ -1339,24 +1339,18 @@ function hentVindIndikator(targetDate,callback){
 }
 function renderSammenligning(){
   if(!S||!S.afrr||!S.mfrr||!S.extra){setTimeout(renderSammenligning,500);return;}
-  function avgField(market,field){
-    let sum=0,cnt=0;
-    for(let h=0;h<24;h++){if(S[market][h]&&S[market][h][field]>0){sum+=S[market][h][field];cnt++;}}
-    return cnt?Math.round(sum/cnt):0;
-  }
   function avgClearPct(market,pris){
+    const stat=S[market];if(!stat)return 0;
     let sum=0;
-    for(let h=0;h<24;h++) sum+=S[market][h]&&S[market][h].clearPct?S[market][h].clearPct(pris):0;
+    for(let h=0;h<24;h++) sum+=stat[h]&&stat[h].clearPct?stat[h].clearPct(pris):0;
     return Math.round(sum/24);
   }
-  const afrrP25=Math.max(5,avgField('afrr','p25'));
-  const mfrrAvg=Math.max(5,avgField('mfrr','avgPrice'));
   const ROWS=[
-    {label:'aFRR BLK 1',market:'afrr',curPris:72,mw:4,newPris:250},
-    {label:'aFRR BLK 2',market:'afrr',curPris:73,mw:4,newPris:250},
-    {label:'aFRR BLK 3',market:'afrr',curPris:74,mw:4,newPris:250},
-    {label:'mFRR rådighedsbud',market:'mfrr',curPris:4.99,mw:6,newPris:mfrrAvg},
-    {label:'mFRR Extra',market:'extra',curPris:99.99,mw:6,newPris:99.99},
+    {label:'aFRR BLK 1 (4 MW)', market:'afrr', curPris:72,  mw:4, newPris:250},
+    {label:'aFRR BLK 2 (4 MW)', market:'afrr', curPris:73,  mw:4, newPris:250},
+    {label:'aFRR BLK 3 (4 MW)', market:'afrr', curPris:74,  mw:4, newPris:250},
+    {label:'mFRR rådighedsbud (6 MW)', market:'mfrr', curPris:4.99, mw:6, newPris:4.99},
+    {label:'mFRR Extra (via tabte aFRR-blokke)', market:'extra', curPris:99.99, mw:6, newPris:99.99},
   ];
   let curTotal=0,newTotal=0,rows='';
   ROWS.forEach(function(r){
@@ -1367,17 +1361,18 @@ function renderSammenligning(){
     const delta=newWeek-curWeek;
     const col=delta>0?'#15803d':delta<0?'#dc2626':'var(--text3)';
     const sign=delta>0?'+':'';
+    const isFixed=r.market==='mfrr'||r.market==='extra';
     curTotal+=curWeek; newTotal+=newWeek;
-    rows+='<tr style="border-bottom:1px solid var(--border)">'
+    rows+='<tr style="border-bottom:1px solid var(--border);'+(isFixed?'opacity:0.65':'')+'">'
       +'<td style="padding:7px 8px;font-weight:600">'+r.label+'</td>'
       +'<td style="text-align:right;padding:7px 8px">'+r.curPris.toFixed(2)+' kr.</td>'
       +'<td style="text-align:right;padding:7px 8px">'+r.mw+' MW</td>'
       +'<td style="text-align:right;padding:7px 8px">'+clearCur+'%</td>'
       +'<td style="text-align:right;padding:7px 8px">'+curWeek.toLocaleString('da-DK')+' kr.</td>'
-      +'<td style="text-align:right;padding:7px 8px;color:var(--accent)">'+r.newPris+' kr.</td>'
+      +'<td style="text-align:right;padding:7px 8px;color:var(--accent);font-weight:'+(isFixed?'400':'700')+'">'+r.newPris.toFixed(2)+' kr.</td>'
       +'<td style="text-align:right;padding:7px 8px;color:var(--accent)">'+r.mw+' MW</td>'
       +'<td style="text-align:right;padding:7px 8px;color:var(--accent)">'+newWeek.toLocaleString('da-DK')+' kr.</td>'
-      +'<td style="text-align:right;padding:7px 8px;font-weight:700;color:'+col+'">'+sign+delta.toLocaleString('da-DK')+' kr.</td>'
+      +'<td style="text-align:right;padding:7px 8px;font-weight:700;color:'+col+'">'+(isFixed?'—':sign+delta.toLocaleString('da-DK')+' kr.')+'</td>'
       +'</tr>';
   });
   document.getElementById('sam-tbody').innerHTML=rows;
@@ -1388,7 +1383,7 @@ function renderSammenligning(){
   document.getElementById('sam-new-total').textContent=newTotal.toLocaleString('da-DK')+' kr.';
   document.getElementById('sam-delta').style.color=delta>=0?'#15803d':'#dc2626';
   document.getElementById('sam-delta').textContent=sign+delta.toLocaleString('da-DK')+' kr.';
-  document.getElementById('sam-delta-pct').textContent=sign+pct+'% ift. nuværende';
+  document.getElementById('sam-delta-pct').textContent=sign+pct+'% ift. nuværende aFRR-kapacitet';
 }
 
 function renderBudstrategi(data){
