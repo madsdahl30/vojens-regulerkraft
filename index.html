@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<div id="panel-strategi-sam" class="panel" style="display:none"><div style="text-align:center;padding:20px 0 16px"><div style="font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">Forventet gevinst ved strategiskifte</div><div style="font-size:44px;font-weight:800;color:#15803d;line-height:1">+46.000 kr.</div><div style="font-size:14px;color:var(--text2);margin-top:4px">pr. uge &middot; jan&ndash;apr 2026 markedsdata</div></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px"><div style="background:var(--bg2);border-radius:12px;padding:16px;border:2px solid var(--border)"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:8px">Nuv&aelig;rende strategi</div><div style="font-size:24px;font-weight:700;margin-bottom:2px" id="sc-cur-total">...</div><div style="font-size:11px;color:var(--text3);margin-bottom:10px">pr. uge (EDS-estimat)</div><hr style="border:none;border-top:1px solid var(--border);margin:8px 0"><div style="font-size:12px;line-height:1.8"><div>&#128  ; aFRR: 3&times;4 MW &nbsp;<strong>72/73/74 kr.</strong></div><div>&#129001; mFRR r&aring;dighed: <strong>6 MW</strong></div><div>&#128155; mFRR Extra: <strong>ved tabte timer</strong></div></div></div><div style="background:var(--bg2);border-radius:12px;padding:16px;border:2px solid var(--accent)"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:8px">Anbefalet strategi</div><div style="font-size:24px;font-weight:700;color:var(--accent);margin-bottom:2px" id="sc-new-total">...</div><div style="font-size:11px;color:var(--text3);margin-bottom:10px">pr. uge (EDS-estimat)</div><hr style="border:none;border-top:1px solid var(--border);margin:8px 0"><div style="font-size:12px;line-height:1.8"><div>&#128  ; aFRR: 3&times;4 MW &nbsp;<strong>250 kr.</strong></div><div>&#129001; mFRR r&aring;dighed: <strong>6 MW</strong></div><div>&#128155; mFRR Extra: <strong>ved tabte timer</strong></div></div></div><div style="background:#f0fdf4;border-radius:12px;padding:16px;border:2px solid #15803d"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#15803d;margin-bottom:8px">Gevinst ved skift</div><div style="font-size:24px;font-weight:700;color:#15803d;margin-bottom:2px" id="sc-delta-total">...</div><div style="font-size:11px;color:var(--text3);margin-bottom:10px">pr. uge ekstra</div><hr style="border:none;border-top:1px solid #bbf7d0;margin:8px 0"><div style="font-size:12px;line-height:1.8;color:#166534"><div>+46.000 kr./uge (108 dages snit)</div><div>+6.600 kr./dag i gennemsnit</div><div>~2,4 mio. kr./&aring;r ekstra</div><div style="margin-top:4px;font-size:11px">EAM er konstant ved begge strategier</div></div></div></div><div style="background:var(--bg2);border-radius:10px;padding:14px 16px;margin-bottom:20px;border-left:4px solid var(--accent)"><div style="font-weight:700;margin-bottom:6px;font-size:13px">Hvorfor giver 250 kr. mere?</div><div style="font-size:12px;color:var(--text2);line-height:1.7">aFRR clearer over 250 kr. i <strong>15% af timerne</strong> til gns. <strong>545 kr./MWh</strong>. De resterende <strong>85%</strong> er vi ledige til mFRR Extra (aktiv 18% af timerne, gns. <strong>908 kr./MWh</strong>). Forventet indkomst per blok stiger fra <strong>684 kr./time</strong> (72 kr. bud) til <strong>776 kr./time</strong> (250 kr. bud).</div></div><div style="font-weight:700;font-size:13px;margin-bottom:10px">Seneste 7 dage &mdash; simulering p&aring; faktiske EDS-clearingpriser</div><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="border-bottom:2px solid var(--border)"><th style="text-align:left;padding:7px;color:var(--text3)">Dato</th><th style="text-align:right;padding:7px;color:var(--text3)">aFRR 72</th><th style="text-align:right;padding:7px;color:var(--text3)">Extra 72</th><th style="text-align:right;padding:7px;color:var(--text3)">mFRR</th><th style="text-align:right;padding:7px;font-weight:700">Total 72</th><th style="text-align:right;padding:7px;color:var(--accent)">aFRR 250</th><th style="text-align:right;padding:7px;color:var(--accent)">Extra 250</th><th style="text-align:right;padding:7px;color:var(--accent)">mFRR</th><th style="text-align:right;padding:7px;font-weight:700;color:var(--accent)">Total 250</th><th style="text-align:right;padding:7px;font-weight:700">Gevinst</th></tr></thead><tbody id="sc-tbody"></tbody></table></div><div style="font-size:11px;color:var(--text3);margin-top:8px">* Ekskluderer EAM-aktiveringsindtaegt &mdash; konstant uanset strategi.</div></div><!DOCTYPE html>
 <html lang="da">
 <head><!-- vojens-regulerkraft auto-refresh v2 -->
 <meta charset="UTF-8">
@@ -124,7 +124,7 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
     <button class="tab" onclick="sw('extra',this)">mFRR Extra</button>
     <button class="tab" onclick="sw('indsigt',this)">Indsigter</button><button class="tab" onclick="sw('budstrategi',this)">Budstrategi</button>
     <button class="tab" onclick="sw('resultater',this)">Mine resultater</button>
-    <button class="tab" onclick="sw('sammenligning',this)">Testuge ⚡</button>
+    <button class="tab" onclick="sw('sammenligning',this)">Testuge ⚡</button><button class="tab" onclick="sw('strategi-sam',this)">Sammenligning 📈</button>
 <button class='tab' onclick="showTab('sammenligning',this)" style="background:linear-gradient(135deg,#1a56db,#7c3aed);color:#fff;font-weight:700">📊 Sammenligning</button>
   </div>
 
@@ -1301,7 +1301,7 @@ function sw(id,el){
   el.classList.add('active');
   if(id==='heatmap'){fetchLiveMarked();}
     if(id==='budstrategi'){renderBudstrategi(window._centricaData||[]);}
-    if(id==='sammenligning'){renderSammenligning();} if(id==='sammenligning-ny'){renderCmp();}
+    if(id==='sammenligning'){renderSammenligning();} if(id==='strategi-sam'){renderStrategiSam();} if(id==='sammenligning-ny'){renderCmp();}
     if(id==='resultater'&&!document.getElementById('c-chart-card').style.display.includes('block')) fetchCentricaWithActive(30,document.querySelector('.centrica-period-btn'));
     if(id==='fordeling') setTimeout(()=>{updateFordelingChart();},50);
 }
@@ -1929,6 +1929,39 @@ function renderCmp(){
     +'<td style="text-align:right;padding:8px;color:#1a56db">'+Math.round(totM250).toLocaleString('da-DK')+'</td>'
     +'<td style="text-align:right;padding:8px;font-weight:800;color:#1a56db">'+Math.round(tot250).toLocaleString('da-DK')+' kr.</td>'
     +'<td style="text-align:right;padding:8px;font-weight:800;color:'+tc+'">'+ts+Math.round(totDelta).toLocaleString('da-DK')+' kr.</td>';
+}
+
+function renderStrategiSam(){
+  var el=document.getElementById('sc-tbody');
+  if(!el)return;
+  if(!window._allAfrr||!window._allExtra||!window._allMfrr){setTimeout(renderStrategiSam,800);return;}
+  var rows='',tC=0,tN=0;
+  for(var o=-7;o<=-1;o++){
+    var d=new Date();d.setDate(d.getDate()+o);
+    var ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    var aH={},xH={},mH={};
+    window._allAfrr.filter(r=>(r.TimeDK||'').startsWith(ds)).forEach(r=>{var h=parseInt(r.TimeDK.substring(11,13));aH[h]=parseFloat(r.UpPriceDKK)||0;});
+    window._allExtra.filter(r=>(r.TimeDK||'').startsWith(ds)).forEach(r=>{var h=parseInt(r.TimeDK.substring(11,13));var x=parseFloat(r.UpPriceDKK)||0;xH[h]=(parseFloat(r.UpDemandMW||0)>0&&x>0)?x:0;});
+    window._allMfrr.filter(r=>(r.TimeDK||'').startsWith(ds)).forEach(r=>{var h=parseInt(r.TimeDK.substring(11,13));mH[h]=parseFloat(r.UpPriceDKK)||0;});
+    var a7=0,x7=0,m7=0,a2=0,x2=0,m2=0;
+    for(var h=0;h<24;h++){
+      var cl=aH[h]||0,xc=xH[h]||0,mc=mH[h]||0,mf=mc>0?mc*6:29.94;
+      m7+=mf;m2+=mf;
+      [72,73,74].forEach(b=>{if(cl>=b){a7+=cl*4;}else if(xc>0){x7+=xc*4;}});
+      [250,250,250].forEach(b=>{if(cl>=b){a2+=cl*4;}else if(xc>0){x2+=xc*4;}});
+    }
+    var t7=a7+x7+m7,t2=a2+x2+m2,dv=t2-t7;
+    tC+=t7;tN+=t2;
+    var dd=ds.substring(8),mo=ds.substring(5,7);
+    var dc=dv>=0?'#15803d':'#dc2626',sg=dv>=0?'+':'';
+    rows+='<tr style="border-bottom:1px solid var(--border)"><td style="padding:7px 8px;font-weight:600">'+dd+'.'+mo+'</td><td style="text-align:right;padding:7px 8px">'+Math.round(a7).toLocaleString('da-DK')+'</td><td style="text-align:right;padding:7px 8px">'+Math.round(x7).toLocaleString('da-DK')+'</td><td style="text-align:right;padding:7px 8px">'+Math.round(m7).toLocaleString('da-DK')+'</td><td style="text-align:right;padding:7px 8px;font-weight:700">'+Math.round(t7).toLocaleString('da-DK')+' kr.</td><td style="text-align:right;padding:7px 8px;color:var(--accent)">'+Math.round(a2).toLocaleString('da-DK')+'</td><td style="text-align:right;padding:7px 8px;color:var(--accent)">'+Math.round(x2).toLocaleString('da-DK')+'</td><td style="text-align:right;padding:7px 8px;color:var(--accent)">'+Math.round(m2).toLocaleString('da-DK')+'</td><td style="text-align:right;padding:7px 8px;font-weight:700;color:var(--accent)">'+Math.round(t2).toLocaleString('da-DK')+' kr.</td><td style="text-align:right;padding:7px 8px;font-weight:700;color:'+dc+'">'+sg+Math.round(dv).toLocaleString('da-DK')+' kr.</td></tr>';
+  }
+  var td=tN-tC,ts=td>=0?'+':'';
+  rows+='<tr style="border-top:2px solid var(--border);font-weight:700;background:var(--bg2)"><td style="padding:8px">Total 7 dage</td><td colspan="3"></td><td style="text-align:right;padding:8px">'+Math.round(tC).toLocaleString('da-DK')+' kr.</td><td colspan="3"></td><td style="text-align:right;padding:8px;color:var(--accent)">'+Math.round(tN).toLocaleString('da-DK')+' kr.</td><td style="text-align:right;padding:8px;font-weight:700;color:#15803d">'+ts+Math.round(td).toLocaleString('da-DK')+' kr.</td></tr>';
+  el.innerHTML=rows;
+  var e=document.getElementById('sc-cur-total');if(e)e.textContent=Math.round(tC/7*7).toLocaleString('da-DK')+' kr.';
+  e=document.getElementById('sc-new-total');if(e)e.textContent=Math.round(tN/7*7).toLocaleString('da-DK')+' kr.';
+  e=document.getElementById('sc-delta-total');if(e)e.textContent='+'+Math.round(td/7*7).toLocaleString('da-DK')+' kr.';
 }
 
 function renderSammenligning(){
