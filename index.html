@@ -1365,8 +1365,8 @@ function renderTidsline(){
       var ar=afrrByH[h];
       if(!ar){rows+=emptyCell();return;}
       var cl=parseFloat(ar.UpPriceDKK)||0;
-      if(cl>=BID){rows+=cell('#1a56db','4 MW',Math.round(cl)+' kr.','✓ vundet');dagAfrr+=cl*4;}
-      else{rows+=cell('#94a3b8','4 MW',Math.round(cl)+' kr.','tabt');}
+      if(cl>=BID){rows+=cell('#1a56db','4 MW',Math.round(cl)+' kr.','✓ clearing');dagAfrr+=cl*4;}
+      else{rows+=cell('#94a3b8','4 MW',Math.round(cl)+' kr.','< 250 kr.');}
     }
     rows+='</tr>';
   });
@@ -1379,7 +1379,7 @@ function renderTidsline(){
     var xActive=xr&&parseFloat(xr.UpDemandMW||0)>0&&xCl>0;
     if(afrrCl<BID&&xActive){rows+=cell('#7c3aed','12 MW',Math.round(xCl)+' kr.','✓ Extra');dagExtra+=xCl*12;}
     else if(afrrCl<BID){rows+=cell('#374151','—','inaktiv','');}
-    else{rows+=cell('#1e3a5f','—','aFRR','win');}
+    else{rows+=cell('#1e3a5f','—','aFRR ✓','');}
   }
   rows+='</tr>';
   body.innerHTML=rows;
