@@ -1322,66 +1322,77 @@ function renderTidsline(){
   var datoEl=document.getElementById('tl-dato');
   var totalEl=document.getElementById('tl-total');
   if(!head||!body||!datoEl||!totalEl)return;
-  if(!window._allAfrr||!window._allExtra){setTimeout(renderTidsline,800);return;}
+  if(!window._allAfrr||!window._allExtra||!window._allMfrr){setTimeout(renderTidsline,800);return;}
   var d=new Date();d.setDate(d.getDate()+_tlOffset);
   var yyyy=d.getFullYear(),mm=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');
   var dateStr=yyyy+'-'+mm+'-'+dd;
   datoEl.textContent=dd+'.'+mm+'.'+yyyy;
-  var afrrDay=(window._allAfrr||[]).filter(function(r){return(r.TimeDK||'').startsWith(dateStr);});
-  var extraDay=(window._allExtra||[]).filter(function(r){return(r.TimeDK||'').startsWith(dateStr);});
-  var afrrByH={},extraByH={};
-  afrrDay.forEach(function(r){var h=parseInt((r.TimeDK||'').substring(11,13),10);afrrByH[h]=r;});
-  extraDay.forEach(function(r){var h=parseInt((r.TimeDK||'').substring(11,13),10);extraByH[h]=r;});
-  var hdr='<tr><td style="padding:4px 8px;font-size:11px;font-weight:600;min-width:150px;white-space:nowrap">Marked / Time</td>';
+  var afrrByH={},extraByH={},mfrrByH={};
+  (window._allAfrr||[]).filter(function(r){return(r.TimeDK||'').startsWith(dateStr);}).forEach(function(r){
+    var h=parseInt((r.TimeDK||'').substring(11,13),10);afrrByH[h]=r;
+  });
+  (window._allExtra||[]).filter(function(r){return(r.TimeDK||'').startsWith(dateStr);}).forEach(function(r){
+    var h=parseInt((r.TimeDK||'').substring(11,13),10);extraByH[h]=r;
+  });
+  (window._allMfrr||[]).filter(function(r){return(r.TimeDK||'').startsWith(dateStr);}).forEach(function(r){
+    var h=parseInt((r.TimeDK||'').substring(11,13),10);mfrrByH[h]=r;
+  });
+  var hdr='<tr><td style="padding:4px 8px;font-size:11px;font-weight:600;min-width:160px;white-space:nowrap">Marked / Time</td>';
   for(var h=0;h<24;h++)hdr+='<td style="padding:4px 2px;font-size:10px;text-align:center;font-weight:600;color:var(--text3);min-width:36px">'+String(h).padStart(2,'0')+'</td>';
   hdr+='</tr>';head.innerHTML=hdr;
   var BID=250,rows='',dagAfrr=0,dagExtra=0,dagMfrr=0;
   function cell(bg,mw,line1,line2){
-    return '<td style="padding:2px"><div style="background:'+bg+';border-radius:4px;padding:3px 1px;text-align:center;color:#fff;min-height:42px;display:flex;flex-direction:column;justify-content:center;align-items:center">'
-      +'<div style="font-weight:700;font-size:9px">'+mw+' MW</div>'
+    return '<td style="padding:2px"><div style="background:'+bg+';border-radius:4px;padding:3px 1px;text-align:center;color:#fff;min-height:46px;display:flex;flex-direction:column;justify-content:center;align-items:center">'
+      +'<div style="font-weight:700;font-size:9px">'+mw+'</div>'
       +'<div style="font-size:8px;margin-top:1px">'+line1+'</div>'
       +'<div style="font-size:7px;opacity:0.85">'+line2+'</div>'
       +'</div></td>';
   }
-  function emptyCell(){return '<td style="padding:2px"><div style="background:var(--bg2);border-radius:4px;min-height:42px;min-width:34px"></div></td>';}
-  // Row 1: mFRR rådighedsbud 6 MW — vinder altid
-  rows+='<tr><td style="padding:4px 8px;font-size:11px;font-weight:600;white-space:nowrap;color:#0f7c3e">mFRR Rådighedsbud</td>';
-  for(var h=0;h<24;h++){rows+=cell('#0f7c3e','6','4,99 kr.','✓');dagMfrr+=126*6;}
+  function emptyCell(){return '<td style="padding:2px"><div style="background:var(--bg2);border-radius:4px;min-height:46px;min-width:34px;display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--text3)">—</div></td>';}
+  // mFRR rådighedsbud — faktisk EDS clearingpris
+  rows+='<tr><td style="padding:4px 8px;font-size:11px;font-weight:600;white-space:nowrap;color:#0f7c3e">mFRR Rådighedsbud · 6 MW</td>';
+  for(var h=0;h<24;h++){
+    var mr=mfrrByH[h];
+    var mCl=mr?parseFloat(mr.UpPriceDKK):0;
+    if(mCl>0){rows+=cell('#0f7c3e','6 MW',Math.round(mCl)+' kr.','✓ vundet');dagMfrr+=mCl*6;}
+    else{rows+=cell('#1a7c4e','6 MW','4,99 kr.','bud');dagMfrr+=4.99*6;}
+  }
   rows+='</tr>';
-  // Rows 2-4: aFRR BLK 1/2/3
+  // aFRR BLK 1/2/3 — faktisk EDS clearingpris, bid 250 kr.
   ['BLK 1','BLK 2','BLK 3'].forEach(function(blk){
-    rows+='<tr><td style="padding:4px 8px;font-size:11px;font-weight:600;white-space:nowrap;color:#1a56db">aFRR CM '+blk+' (4 MW)</td>';
+    rows+='<tr><td style="padding:4px 8px;font-size:11px;font-weight:600;white-space:nowrap;color:#1a56db">aFRR CM '+blk+' · 4 MW · bid 250 kr.</td>';
     for(var h=0;h<24;h++){
       var ar=afrrByH[h];
       if(!ar){rows+=emptyCell();return;}
       var cl=parseFloat(ar.UpPriceDKK)||0;
-      var won=cl>=BID;
-      if(won){rows+=cell('#1a56db','4',Math.round(cl)+' kr.','✓ vundet');dagAfrr+=cl*4;}
-      else{rows+=cell('#94a3b8','4',Math.round(cl)+' kr.','tabt');}
+      if(cl>=BID){rows+=cell('#1a56db','4 MW',Math.round(cl)+' kr.','✓ vundet');dagAfrr+=cl*4;}
+      else{rows+=cell('#94a3b8','4 MW',Math.round(cl)+' kr.','tabt');}
     }
     rows+='</tr>';
   });
-  // Row 5: mFRR Extra
-  rows+='<tr><td style="padding:4px 8px;font-size:11px;font-weight:600;white-space:nowrap;color:#7c3aed">mFRR Extra (12 MW)</td>';
+  // mFRR Extra — faktisk EDS clearingpris
+  rows+='<tr><td style="padding:4px 8px;font-size:11px;font-weight:600;white-space:nowrap;color:#7c3aed">mFRR Extra · op til 12 MW</td>';
   for(var h=0;h<24;h++){
     var ar2=afrrByH[h],xr=extraByH[h];
     var afrrCl=ar2?(parseFloat(ar2.UpPriceDKK)||0):0;
-    var afrrWon=afrrCl>=BID;
-    var xActive=xr&&parseFloat(xr.UpPriceDKK||0)>0&&parseFloat(xr.UpDemandMW||0)>0;
-    var xPrice=xActive?parseFloat(xr.UpPriceDKK):0;
-    if(!afrrWon&&xActive){rows+=cell('#7c3aed','12',Math.round(xPrice)+' kr.','Extra');dagExtra+=xPrice*12;}
-    else if(!afrrWon){rows+=cell('#374151','—','inaktiv','');}
+    var xCl=xr?(parseFloat(xr.UpPriceDKK)||0):0;
+    var xActive=xr&&parseFloat(xr.UpDemandMW||0)>0&&xCl>0;
+    if(afrrCl<BID&&xActive){rows+=cell('#7c3aed','12 MW',Math.round(xCl)+' kr.','✓ Extra');dagExtra+=xCl*12;}
+    else if(afrrCl<BID){rows+=cell('#374151','—','inaktiv','');}
     else{rows+=cell('#1e3a5f','—','aFRR','win');}
   }
   rows+='</tr>';
   body.innerHTML=rows;
   var total=dagAfrr+dagExtra+dagMfrr;
-  totalEl.innerHTML=
-    '<div><span style="color:var(--text3)">aFRR kapacitet:</span> <strong>'+Math.round(dagAfrr).toLocaleString('da-DK')+' kr.</strong></div>'+
-    '<div><span style="color:var(--text3)">mFRR Extra:</span> <strong>'+Math.round(dagExtra).toLocaleString('da-DK')+' kr.</strong></div>'+
-    '<div><span style="color:var(--text3)">mFRR rådighedsbud (est.):</span> <strong>'+Math.round(dagMfrr).toLocaleString('da-DK')+' kr.</strong></div>'+
-    '<div style="border-left:3px solid var(--accent);padding-left:12px"><span style="color:var(--text3)">Total dag:</span> <strong style="font-size:15px">'+Math.round(total).toLocaleString('da-DK')+' kr.</strong></div>';
+  var noData=Object.keys(afrrByH).length===0;
+  totalEl.innerHTML=noData
+    ?'<div style="color:var(--text3);font-style:italic">Ingen EDS-data for denne dato — bladr tilbage for at se historiske dage</div>'
+    :'<div><span style="color:var(--text3)">aFRR kapacitet:</span> <strong>'+Math.round(dagAfrr).toLocaleString('da-DK')+' kr.</strong></div>'
+    +'<div><span style="color:var(--text3)">mFRR Extra:</span> <strong>'+Math.round(dagExtra).toLocaleString('da-DK')+' kr.</strong></div>'
+    +'<div><span style="color:var(--text3)">mFRR rådighedsbud:</span> <strong>'+Math.round(dagMfrr).toLocaleString('da-DK')+' kr.</strong></div>'
+    +'<div style="border-left:3px solid var(--accent);padding-left:12px"><span style="color:var(--text3)">Total dag (250 kr. strategi):</span> <strong style="font-size:15px">'+Math.round(total).toLocaleString('da-DK')+' kr.</strong></div>';
 }
+
 function renderSammenligning(){_tlOffset=-1;renderTidsline();}
 
 
