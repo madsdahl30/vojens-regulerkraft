@@ -277,55 +277,31 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
 <div class="tt" id="tt"></div>
 
 <div id="panel-sammenligning" class="panel">
-  <div class="card" style="margin-bottom:12px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <div>
-        <div style="font-size:16px;font-weight:700">Testuge — Strategi-sammenligning</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:2px">Nuværende faste priser vs. værktøjets anbefalinger · Baseret på historiske clearingspriser (EDS DK1 90 dage)</div>
-      </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+    <div>
+      <span style="font-weight:700;font-size:16px">Planlægning — 250 kr. strategi</span>
+      <span style="margin-left:10px;font-size:12px;color:var(--text3)">Simuleret ud fra historiske EDS-clearingspriser</span>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px">
-      <div style="background:var(--bg2);border-radius:10px;padding:16px;text-align:center">
-        <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Nuværende strategi</div>
-        <div style="font-size:22px;font-weight:800" id="sam-cur-total">—</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:4px">est. kapacitetsindtægt/uge</div>
-      </div>
-      <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:16px;text-align:center">
-        <div style="font-size:11px;font-weight:600;color:#166534;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Værktøjets strategi</div>
-        <div style="font-size:22px;font-weight:800;color:#15803d" id="sam-new-total">—</div>
-        <div style="font-size:11px;color:#166534;margin-top:4px">est. kapacitetsindtægt/uge</div>
-      </div>
-      <div style="background:var(--bg2);border-radius:10px;padding:16px;text-align:center">
-        <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Forskel</div>
-        <div style="font-size:22px;font-weight:800" id="sam-delta">—</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:4px" id="sam-delta-pct">—</div>
-      </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button onclick="tidslinjeDag(-1)" style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:4px 12px;cursor:pointer;font-size:14px">◀</button>
+      <span id="tl-dato" style="font-weight:600;min-width:120px;text-align:center">—</span>
+      <button onclick="tidslinjeDag(+1)" style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:4px 12px;cursor:pointer;font-size:14px">▶</button>
     </div>
-    <div style="font-size:12px;font-weight:600;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px">Opdelt per marked</div>
-    <table style="width:100%;border-collapse:collapse;font-size:12px">
-      <thead>
-        <tr style="border-bottom:2px solid var(--border)">
-          <th style="text-align:left;padding:7px 8px;color:var(--text3)">Marked</th>
-          <th style="text-align:right;padding:7px 8px;color:var(--text3)">Nuv. pris</th>
-          <th style="text-align:right;padding:7px 8px;color:var(--text3)">MW</th>
-          <th style="text-align:right;padding:7px 8px;color:var(--text3)">Clearing %</th>
-          <th style="text-align:right;padding:7px 8px;color:var(--text3)">Nuv. kr./uge</th>
-          <th style="text-align:right;padding:7px 8px;color:var(--text2)">Anb. pris</th>
-          <th style="text-align:right;padding:7px 8px;color:var(--text2)">Anb. MW</th>
-          <th style="text-align:right;padding:7px 8px;color:var(--text2)">Ny kr./uge</th>
-          <th style="text-align:right;padding:7px 8px;color:#15803d">Delta</th>
-        </tr>
-      </thead>
-      <tbody id="sam-tbody"></tbody>
+  </div>
+  <div style="display:flex;gap:16px;margin-bottom:12px;font-size:11px;flex-wrap:wrap">
+    <span><span style="display:inline-block;width:12px;height:12px;background:#0f7c3e;border-radius:3px;margin-right:4px;vertical-align:middle"></span>mFRR Rådighedsbud</span>
+    <span><span style="display:inline-block;width:12px;height:12px;background:#1a56db;border-radius:3px;margin-right:4px;vertical-align:middle"></span>aFRR vundet</span>
+    <span><span style="display:inline-block;width:12px;height:12px;background:#94a3b8;border-radius:3px;margin-right:4px;vertical-align:middle"></span>aFRR tabt → ledig til Extra</span>
+    <span><span style="display:inline-block;width:12px;height:12px;background:#7c3aed;border-radius:3px;margin-right:4px;vertical-align:middle"></span>mFRR Extra aktiv</span>
+    <span><span style="display:inline-block;width:12px;height:12px;background:#374151;border-radius:3px;margin-right:4px;vertical-align:middle"></span>Extra inaktiv</span>
+  </div>
+  <div style="overflow-x:auto">
+    <table id="tl-table" style="border-collapse:collapse;width:100%;min-width:900px">
+      <thead id="tl-head"></thead>
+      <tbody id="tl-body"></tbody>
     </table>
   </div>
-  <div class="card" style="font-size:11px;color:var(--text3);line-height:1.7">
-    <div style="font-weight:600;margin-bottom:6px;color:var(--text2)">Sådan beregnes estimaterne</div>
-    Kapacitetsindtægt = <strong>pris × MW × clearing% × 168 timer/uge</strong>.<br>
-    Clearing% = andel af historiske timer (90 dage) hvor markedets clearingpris var ≤ din budpris.<br>
-    Nuværende priser er dine faste Centrica-skabeloner (72/73/74 kr.). Anbefalede priser er 250 kr./MWh baseret på matematisk optimering af jan-apr 2026 data (+46.000 kr./uge).<br>
-    <strong>Bemærk:</strong> Kun kapacitetsbetaling (CM) — aktiveringsindtægt (EAM) ikke inkluderet.
-  </div>
+  <div id="tl-total" style="margin-top:14px;display:flex;gap:24px;font-size:13px;padding:10px 14px;background:var(--bg2);border-radius:8px;flex-wrap:wrap"></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -1337,54 +1313,77 @@ function hentVindIndikator(targetDate,callback){
   })
   .catch(function(){callback({ms:0,niveau:'ukendt',harData:false});});
 }
-function renderSammenligning(){
-  if(!S||!S.afrr||!S.mfrr||!S.extra){setTimeout(renderSammenligning,500);return;}
-  function avgClearPct(market,pris){
-    const stat=S[market];if(!stat)return 0;
-    let sum=0;
-    for(let h=0;h<24;h++) sum+=stat[h]&&stat[h].clearPct?stat[h].clearPct(pris):0;
-    return Math.round(sum/24);
+
+var _tlOffset=-1;
+function tidslinjeDag(delta){_tlOffset+=delta;renderTidsline();}
+function renderTidsline(){
+  var head=document.getElementById('tl-head');
+  var body=document.getElementById('tl-body');
+  var datoEl=document.getElementById('tl-dato');
+  var totalEl=document.getElementById('tl-total');
+  if(!head||!body||!datoEl||!totalEl)return;
+  if(!window._allAfrr||!window._allExtra){setTimeout(renderTidsline,800);return;}
+  var d=new Date();d.setDate(d.getDate()+_tlOffset);
+  var yyyy=d.getFullYear(),mm=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0');
+  var dateStr=yyyy+'-'+mm+'-'+dd;
+  datoEl.textContent=dd+'.'+mm+'.'+yyyy;
+  var afrrDay=(window._allAfrr||[]).filter(function(r){return(r.TimeDK||'').startsWith(dateStr);});
+  var extraDay=(window._allExtra||[]).filter(function(r){return(r.TimeDK||'').startsWith(dateStr);});
+  var afrrByH={},extraByH={};
+  afrrDay.forEach(function(r){var h=parseInt((r.TimeDK||'').substring(11,13),10);afrrByH[h]=r;});
+  extraDay.forEach(function(r){var h=parseInt((r.TimeDK||'').substring(11,13),10);extraByH[h]=r;});
+  var hdr='<tr><td style="padding:4px 8px;font-size:11px;font-weight:600;min-width:150px;white-space:nowrap">Marked / Time</td>';
+  for(var h=0;h<24;h++)hdr+='<td style="padding:4px 2px;font-size:10px;text-align:center;font-weight:600;color:var(--text3);min-width:36px">'+String(h).padStart(2,'0')+'</td>';
+  hdr+='</tr>';head.innerHTML=hdr;
+  var BID=250,rows='',dagAfrr=0,dagExtra=0,dagMfrr=0;
+  function cell(bg,mw,line1,line2){
+    return '<td style="padding:2px"><div style="background:'+bg+';border-radius:4px;padding:3px 1px;text-align:center;color:#fff;min-height:42px;display:flex;flex-direction:column;justify-content:center;align-items:center">'
+      +'<div style="font-weight:700;font-size:9px">'+mw+' MW</div>'
+      +'<div style="font-size:8px;margin-top:1px">'+line1+'</div>'
+      +'<div style="font-size:7px;opacity:0.85">'+line2+'</div>'
+      +'</div></td>';
   }
-  const ROWS=[
-    {label:'aFRR BLK 1 (4 MW)', market:'afrr', curPris:72,  mw:4, newPris:250},
-    {label:'aFRR BLK 2 (4 MW)', market:'afrr', curPris:73,  mw:4, newPris:250},
-    {label:'aFRR BLK 3 (4 MW)', market:'afrr', curPris:74,  mw:4, newPris:250},
-    {label:'mFRR rådighedsbud (6 MW)', market:'mfrr', curPris:4.99, mw:6, newPris:4.99},
-    {label:'mFRR Extra (via tabte aFRR-blokke)', market:'extra', curPris:99.99, mw:6, newPris:99.99},
-  ];
-  let curTotal=0,newTotal=0,rows='';
-  ROWS.forEach(function(r){
-    const clearCur=avgClearPct(r.market,r.curPris);
-    const clearNew=avgClearPct(r.market,r.newPris);
-    const curWeek=Math.round(r.curPris*r.mw*(clearCur/100)*168);
-    const newWeek=Math.round(r.newPris*r.mw*(clearNew/100)*168);
-    const delta=newWeek-curWeek;
-    const col=delta>0?'#15803d':delta<0?'#dc2626':'var(--text3)';
-    const sign=delta>0?'+':'';
-    const isFixed=r.market==='mfrr'||r.market==='extra';
-    curTotal+=curWeek; newTotal+=newWeek;
-    rows+='<tr style="border-bottom:1px solid var(--border);'+(isFixed?'opacity:0.65':'')+'">'
-      +'<td style="padding:7px 8px;font-weight:600">'+r.label+'</td>'
-      +'<td style="text-align:right;padding:7px 8px">'+r.curPris.toFixed(2)+' kr.</td>'
-      +'<td style="text-align:right;padding:7px 8px">'+r.mw+' MW</td>'
-      +'<td style="text-align:right;padding:7px 8px">'+clearCur+'%</td>'
-      +'<td style="text-align:right;padding:7px 8px">'+curWeek.toLocaleString('da-DK')+' kr.</td>'
-      +'<td style="text-align:right;padding:7px 8px;color:var(--accent);font-weight:'+(isFixed?'400':'700')+'">'+r.newPris.toFixed(2)+' kr.</td>'
-      +'<td style="text-align:right;padding:7px 8px;color:var(--accent)">'+r.mw+' MW</td>'
-      +'<td style="text-align:right;padding:7px 8px;color:var(--accent)">'+newWeek.toLocaleString('da-DK')+' kr.</td>'
-      +'<td style="text-align:right;padding:7px 8px;font-weight:700;color:'+col+'">'+(isFixed?'—':sign+delta.toLocaleString('da-DK')+' kr.')+'</td>'
-      +'</tr>';
+  function emptyCell(){return '<td style="padding:2px"><div style="background:var(--bg2);border-radius:4px;min-height:42px;min-width:34px"></div></td>';}
+  // Row 1: mFRR rådighedsbud 6 MW — vinder altid
+  rows+='<tr><td style="padding:4px 8px;font-size:11px;font-weight:600;white-space:nowrap;color:#0f7c3e">mFRR Rådighedsbud</td>';
+  for(var h=0;h<24;h++){rows+=cell('#0f7c3e','6','4,99 kr.','✓');dagMfrr+=126*6;}
+  rows+='</tr>';
+  // Rows 2-4: aFRR BLK 1/2/3
+  ['BLK 1','BLK 2','BLK 3'].forEach(function(blk){
+    rows+='<tr><td style="padding:4px 8px;font-size:11px;font-weight:600;white-space:nowrap;color:#1a56db">aFRR CM '+blk+' (4 MW)</td>';
+    for(var h=0;h<24;h++){
+      var ar=afrrByH[h];
+      if(!ar){rows+=emptyCell();return;}
+      var cl=parseFloat(ar.UpPriceDKK)||0;
+      var won=cl>=BID;
+      if(won){rows+=cell('#1a56db','4',Math.round(cl)+' kr.','✓ vundet');dagAfrr+=cl*4;}
+      else{rows+=cell('#94a3b8','4',Math.round(cl)+' kr.','tabt');}
+    }
+    rows+='</tr>';
   });
-  document.getElementById('sam-tbody').innerHTML=rows;
-  const delta=newTotal-curTotal;
-  const pct=curTotal?Math.round((delta/curTotal)*100):0;
-  const sign=delta>=0?'+':'';
-  document.getElementById('sam-cur-total').textContent=curTotal.toLocaleString('da-DK')+' kr.';
-  document.getElementById('sam-new-total').textContent=newTotal.toLocaleString('da-DK')+' kr.';
-  document.getElementById('sam-delta').style.color=delta>=0?'#15803d':'#dc2626';
-  document.getElementById('sam-delta').textContent=sign+delta.toLocaleString('da-DK')+' kr.';
-  document.getElementById('sam-delta-pct').textContent=sign+pct+'% ift. nuværende aFRR-kapacitet';
+  // Row 5: mFRR Extra
+  rows+='<tr><td style="padding:4px 8px;font-size:11px;font-weight:600;white-space:nowrap;color:#7c3aed">mFRR Extra (12 MW)</td>';
+  for(var h=0;h<24;h++){
+    var ar2=afrrByH[h],xr=extraByH[h];
+    var afrrCl=ar2?(parseFloat(ar2.UpPriceDKK)||0):0;
+    var afrrWon=afrrCl>=BID;
+    var xActive=xr&&parseFloat(xr.UpPriceDKK||0)>0&&parseFloat(xr.UpDemandMW||0)>0;
+    var xPrice=xActive?parseFloat(xr.UpPriceDKK):0;
+    if(!afrrWon&&xActive){rows+=cell('#7c3aed','12',Math.round(xPrice)+' kr.','Extra');dagExtra+=xPrice*12;}
+    else if(!afrrWon){rows+=cell('#374151','—','inaktiv','');}
+    else{rows+=cell('#1e3a5f','—','aFRR','win');}
+  }
+  rows+='</tr>';
+  body.innerHTML=rows;
+  var total=dagAfrr+dagExtra+dagMfrr;
+  totalEl.innerHTML=
+    '<div><span style="color:var(--text3)">aFRR kapacitet:</span> <strong>'+Math.round(dagAfrr).toLocaleString('da-DK')+' kr.</strong></div>'+
+    '<div><span style="color:var(--text3)">mFRR Extra:</span> <strong>'+Math.round(dagExtra).toLocaleString('da-DK')+' kr.</strong></div>'+
+    '<div><span style="color:var(--text3)">mFRR rådighedsbud (est.):</span> <strong>'+Math.round(dagMfrr).toLocaleString('da-DK')+' kr.</strong></div>'+
+    '<div style="border-left:3px solid var(--accent);padding-left:12px"><span style="color:var(--text3)">Total dag:</span> <strong style="font-size:15px">'+Math.round(total).toLocaleString('da-DK')+' kr.</strong></div>';
 }
+function renderSammenligning(){_tlOffset=-1;renderTidsline();}
+
 
 function renderBudstrategi(data){
   if(!data||!data.length){
