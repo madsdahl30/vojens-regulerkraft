@@ -1288,11 +1288,21 @@ function blokLabel(mw){
   // Fallback: vis bare MW
   return mw+' MW';
 }
-function blokPris(h,blok){
-  // Optimeret budpris: 250 kr./MWh — jan-apr 2026 data
-  // aFRR clearer 14.6% af timerne til avg 545 kr.
-  // Resterende 85.4% ledige til mFRR Extra (18.4% sandsynlighed, avg 908 kr.)
-  // Gevinst vs. 72/73/74: +46.000 kr./uge
+function blokPris(h,blok,dato){
+  // Optimal strategi — jan-apr 2026 data (108 dage)
+  // Blok 1-3: 3×4 MW aFRR @ 250 kr. alle ugedage
+  // Blok 4: 6 MW varierer per ugedag:
+  //   Man, Fre, Lør, Søn → aFRR @ 250 kr.
+  //   Tirsdag            → aFRR @ 500 kr. (Extra aktiv 30% af timerne)
+  //   Ons, Tor           → null = mFRR CM rådighedsbud
+  // Forventet gevinst vs. nuværende: +54.000 kr./uge ekskl. EAM
+  var d = dato ? new Date(dato) : new Date();
+  var wd = d.getDay();
+  if(blok === 4){
+    if(wd === 2) return 500;
+    if(wd === 3 || wd === 4) return null;
+    return 250;
+  }
   return 250;
 }
 function hentVindIndikator(targetDate,callback){
