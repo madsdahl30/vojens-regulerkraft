@@ -219,25 +219,7 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
       <div class="cw" style="height:220px;"><canvas id="extraChart"></canvas></div>
       <div style="font-size:11px;color:var(--text3);margin-top:8px;">Sjle = % af dage Extra-markedet er aktivt  Linje = snit-clearing-pris nr aktiv (kr./MW)</div>
     </div>
-    <div class="card">
-      <div class="ct">Extra vs. aFRR sammenligning <span class="badge bx">Hvornr betaler det sig at satse p Extra?</span></div>
-      <div id="extra-dato-nav" style="display:flex;align-items:center;justify-content:space-between;padding:8px 4px 12px"><button onclick="skiftExtraDag(-1)" id="extra-btn-prev" style="padding:6px 16px;border-radius:8px;border:1px solid #ddd;background:#f5f5f5;cursor:pointer;font-size:14px">&#8592; Forrige</button><div style="text-align:center"><div id="extra-dato-label" style="font-weight:700;font-size:15px">90 dage</div><div id="extra-dato-sub" style="font-size:11px;color:#888">historik</div></div><button onclick="skiftExtraDag(1)" id="extra-btn-next" style="padding:6px 16px;border-radius:8px;border:1px solid #ddd;background:#f5f5f5;cursor:pointer;font-size:14px">N&#230;ste &#8594;</button></div><table class="rt" id="extra-compare"></table>
-    </div>
-  </div>
-
-  <!-- INDSIGTER -->
-  <div id="panel-indsigt" class="panel">
-
-  <!-- VIND WIDGET -->
-  <div class="card" id="vind-card" style="margin-bottom:12px">
-    <div class="ct" style="display:flex;justify-content:space-between;align-items:center">
-      <span>🌬️ Vindforhold – Esbjerg (DK1)</span>
-      <button onclick="hentVind()" style="font-size:11px;padding:3px 10px;border-radius:6px;border:1px solid #ccc;background:#f5f5f5;cursor:pointer">↻ Opdater</button>
-    </div>
-    <div id="vind-indhold" style="padding:8px 0;color:#888;font-size:13px">Henter vinddata...</div>
-  </div>
-
-  <!-- DK1 UDFALD -->
+    <!-- DK1 UDFALD -->
   <div class="card" id="udfald-card" style="margin-bottom:12px">
     <div class="ct" style="display:flex;justify-content:space-between;align-items:center">
       <span>⚡ DK1 Produktionsudfald – i dag</span>
