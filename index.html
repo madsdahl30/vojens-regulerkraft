@@ -217,6 +217,7 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
     <div class="card">
       <div class="ct">Extra aktiveringsfrekvens og priser pr. time <span class="badge bx">90 dage  DK1</span></div>
       <div class="cw" style="height:220px;"><canvas id="extraChart"></canvas></div>
+      <div class="cw" style="margin-top:12px;"><div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px;">Aktivering pr. ugedag &amp; time (%)</div><div id="extraHeatmap" style="overflow-x:auto;"></div></div>
       <div style="font-size:11px;color:var(--text3);margin-top:8px;">Sjle = % af dage Extra-markedet er aktivt  Linje = snit-clearing-pris nr aktiv (kr./MW)</div>
     </div>
 </div>
@@ -430,6 +431,7 @@ async function fetchAll() {
       afrr: cStats(a.records),
       mfrr: cStats(m.records),
       extra: cStats(x.records),
+      extraByDay: cStatsByDay(x.records),
       afrrWD: cWD(a.records),
       mfrrWD: cWD(m.records),
       at: new Date().toLocaleString('da-DK')
@@ -489,11 +491,39 @@ function cWD(recs) {
 
 function heatCol(val,max,r,g,b){return `rgba(${r},${g},${b},${0.07+Math.min(val/max,1)*.88})`;}
 
+function renderExtraHeatmap(){
+  const el=document.getElementById('extraHeatmap');
+  if(!el||!S||!S.extraByDay)return;
+  const days=['Man','Tir','Ons','Tor','Fre','Lør','Søn'];
+  const cellW=32,cellH=22,labelW=32,topH=18;
+  const W=labelW+24*cellW,H=topH+7*cellH+4;
+  let svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" style="display:block;min-width:${W}px">`;
+  for(let h=0;h<24;h++){
+    if(h%3===0) svg+=`<text x="${labelW+h*cellW+cellW/2}" y="${topH-4}" text-anchor="middle" font-size="9" fill="var(--text2)">${h}</text>`;
+  }
+  for(let d=0;d<7;d++){
+    svg+=`<text x="${labelW-3}" y="${topH+d*cellH+cellH/2+4}" text-anchor="end" font-size="9" fill="var(--text2)">${days[d]}</text>`;
+    for(let h=0;h<24;h++){
+      const pct=S.extraByDay[d][h].activePct;
+      const t=pct/100;
+      const r=Math.round(30+t*180);
+      const g=Math.round(40+t*180);
+      const b=Math.round(220-t*160);
+      const fill=pct===0?'var(--bg2)':`rgb(${r},${g},${b})`;
+      const x=labelW+h*cellW,y=topH+d*cellH;
+      svg+=`<rect x="${x}" y="${y}" width="${cellW-1}" height="${cellH-1}" rx="2" fill="${fill}"/>`;
+      if(pct>0) svg+=`<text x="${x+cellW/2}" y="${y+cellH/2+3}" text-anchor="middle" font-size="8" fill="${pct>45?'#fff':'var(--text)'}">${pct}</text>`;
+    }
+  }
+  svg+='</svg>';
+  el.innerHTML=svg;
+}
 function renderAll(){
   renderHeatmap();
   renderRecTable();
   renderHourPlanner();
   renderExtraChart();
+  renderExtraHeatmap();
   renderExtraCompare();
   renderInsights();
 }
@@ -728,6 +758,18 @@ function updateFordelingChart(){
   });
 }
 
+function cStatsByDay(recs){
+  const s={};
+  for(let d=0;d<7;d++){
+    s[d]={};
+    for(let h=0;h<24;h++){
+      const rows=recs.filter(r=>{const dt=new Date(r.TimeDK);return ((dt.getDay()+6)%7)===d&&dt.getHours()===h;});
+      const act=rows.filter(r=>r.UpDemandMW>0&&r.UpPriceDKK>0);
+      s[d][h]={activePct:rows.length?Math.round(act.length/rows.length*100):0};
+    }
+  }
+  return s;
+}
 function renderExtraChart(){
   if(!S)return;
   const labels=Array.from({length:24},(_,h)=>h+':00');
