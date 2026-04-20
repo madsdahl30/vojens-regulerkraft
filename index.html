@@ -219,7 +219,8 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
       <div class="cw" style="height:220px;"><canvas id="extraChart"></canvas></div>
       <div style="font-size:11px;color:var(--text3);margin-top:8px;">Sjle = % af dage Extra-markedet er aktivt  Linje = snit-clearing-pris nr aktiv (kr./MW)</div>
     </div>
-    <!-- DK1 UDFALD -->
+  <div id="panel-indsigter" class="panel">
+  <!-- DK1 UDFALD -->
   <div class="card" id="udfald-card" style="margin-bottom:12px">
     <div class="ct" style="display:flex;justify-content:space-between;align-items:center">
       <span>⚡ DK1 Produktionsudfald – i dag</span>
@@ -231,6 +232,7 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
   <!-- EKSISTERENDE MARKEDSANALYSE -->
   <div id="insights"></div>
 
+</div>
 </div>
 
 <div id="panel-budstrategi" class="panel"><div class="card"><div class="ct">Budstrategi <span class="badge ba">Seneste 90 dage</span><span style="font-size:11px;color:var(--text3);margin-left:8px">Baseret på historiske markedsclearingspriser (EDS DK1)</span></div><div id="bs-summary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px"></div></div><div class="card"><div class="ct">Anbefalet budpris pr. time <span style="font-size:11px;font-weight:400;color:var(--text3)"> hv budpris &nbsp; ok &nbsp; for hjt</span></div><div style="overflow-x:auto"><table class="rt" id="bs-table"></table></div></div><div class="card" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-color:#86efac"><div class="ct" style="color:#166534"> Potentiel gevinst ved optimerede budpriser</div><div id="bs-gain"></div></div></div>
