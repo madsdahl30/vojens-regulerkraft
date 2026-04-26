@@ -265,76 +265,175 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
   </div>
   <div id="tl-total" style="margin-top:14px;display:flex;gap:24px;font-size:13px;padding:10px 14px;background:var(--bg2);border-radius:8px;flex-wrap:wrap"></div>
 </div>
-<div id="panel-strategi-sam" class="panel"><div style="text-align:center;padding:20px 0 16px"><div style="font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">Forventet gevinst ved strategiskifte</div><div style="font-size:44px;font-weight:800;color:#15803d;line-height:1">+54.000 kr.</div><div style="font-size:14px;color:var(--text2);margin-top:4px">pr. uge &middot; baseret p&aring; jan&ndash;apr 2026 data (108 dage)</div></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px"><div style="background:var(--bg2);border-radius:12px;padding:16px;border:2px solid var(--border)"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:8px">Nuv&aelig;rende strategi</div><div style="font-size:22px;font-weight:700;margin-bottom:2px" id="sc-cur-total">beregner...</div><div id="sc-cur-dag" style="font-size:12px;color:var(--text3);margin-bottom:2px"></div><div style="font-size:11px;color:var(--text3);margin-bottom:10px">total seneste 7 dage (EDS-simulering)</div><hr style="border:none;border-top:1px solid var(--border);margin:8px 0"><div style="font-size:12px;line-height:1.9"><div>aFRR: 3&times;4 MW &mdash; <strong>72/73/74 kr.</strong></div><div>mFRR r&aring;dighed: <strong>6 MW</strong></div><div>mFRR Extra: <strong>ved tabte aFRR-timer</strong></div></div></div><div style="background:var(--bg2);border-radius:12px;padding:16px;border:2px solid var(--accent)"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:8px">Anbefalet strategi</div><div style="font-size:22px;font-weight:700;color:var(--accent);margin-bottom:2px" id="sc-new-total">beregner...</div><div id="sc-new-dag" style="font-size:12px;color:var(--accent);margin-bottom:2px"></div><div style="font-size:11px;color:var(--text3);margin-bottom:10px">total seneste 7 dage (EDS-simulering)</div><hr style="border:none;border-top:1px solid var(--border);margin:8px 0"><div style="font-size:12px;line-height:1.9"><div>Blok 1-3: 3&times;4 MW &mdash; <strong>250 kr. alle dage</strong></div><div>Blok 4: 6 MW &mdash; <strong>Man/Fre/L&oslash;r/S&oslash;n @ 250 kr.</strong></div><div style="padding-left:52px"><strong>Tirsdag @ 500 kr.</strong></div><div style="padding-left:52px"><strong>Ons/Tor = mFRR CM</strong></div><div>mFRR Extra: <strong>ved tabte aFRR-timer</strong></div></div></div><div style="background:#f0fdf4;border-radius:12px;padding:16px;border:2px solid #15803d"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#15803d;margin-bottom:8px">Gevinst ved skift</div><div style="font-size:22px;font-weight:700;color:#15803d;margin-bottom:2px" id="sc-delta-total">beregner...</div><div id="sc-del-dag" style="font-size:12px;color:#15803d;margin-bottom:2px"></div><div style="font-size:11px;color:var(--text3);margin-bottom:10px">over seneste 7 dage</div><hr style="border:none;border-top:1px solid #bbf7d0;margin:8px 0"><div style="font-size:12px;line-height:1.9;color:#166534"><div>+54.000 kr./uge (108 dages snit)</div><div>+7.700 kr./dag i gennemsnit</div><div>~2,8 mio. kr./&aring;r ekstra</div><div style="font-size:11px;margin-top:4px">EAM er konstant ved begge strategier</div></div></div></div><div style="background:var(--bg2);border-radius:10px;padding:14px 16px;margin-bottom:20px;border-left:4px solid var(--accent)"><div style="font-weight:700;margin-bottom:6px;font-size:13px">Hvorfor giver den nye strategi mere?</div><div style="font-size:12px;color:var(--text2);line-height:1.7">Blok 1-3 (3&times;4 MW) byder <strong>250 kr.</strong> alle dage Ã¢ÂÂ vinder de dyre timer og frigives til mFRR Extra i &oslash;vrige. Blok 4 (6 MW) optimeres per ugedag: <strong>tirsdag @ 500 kr.</strong> da Extra er aktiv 30% af tirsdagene Ã¢ÂÂ <strong>onsdag og torsdag i mFRR CM</strong> da r&aring;dighedsbetalingen sl&aring;r Extra de dage Ã¢ÂÂ <strong>alle andre dage @ 250 kr.</strong> Samlet forventet gevinst: <strong>+54.000 kr./uge</strong> ekskl. EAM.</div></div><div style="font-weight:700;font-size:13px;margin-bottom:10px">Seneste 7 dage &mdash; simulering p&aring; faktiske EDS-clearingpriser</div><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="border-bottom:2px solid var(--border)"><th style="text-align:left;padding:7px;color:var(--text3)">Dato</th><th style="text-align:right;padding:7px;color:var(--text3)">aFRR 72</th><th style="text-align:right;padding:7px;color:var(--text3)">Extra 72</th><th style="text-align:right;padding:7px;color:var(--text3)">mFRR</th><th style="text-align:right;padding:7px;font-weight:700">Total 72</th><th style="text-align:right;padding:7px;color:var(--accent)">aFRR 250</th><th style="text-align:right;padding:7px;color:var(--accent)">Extra 250</th><th style="text-align:right;padding:7px;color:var(--accent)">mFRR</th><th style="text-align:right;padding:7px;font-weight:700;color:var(--accent)">Total 250</th><th style="text-align:right;padding:7px;font-weight:700">Gevinst</th></tr></thead><tbody id="sc-tbody"></tbody></table></div><div style="font-size:11px;color:var(--text3);margin-top:8px">* Ekskluderer EAM-aktiveringsindt&aelig;gt &mdash; konstant uanset strategi.</div></div><div id="panel-simulator" class="panel"><style>
-  .sim-hdr{padding:20px 24px 14px;border-bottom:1px solid #e5e7eb;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
-  .sim-hdr h2{font-size:20px;font-weight:700;letter-spacing:-.3px;margin:0}
-  .sim-hdr-sub{font-size:13px;color:#6b7280}
-  .sim-ctrl{padding:12px 24px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#f9fafb;border-bottom:1px solid #e5e7eb}
-  .sim-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7280}
-  .sim-ctrl input[type=date],.sim-ctrl input[type=number]{border:1px solid #e5e7eb;border-radius:6px;padding:6px 10px;font-size:14px;background:#fff;color:#111827}
-  .sim-ctrl input[type=number]{width:74px}
-  .sim-vsep{width:1px;height:22px;background:#e5e7eb;flex-shrink:0}
-  .sim-btn{padding:6px 13px;border-radius:6px;border:1px solid #e5e7eb;cursor:pointer;font-size:12px;font-weight:700;background:#fff;white-space:nowrap;transition:background .12s}
-  .sim-btn:hover{background:#f3f4f6}
-  .sim-prim{background:#111827;color:#fff;border-color:#111827}.sim-prim:hover{background:#374151}
-  .sim-ba{color:#16a34a;border-color:#16a34a}.sim-ba:hover{background:#dcfce7}
-  .sim-bm{color:#ea580c;border-color:#ea580c}.sim-bm:hover{background:#ffedd5}
-  .sim-be{color:#7c3aed;border-color:#7c3aed}.sim-be:hover{background:#ede9fe}
-  #sim-sb{padding:8px 24px;font-size:12px;color:#6b7280;display:flex;align-items:center;gap:8px;min-height:34px;border-bottom:1px solid #e5e7eb}
-  .sim-spin{width:12px;height:12px;border:2px solid #e5e7eb;border-top-color:#6b7280;border-radius:50%;animation:simsp .65s linear infinite;flex-shrink:0}
-  @keyframes simsp{to{transform:rotate(360deg)}}
-  .sim-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;flex-shrink:0}
-  .sg{display:none!important}
-  .sim-kpis{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid #e5e7eb}
-  .sim-kc{padding:18px 22px;border-right:1px solid #e5e7eb}
-  .sim-kc:last-child{border-right:none}
-  .sim-kl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#6b7280;margin-bottom:4px}
-  .sim-kn{font-size:24px;font-weight:700;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
-  .sim-kn.sca{color:#16a34a}.sim-kn.scm{color:#ea580c}.sim-kn.sce{color:#7c3aed}
-  .sim-ks{font-size:11px;color:#6b7280;margin-top:2px}
-  .sim-cw{padding:16px 24px 12px;border-bottom:1px solid #e5e7eb}
-  .sim-ct{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#6b7280;margin-bottom:12px}
-  .sim-ca{display:flex;align-items:flex-end;gap:2px;height:140px}
-  .sim-cc{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:1px;height:100%}
-  .sim-bar{width:100%;border-radius:2px 2px 0 0;transition:height .3s ease;cursor:default}
-  .sim-bar.a{background:#16a34a;opacity:.28}.sim-bar.m{background:#ea580c;opacity:.28}.sim-bar.e{background:#7c3aed;opacity:.28}
-  .sim-bar.sel{opacity:1}.sim-bar.nil{background:#e5e7eb;opacity:1}
-  .sim-chl{font-size:8px;color:#6b7280;margin-top:3px;user-select:none}
-  .sim-leg{display:flex;gap:16px;margin-top:10px}
-  .sim-li{display:flex;align-items:center;gap:5px;font-size:11px;color:#6b7280}
-  .sim-ld{width:8px;height:8px;border-radius:2px;flex-shrink:0}
-  .sim-tw{overflow-x:auto}
-  .sim-tw table{width:100%;border-collapse:collapse}
-  .sim-tw thead th{background:#f3f4f6;padding:9px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;border-bottom:1px solid #e5e7eb;white-space:nowrap;position:sticky;top:0;z-index:2}
-  .sim-tw tbody tr{border-bottom:1px solid #e5e7eb;transition:background .1s}
-  .sim-tw tbody tr:hover{background:#f9fafb}
-  .sim-tw tbody td{padding:8px 14px;font-size:13px;white-space:nowrap;font-variant-numeric:tabular-nums}
-  .sth{font-weight:600;color:#6b7280}
-  .spa{color:#16a34a;font-weight:600}.spm{color:#ea580c;font-weight:600}.spe{color:#7c3aed;font-weight:600}.spn{color:#d1d5db}
-  .sms{display:inline-flex;border:1px solid #e5e7eb;border-radius:5px;overflow:hidden}
-  .sms button{padding:4px 9px;border:none;border-right:1px solid #e5e7eb;cursor:pointer;font-size:11px;font-weight:700;background:#fff;transition:background .1s}
-  .sms button:last-child{border-right:none}
-  .sms button.aa{background:#16a34a;color:#fff}.sms button.am{background:#ea580c;color:#fff}.sms button.ae{background:#7c3aed;color:#fff}
-  .smw{width:58px;border:1px solid #e5e7eb;border-radius:4px;padding:4px 6px;font-size:13px;text-align:right;font-variant-numeric:tabular-nums;color:#111827;background:#fff}
-  .smw:focus{outline:2px solid #9ca3af;outline-offset:1px}
-  .srv{font-weight:700;font-size:13px}
-  .srv.ra{color:#16a34a}.srv.rm{color:#ea580c}.srv.re{color:#7c3aed}.srv.rn{color:#d1d5db}
-  .sem{padding:56px 24px;text-align:center;color:#6b7280}
-  .sem .si{font-size:36px;margin-bottom:10px}
-  .sem h3{font-size:15px;font-weight:600;color:#111827;margin-bottom:6px}
-  .sem p{font-size:13px}
-  @media(max-width:700px){.sim-kpis{grid-template-columns:1fr 1fr}.sim-kc{border-right:none;border-bottom:1px solid #e5e7eb}.sim-kc:nth-child(odd){border-right:1px solid #e5e7eb}}
+<div id="panel-strategi-sam" class="panel"><div style="text-align:center;padding:20px 0 16px"><div style="font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">Forventet gevinst ved strategiskifte</div><div style="font-size:44px;font-weight:800;color:#15803d;line-height:1">+54.000 kr.</div><div style="font-size:14px;color:var(--text2);margin-top:4px">pr. uge &middot; baseret p&aring; jan&ndash;apr 2026 data (108 dage)</div></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px"><div style="background:var(--bg2);border-radius:12px;padding:16px;border:2px solid var(--border)"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:8px">Nuv&aelig;rende strategi</div><div style="font-size:22px;font-weight:700;margin-bottom:2px" id="sc-cur-total">beregner...</div><div id="sc-cur-dag" style="font-size:12px;color:var(--text3);margin-bottom:2px"></div><div style="font-size:11px;color:var(--text3);margin-bottom:10px">total seneste 7 dage (EDS-simulering)</div><hr style="border:none;border-top:1px solid var(--border);margin:8px 0"><div style="font-size:12px;line-height:1.9"><div>aFRR: 3&times;4 MW &mdash; <strong>72/73/74 kr.</strong></div><div>mFRR r&aring;dighed: <strong>6 MW</strong></div><div>mFRR Extra: <strong>ved tabte aFRR-timer</strong></div></div></div><div style="background:var(--bg2);border-radius:12px;padding:16px;border:2px solid var(--accent)"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:8px">Anbefalet strategi</div><div style="font-size:22px;font-weight:700;color:var(--accent);margin-bottom:2px" id="sc-new-total">beregner...</div><div id="sc-new-dag" style="font-size:12px;color:var(--accent);margin-bottom:2px"></div><div style="font-size:11px;color:var(--text3);margin-bottom:10px">total seneste 7 dage (EDS-simulering)</div><hr style="border:none;border-top:1px solid var(--border);margin:8px 0"><div style="font-size:12px;line-height:1.9"><div>Blok 1-3: 3&times;4 MW &mdash; <strong>250 kr. alle dage</strong></div><div>Blok 4: 6 MW &mdash; <strong>Man/Fre/L&oslash;r/S&oslash;n @ 250 kr.</strong></div><div style="padding-left:52px"><strong>Tirsdag @ 500 kr.</strong></div><div style="padding-left:52px"><strong>Ons/Tor = mFRR CM</strong></div><div>mFRR Extra: <strong>ved tabte aFRR-timer</strong></div></div></div><div style="background:#f0fdf4;border-radius:12px;padding:16px;border:2px solid #15803d"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#15803d;margin-bottom:8px">Gevinst ved skift</div><div style="font-size:22px;font-weight:700;color:#15803d;margin-bottom:2px" id="sc-delta-total">beregner...</div><div id="sc-del-dag" style="font-size:12px;color:#15803d;margin-bottom:2px"></div><div style="font-size:11px;color:var(--text3);margin-bottom:10px">over seneste 7 dage</div><hr style="border:none;border-top:1px solid #bbf7d0;margin:8px 0"><div style="font-size:12px;line-height:1.9;color:#166534"><div>+54.000 kr./uge (108 dages snit)</div><div>+7.700 kr./dag i gennemsnit</div><div>~2,8 mio. kr./&aring;r ekstra</div><div style="font-size:11px;margin-top:4px">EAM er konstant ved begge strategier</div></div></div></div><div style="background:var(--bg2);border-radius:10px;padding:14px 16px;margin-bottom:20px;border-left:4px solid var(--accent)"><div style="font-weight:700;margin-bottom:6px;font-size:13px">Hvorfor giver den nye strategi mere?</div><div style="font-size:12px;color:var(--text2);line-height:1.7">Blok 1-3 (3&times;4 MW) byder <strong>250 kr.</strong> alle dage Ã¢ÂÂ vinder de dyre timer og frigives til mFRR Extra i &oslash;vrige. Blok 4 (6 MW) optimeres per ugedag: <strong>tirsdag @ 500 kr.</strong> da Extra er aktiv 30% af tirsdagene Ã¢ÂÂ <strong>onsdag og torsdag i mFRR CM</strong> da r&aring;dighedsbetalingen sl&aring;r Extra de dage Ã¢ÂÂ <strong>alle andre dage @ 250 kr.</strong> Samlet forventet gevinst: <strong>+54.000 kr./uge</strong> ekskl. EAM.</div></div><div style="font-weight:700;font-size:13px;margin-bottom:10px">Seneste 7 dage &mdash; simulering p&aring; faktiske EDS-clearingpriser</div><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="border-bottom:2px solid var(--border)"><th style="text-align:left;padding:7px;color:var(--text3)">Dato</th><th style="text-align:right;padding:7px;color:var(--text3)">aFRR 72</th><th style="text-align:right;padding:7px;color:var(--text3)">Extra 72</th><th style="text-align:right;padding:7px;color:var(--text3)">mFRR</th><th style="text-align:right;padding:7px;font-weight:700">Total 72</th><th style="text-align:right;padding:7px;color:var(--accent)">aFRR 250</th><th style="text-align:right;padding:7px;color:var(--accent)">Extra 250</th><th style="text-align:right;padding:7px;color:var(--accent)">mFRR</th><th style="text-align:right;padding:7px;font-weight:700;color:var(--accent)">Total 250</th><th style="text-align:right;padding:7px;font-weight:700">Gevinst</th></tr></thead><tbody id="sc-tbody"></tbody></table></div><div style="font-size:11px;color:var(--text3);margin-top:8px">* Ekskluderer EAM-aktiveringsindt&aelig;gt &mdash; konstant uanset strategi.</div></div><div id="panel-simulator" class="panel">
+<style>
+.sim-hdr{padding:20px 24px 14px;border-bottom:1px solid #e5e7eb;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.sim-hdr h2{font-size:20px;font-weight:700;letter-spacing:-.3px;margin:0}
+.sim-hdr-sub{font-size:13px;color:#6b7280}
+.sim-ctrl{padding:12px 24px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#f9fafb;border-bottom:1px solid #e5e7eb}
+.sim-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7280}
+.sim-ctrl input[type=date],.sim-ctrl input[type=number]{border:1px solid #e5e7eb;border-radius:6px;padding:6px 10px;font-size:14px;background:#fff;color:#111827}
+.sim-ctrl input[type=number]{width:74px}
+.sim-vsep{width:1px;height:22px;background:#e5e7eb;flex-shrink:0}
+.sim-btn{padding:6px 13px;border-radius:6px;border:1px solid #e5e7eb;cursor:pointer;font-size:12px;font-weight:700;background:#fff;white-space:nowrap;transition:background .12s}
+.sim-btn:hover{background:#f3f4f6}
+.sim-prim{background:#111827;color:#fff;border-color:#111827}.sim-prim:hover{background:#374151}
+.sim-ba{color:#16a34a;border-color:#16a34a}.sim-ba:hover{background:#dcfce7}
+.sim-bm{color:#ea580c;border-color:#ea580c}.sim-bm:hover{background:#ffedd5}
+.sim-be{color:#7c3aed;border-color:#7c3aed}.sim-be:hover{background:#ede9fe}
+#sim-sb{padding:8px 24px;font-size:12px;color:#6b7280;display:flex;align-items:center;gap:8px;min-height:34px;border-bottom:1px solid #e5e7eb}
+.sim-spin{width:12px;height:12px;border:2px solid #e5e7eb;border-top-color:#6b7280;border-radius:50%;animation:simsp .65s linear infinite;flex-shrink:0}
+@keyframes simsp{to{transform:rotate(360deg)}}
+.sim-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;flex-shrink:0}
+.sg{display:none!important}
+.sim-kpis{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid #e5e7eb}
+.sim-kc{padding:18px 22px;border-right:1px solid #e5e7eb}
+.sim-kc:last-child{border-right:none}
+.sim-kl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#6b7280;margin-bottom:4px}
+.sim-kn{font-size:24px;font-weight:700;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+.sim-kn.sca{color:#16a34a}.sim-kn.scm{color:#ea580c}.sim-kn.sce{color:#7c3aed}
+.sim-ks{font-size:11px;color:#6b7280;margin-top:2px}
+.sim-cw{padding:16px 24px 12px;border-bottom:1px solid #e5e7eb}
+.sim-ct{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#6b7280;margin-bottom:12px}
+.sim-ca{display:flex;align-items:flex-end;gap:2px;height:140px}
+.sim-cc{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:1px;height:100%}
+.sim-bar{width:100%;border-radius:2px 2px 0 0;transition:height .3s ease;cursor:default}
+.sim-bar.a{background:#16a34a;opacity:.28}.sim-bar.m{background:#ea580c;opacity:.28}.sim-bar.e{background:#7c3aed;opacity:.28}
+.sim-bar.sel{opacity:1}.sim-bar.nil{background:#e5e7eb;opacity:1}
+.sim-chl{font-size:8px;color:#6b7280;margin-top:3px}
+.sim-leg{display:flex;gap:16px;margin-top:10px}
+.sim-li{display:flex;align-items:center;gap:5px;font-size:11px;color:#6b7280}
+.sim-ld{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.sim-tw{overflow-x:auto}
+.sim-tw table{width:100%;border-collapse:collapse}
+.sim-tw thead th{background:#f3f4f6;padding:9px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;border-bottom:1px solid #e5e7eb;white-space:nowrap;position:sticky;top:0;z-index:2}
+.sim-tw tbody tr{border-bottom:1px solid #e5e7eb;transition:background .1s}
+.sim-tw tbody tr:hover{background:#f9fafb}
+.sim-tw tbody td{padding:8px 14px;font-size:13px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.sth{font-weight:600;color:#6b7280}
+.spa{color:#16a34a;font-weight:600}.spm{color:#ea580c;font-weight:600}.spe{color:#7c3aed;font-weight:600}.spn{color:#d1d5db}
+.sms{display:inline-flex;border:1px solid #e5e7eb;border-radius:5px;overflow:hidden}
+.sms button{padding:4px 9px;border:none;border-right:1px solid #e5e7eb;cursor:pointer;font-size:11px;font-weight:700;background:#fff;transition:background .1s}
+.sms button:last-child{border-right:none}
+.sms button.aa{background:#16a34a;color:#fff}.sms button.am{background:#ea580c;color:#fff}.sms button.ae{background:#7c3aed;color:#fff}
+.smw{width:58px;border:1px solid #e5e7eb;border-radius:4px;padding:4px 6px;font-size:13px;text-align:right;font-variant-numeric:tabular-nums;color:#111827;background:#fff}
+.smw:focus{outline:2px solid #9ca3af;outline-offset:1px}
+.srv{font-weight:700;font-size:13px}
+.srv.ra{color:#16a34a}.srv.rm{color:#ea580c}.srv.re{color:#7c3aed}.srv.rn{color:#d1d5db}
+.sem{padding:56px 24px;text-align:center;color:#6b7280}
+.sem .si{font-size:36px;margin-bottom:10px}
+.sem h3{font-size:15px;font-weight:600;color:#111827;margin-bottom:6px}
+.sem p{font-size:13px}
+@media(max-width:700px){.sim-kpis{grid-template-columns:1fr 1fr}.sim-kc{border-right:none;border-bottom:1px solid #e5e7eb}.sim-kc:nth-child(odd){border-right:1px solid #e5e7eb}}
 </style>
-
-<div class="sim-hdr">
-  <h2>&#x1F4C5; Dagssimulator</h2>
-  <span class="sim-hdr-sub">DK1 &middot; Fordel dine MW per time og se faktisk r&aring;dighedsbetaling</span>
+<div class="sim-hdr"><h2>&#x1F4C5; Dagssimulator</h2><span class="sim-hdr-sub">DK1 &middot; Fordel dine MW per time og se faktisk r&aring;dighedsbetaling</span><script>
+(function(){
+var SH=[];
+var _dp=document.getElementById("sdp");
+if(_dp){var _d=new Date();_d.setDate(_d.getDate()-1);var _ds=_d.toISOString().split("T")[0];_dp.value=_ds;_dp.max=_ds;}
+window.simLoad=function(){
+  var date=document.getElementById("sdp").value;
+  var mw=Math.max(1,parseInt(document.getElementById("smwdef").value)||18);
+  if(!date){alert("Vaelg en dato");return;}
+  _sst("spin","Henter data...");
+  var base="https://api.energidataservice.dk/dataset";
+  var f=encodeURIComponent('{"PriceArea":"DK1"}');
+  var q="start="+date+"T00:00&end="+date+"T23:59&filter="+f+"&limit=48";
+  Promise.all([_sg(base+"/AfrrReservesNordic?"+q),_sg(base+"/mFRRCapacityMarket?"+q),_sg(base+"/MfrrCapacityMarketExtra?"+q)])
+  .then(function(r){
+    SH=_build(r[0],r[1],r[2],mw);
+    if(!SH.length){_sst("idle","Ingen data - proev en tidligere dato");return;}
+    var nd=SH.filter(function(h){return h.a!==null||h.m!==null||h.e!==null;}).length;
+    _sst("ok",_fd(date)+" · "+nd+" timer med clearingpris");
+    _sw("sim-kpis");_sw("sim-cw");document.getElementById("sim-em").classList.add("sg");
+    _rend();_kpis();_chart();
+  }).catch(function(e){_sst("idle","Fejl: "+e.message);});
+};
+function _sg(url){return fetch(url).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json();}).then(function(j){return j.records||[];});}
+function _build(ra,rm,re,mw){
+  var map={};for(var i=0;i<24;i++)map[i]={h:i,a:null,m:null,e:null,mk:"m",mw:mw};
+  function fill(recs,key){recs.forEach(function(r){var ts=r.TimeDK||r.TimeUTC||"";var x=ts.match(/T(\d{2}):/);if(!x)return;var hi=parseInt(x[1]);if(map[hi]!==undefined&&r.UpPriceDKK!=null)map[hi][key]=parseFloat(r.UpPriceDKK);});}
+  fill(ra,"a");fill(rm,"m");fill(re,"e");
+  return Array.from({length:24},function(_,i){return map[i];});
+}
+function _rend(){
+  var ta=document.getElementById("sim-ta");ta.innerHTML="";
+  var tw=document.createElement("div");tw.className="sim-tw";
+  var tbl=document.createElement("table");
+  tbl.innerHTML='<thead><tr><th>Time</th><th>aFRR ↑ kr./MW</th><th>mFRR ↑ kr./MW</th><th>Extra ↑ kr./MW</th><th>Marked</th><th>MW</th><th>Rådighedsbetaling</th></tr></thead><tbody id="sim-tb"></tbody>';
+  tw.appendChild(tbl);ta.appendChild(tw);
+  var tb=document.getElementById("sim-tb");
+  SH.forEach(function(row,i){
+    var tr=document.createElement("tr");tr.id="str"+i;
+    tr.innerHTML='<td class="sth">kl. '+_p2(row.h)+':00</td>'+
+      '<td class="spa">'+_pf(row.a)+'</td><td class="spm">'+_pf(row.m)+'</td><td class="spe">'+_pf(row.e)+'</td>'+
+      '<td><div class="sms" id="sms'+i+'">'+
+        '<button onclick="simPick('+i+',\'a\')">aFRR</button>'+
+        '<button onclick="simPick('+i+',\'m\')">mFRR</button>'+
+        '<button onclick="simPick('+i+',\'e\')">Extra</button>'+
+      '</div></td>'+
+      '<td><input class="smw" type="number" id="smw'+i+'" value="'+row.mw+'" min="0" max="9999" oninput="simMW('+i+',this.value)"></td>'+
+      '<td id="srv'+i+'" class="srv rn">&#8212;</td>';
+    tb.appendChild(tr);_pr(i);
+  });
+}
+function _pr(i){
+  var row=SH[i];var ms=document.getElementById("sms"+i);if(!ms)return;
+  var ks=["a","m","e"],cs=["aa","am","ae"];
+  ms.querySelectorAll("button").forEach(function(b,j){b.className=row.mk===ks[j]?cs[j]:"";});
+  var p=row[row.mk];var rv=document.getElementById("srv"+i);
+  if(p!==null&&p!==undefined){rv.textContent=_dkk(p*row.mw);rv.className="srv r"+row.mk;}
+  else{rv.innerHTML="&#8212;";rv.className="srv rn";}
+}
+window.simPick=function(i,mk){SH[i].mk=mk;_pr(i);_kpis();_chart();};
+window.simMW=function(i,v){SH[i].mw=Math.max(0,parseFloat(v)||0);_pr(i);_kpis();};
+window.simAll=function(mk){if(!SH.length)return;SH.forEach(function(_,i){SH[i].mk=mk;_pr(i);});_kpis();_chart();};
+window.simAuto=function(){
+  if(!SH.length)return;
+  SH.forEach(function(row,i){var best="m",bv=-Infinity;["a","m","e"].forEach(function(k){if(row[k]!==null&&row[k]>bv){bv=row[k];best=k;}});SH[i].mk=best;_pr(i);});
+  _kpis();_chart();
+};
+function _kpis(){
+  var tot=0,av=0,mv=0,ev=0,an=0,mn=0,en=0;
+  SH.forEach(function(row){var p=row[row.mk];if(p===null||p===undefined)return;var r=p*row.mw;tot+=r;if(row.mk==="a"){av+=r;an++;}if(row.mk==="m"){mv+=r;mn++;}if(row.mk==="e"){ev+=r;en++;}});
+  function pct(v){return tot?Math.round(v/tot*100):0;}
+  _st("sk0",_dkk(tot));_st("sk0h",(an+mn+en)+" aktive timer");
+  _st("sk1",_dkk(av));_st("sk1h",an+" timer · "+pct(av)+"%");
+  _st("sk2",_dkk(mv));_st("sk2h",mn+" timer · "+pct(mv)+"%");
+  _st("sk3",_dkk(ev));_st("sk3h",en+" timer · "+pct(ev)+"%");
+}
+function _chart(){
+  var ca=document.getElementById("sim-ca");ca.innerHTML="";
+  var MAX=135,all=[];
+  SH.forEach(function(r){if(r.a>0)all.push(r.a);if(r.m>0)all.push(r.m);if(r.e>0)all.push(r.e);});
+  var peak=all.length?Math.max.apply(null,all):1;
+  SH.forEach(function(row){
+    var col=document.createElement("div");col.className="sim-cc";
+    [["a",row.a],["m",row.m],["e",row.e]].forEach(function(s){
+      var bar=document.createElement("div");var active=row.mk===s[0];
+      if(!s[1]||s[1]<=0){bar.className="sim-bar nil";bar.style.height="1px";}
+      else{bar.className="sim-bar "+s[0]+(active?" sel":"");bar.style.height=Math.max(2,(s[1]/peak)*MAX)+"px";}
+      bar.title=s[1]?s[0].toUpperCase()+" kl."+_p2(row.h)+": "+_nf(s[1])+" kr./MW":"--";
+      col.appendChild(bar);
+    });
+    var lbl=document.createElement("div");lbl.className="sim-chl";lbl.textContent=_p2(row.h);
+    col.appendChild(lbl);ca.appendChild(col);
+  });
+}
+function _sst(state,msg){_st("sim-stxt",msg);var sp=document.getElementById("sim-spin"),ok=document.getElementById("sim-dot");sp.classList.toggle("sg",state!=="spin");ok.classList.toggle("sg",state!=="ok");}
+function _st(id,t){var el=document.getElementById(id);if(el)el.textContent=t;}
+function _sw(id){var el=document.getElementById(id);if(el)el.classList.remove("sg");}
+function _p2(n){return("0"+n).slice(-2);}
+function _nf(v){return v.toLocaleString("da-DK",{minimumFractionDigits:2,maximumFractionDigits:2});}
+function _pf(v){return(v!==null&&v!==undefined)?_nf(v):'<span class="spn">&#8212;</span>';}
+function _dkk(v){return v.toLocaleString("da-DK",{minimumFractionDigits:0,maximumFractionDigits:0})+" kr.";}
+function _fd(s){return new Date(s+"T12:00:00").toLocaleDateString("da-DK",{weekday:"short",day:"numeric",month:"long",year:"numeric"});}
+})();
+</script>
 </div>
 <div class="sim-ctrl">
-  <span class="sim-lbl">Dato</span>
-  <input type="date" id="sdp">
-  <span class="sim-lbl">Kapacitet (MW)</span>
-  <input type="number" id="smwdef" value="18" min="1" max="9999">
+  <span class="sim-lbl">Dato</span><input type="date" id="sdp">
+  <span class="sim-lbl">Kapacitet (MW)</span><input type="number" id="smwdef" value="18" min="1" max="9999">
   <button class="sim-btn sim-prim" onclick="simLoad()">Hent data</button>
   <div class="sim-vsep"></div>
   <button class="sim-btn sim-ba" onclick="simAll('a')">Alle &rarr; aFRR</button>
@@ -342,154 +441,20 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
   <button class="sim-btn sim-be" onclick="simAll('e')">Alle &rarr; Extra</button>
   <button class="sim-btn sim-prim" onclick="simAuto()">&#x26A1; Auto: bedste marked per time</button>
 </div>
-<div id="sim-sb">
-  <div id="sim-spin" class="sim-spin sg"></div>
-  <div id="sim-dot" class="sim-dot sg"></div>
-  <span id="sim-stxt">V&aelig;lg en dato og tryk &ldquo;Hent data&rdquo;</span>
-</div>
+<div id="sim-sb"><div id="sim-spin" class="sim-spin sg"></div><div id="sim-dot" class="sim-dot sg"></div><span id="sim-stxt">V&aelig;lg en dato og tryk &ldquo;Hent data&rdquo;</span></div>
 <div class="sim-kpis sg" id="sim-kpis">
-  <div class="sim-kc"><div class="sim-kl">Total r&aring;dighedsbetaling</div><div class="sim-kn" id="sk0">&mdash;</div><div class="sim-ks" id="sk0h"></div></div>
-  <div class="sim-kc"><div class="sim-kl">aFRR andel</div><div class="sim-kn sca" id="sk1">&mdash;</div><div class="sim-ks" id="sk1h"></div></div>
-  <div class="sim-kc"><div class="sim-kl">mFRR andel</div><div class="sim-kn scm" id="sk2">&mdash;</div><div class="sim-ks" id="sk2h"></div></div>
-  <div class="sim-kc"><div class="sim-kl">mFRR Extra andel</div><div class="sim-kn sce" id="sk3">&mdash;</div><div class="sim-ks" id="sk3h"></div></div>
+  <div class="sim-kc"><div class="sim-kl">Total r&aring;dighedsbetaling</div><div class="sim-kn" id="sk0">&#8212;</div><div class="sim-ks" id="sk0h"></div></div>
+  <div class="sim-kc"><div class="sim-kl">aFRR andel</div><div class="sim-kn sca" id="sk1">&#8212;</div><div class="sim-ks" id="sk1h"></div></div>
+  <div class="sim-kc"><div class="sim-kl">mFRR andel</div><div class="sim-kn scm" id="sk2">&#8212;</div><div class="sim-ks" id="sk2h"></div></div>
+  <div class="sim-kc"><div class="sim-kl">mFRR Extra andel</div><div class="sim-kn sce" id="sk3">&#8212;</div><div class="sim-ks" id="sk3h"></div></div>
 </div>
 <div class="sim-cw sg" id="sim-cw">
   <div class="sim-ct">Clearingpris per time (kr./MW) &mdash; valgt marked fuldt, &oslash;vrige d&aelig;mpet</div>
   <div class="sim-ca" id="sim-ca"></div>
-  <div class="sim-leg">
-    <div class="sim-li"><div class="sim-ld" style="background:#16a34a"></div>aFRR</div>
-    <div class="sim-li"><div class="sim-ld" style="background:#ea580c"></div>mFRR kapacitet</div>
-    <div class="sim-li"><div class="sim-ld" style="background:#7c3aed"></div>mFRR Extra</div>
-  </div>
+  <div class="sim-leg"><div class="sim-li"><div class="sim-ld" style="background:#16a34a"></div>aFRR</div><div class="sim-li"><div class="sim-ld" style="background:#ea580c"></div>mFRR kapacitet</div><div class="sim-li"><div class="sim-ld" style="background:#7c3aed"></div>mFRR Extra</div></div>
 </div>
-<div id="sim-ta">
-  <div class="sem" id="sim-em">
-    <div class="si">&#x1F4CA;</div>
-    <h3>Ingen data endnu</h3>
-    <p>V&aelig;lg en historisk dato og tryk &ldquo;Hent data&rdquo;<br>for at hente clearingpriser fra Energinets API.</p>
-  </div>
+<div id="sim-ta"><div class="sem" id="sim-em"><div class="si">&#x1F4CA;</div><h3>Ingen data endnu</h3><p>V&aelig;lg en historisk dato og tryk &ldquo;Hent data&rdquo;<br>for at hente clearingpriser fra Energinets API.</p></div></div>
 </div>
-<script>
-(function(){
-var SH=[];
-// init date
-var sdp=document.getElementById('sdp');
-if(sdp){var dd=new Date();dd.setDate(dd.getDate()-1);sdp.value=dd.toISOString().split('T')[0];sdp.max=dd.toISOString().split('T')[0];}
-
-window.simLoad=function(){
-  var date=document.getElementById('sdp').value;
-  var mw=Math.max(1,parseInt(document.getElementById('smwdef').value)||18);
-  if(!date){alert('VÃ¦lg en dato');return;}
-  sst('spin','Henter data fra Energidataserviceâ¦');
-  var base='https://api.energidataservice.dk/dataset';
-  var f=encodeURIComponent('{"PriceArea":"DK1"}');
-  var q='start='+date+'T00:00&end='+date+'T23:59&filter='+f+'&limit=48';
-  Promise.all([sg(base+'/AfrrReservesNordic?'+q),sg(base+'/mFRRCapacityMarket?'+q),sg(base+'/MfrrCapacityMarketExtra?'+q)])
-  .then(function(r){
-    SH=sbuild(r[0],r[1],r[2],mw);
-    if(!SH.length){sst('idle','Ingen poster â prÃ¸v en tidligere dato');return;}
-    var nd=SH.filter(function(h){return h.a!==null||h.m!==null||h.e!==null;}).length;
-    sst('ok',sfmtd(date)+' Â· '+nd+' timer med clearingpris');
-    ssw('sim-kpis');ssw('sim-cw');document.getElementById('sim-em').classList.add('sg');
-    srend();skpis();schart();
-  }).catch(function(e){sst('idle','Fejl: '+e.message);});
-};
-
-function sg(url){return fetch(url).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(function(j){return j.records||[];});}
-
-function sbuild(ra,rm,re,mw){
-  var map={};for(var i=0;i<24;i++)map[i]={h:i,a:null,m:null,e:null,mk:'m',mw:mw};
-  function fill(recs,key){recs.forEach(function(r){var ts=r.TimeDK||r.TimeUTC||'';var x=ts.match(/T(d{2}):/);if(!x)return;var hi=parseInt(x[1]);if(map[hi]!==undefined&&r.UpPriceDKK!=null)map[hi][key]=parseFloat(r.UpPriceDKK);});}
-  fill(ra,'a');fill(rm,'m');fill(re,'e');
-  return Array.from({length:24},function(_,i){return map[i];});
-}
-
-function srend(){
-  var ta=document.getElementById('sim-ta');ta.innerHTML='';
-  var tw=document.createElement('div');tw.className='sim-tw';
-  var tbl=document.createElement('table');
-  tbl.innerHTML='<thead><tr><th>Time</th><th>aFRR &uarr; kr./MW</th><th>mFRR &uarr; kr./MW</th><th>Extra &uarr; kr./MW</th><th>Marked</th><th>MW</th><th>RÃ¥dighedsbetaling</th></tr></thead><tbody id="sim-tb"></tbody>';
-  tw.appendChild(tbl);ta.appendChild(tw);
-  var tb=document.getElementById('sim-tb');
-  SH.forEach(function(row,i){
-    var tr=document.createElement('tr');tr.id='str'+i;
-    tr.innerHTML='<td class="sth">kl.Â '+sp2(row.h)+':00</td>'+
-      '<td class="spa">'+spf(row.a)+'</td><td class="spm">'+spf(row.m)+'</td><td class="spe">'+spf(row.e)+'</td>'+
-      '<td><div class="sms" id="sms'+i+'">'+
-        '<button onclick="simPick('+i+','a')">aFRR</button>'+
-        '<button onclick="simPick('+i+','m')">mFRR</button>'+
-        '<button onclick="simPick('+i+','e')">Extra</button>'+
-      '</div></td>'+
-      '<td><input class="smw" type="number" id="smw'+i+'" value="'+row.mw+'" min="0" max="9999" oninput="simMW('+i+',this.value)"></td>'+
-      '<td id="srv'+i+'" class="srv rn">â</td>';
-    tb.appendChild(tr);spr(i);
-  });
-}
-
-function spr(i){
-  var row=SH[i];var ms=document.getElementById('sms'+i);if(!ms)return;
-  var ks=['a','m','e'],cs=['aa','am','ae'];
-  ms.querySelectorAll('button').forEach(function(b,j){b.className=row.mk===ks[j]?cs[j]:'';});
-  var p=row[row.mk];var rv=document.getElementById('srv'+i);
-  if(p!==null&&p!==undefined){rv.textContent=sdkk(p*row.mw);rv.className='srv r'+row.mk;}
-  else{rv.innerHTML='â';rv.className='srv rn';}
-}
-
-window.simPick=function(i,mk){SH[i].mk=mk;spr(i);skpis();schart();};
-window.simMW=function(i,v){SH[i].mw=Math.max(0,parseFloat(v)||0);spr(i);skpis();};
-window.simAll=function(mk){if(!SH.length)return;SH.forEach(function(_,i){SH[i].mk=mk;spr(i);});skpis();schart();};
-window.simAuto=function(){
-  if(!SH.length)return;
-  SH.forEach(function(row,i){
-    var best='m',bv=-Infinity;
-    ['a','m','e'].forEach(function(k){if(row[k]!==null&&row[k]>bv){bv=row[k];best=k;}});
-    SH[i].mk=best;spr(i);
-  });skpis();schart();
-};
-
-function skpis(){
-  var tot=0,av=0,mv=0,ev=0,an=0,mn=0,en=0;
-  SH.forEach(function(row){var p=row[row.mk];if(p===null||p===undefined)return;var r=p*row.mw;tot+=r;if(row.mk==='a'){av+=r;an++;}if(row.mk==='m'){mv+=r;mn++;}if(row.mk==='e'){ev+=r;en++;}});
-  function pct(v){return tot?Math.round(v/tot*100):0;}
-  sst2('sk0',sdkk(tot));sst2('sk0h',(an+mn+en)+' aktive timer');
-  sst2('sk1',sdkk(av));sst2('sk1h',an+' timer Â· '+pct(av)+'%');
-  sst2('sk2',sdkk(mv));sst2('sk2h',mn+' timer Â· '+pct(mv)+'%');
-  sst2('sk3',sdkk(ev));sst2('sk3h',en+' timer Â· '+pct(ev)+'%');
-}
-
-function schart(){
-  var ca=document.getElementById('sim-ca');ca.innerHTML='';
-  var MAX=135,all=[];
-  SH.forEach(function(r){if(r.a>0)all.push(r.a);if(r.m>0)all.push(r.m);if(r.e>0)all.push(r.e);});
-  var peak=all.length?Math.max.apply(null,all):1;
-  SH.forEach(function(row){
-    var col=document.createElement('div');col.className='sim-cc';
-    [['a',row.a],['m',row.m],['e',row.e]].forEach(function(s){
-      var bar=document.createElement('div');var active=row.mk===s[0];
-      if(!s[1]||s[1]<=0){bar.className='sim-bar nil';bar.style.height='1px';}
-      else{bar.className='sim-bar '+s[0]+(active?' sel':'');bar.style.height=Math.max(2,(s[1]/peak)*MAX)+'px';}
-      bar.title=s[1]?s[0].toUpperCase()+' kl.'+sp2(row.h)+': '+snf(s[1])+' kr./MW':'â';
-      col.appendChild(bar);
-    });
-    var lbl=document.createElement('div');lbl.className='sim-chl';lbl.textContent=sp2(row.h);
-    col.appendChild(lbl);ca.appendChild(col);
-  });
-}
-
-function sst(state,msg){
-  sst2('sim-stxt',msg);
-  var sp=document.getElementById('sim-spin'),ok=document.getElementById('sim-dot');
-  sp.classList.toggle('sg',state!=='spin');ok.classList.toggle('sg',state!=='ok');
-}
-function sst2(id,t){var el=document.getElementById(id);if(el)el.textContent=t;}
-function ssw(id){var el=document.getElementById(id);if(el)el.classList.remove('sg');}
-function sp2(n){return('0'+n).slice(-2);}
-function snf(v){return v.toLocaleString('da-DK',{minimumFractionDigits:2,maximumFractionDigits:2});}
-function spf(v){return(v!==null&&v!==undefined)?snf(v):'<span class="spn">â</span>';}
-function sdkk(v){return v.toLocaleString('da-DK',{minimumFractionDigits:0,maximumFractionDigits:0})+' kr.';}
-function sfmtd(s){return new Date(s+'T12:00:00').toLocaleDateString('da-DK',{weekday:'short',day:'numeric',month:'long',year:'numeric'});}
-})();
-</script></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
