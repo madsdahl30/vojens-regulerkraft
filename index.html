@@ -367,87 +367,81 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
   </div>
 </div>
 <script>
-(function(){
-var SH=[];
-var _dp=document.getElementById("sdp");
-if(_dp){var _d=new Date();_d.setDate(_d.getDate()-1);var _ds=_d.toISOString().split("T")[0];_dp.value=_ds;_dp.max=_ds;}
 window.simLoad=function(){
   var date=document.getElementById("sdp").value;
   var mw=Math.max(1,parseInt(document.getElementById("smwdef").value)||18);
   if(!date){alert("Vaelg en dato");return;}
+  var _sst=function(st,msg){var el=document.getElementById("sim-stxt");if(el)el.textContent=msg;var sp=document.getElementById("sim-spin"),ok=document.getElementById("sim-dot");if(sp)sp.classList.toggle("sg",st!=="spin");if(ok)ok.classList.toggle("sg",st!=="ok");};
+  var _sw=function(id){var el=document.getElementById(id);if(el)el.classList.remove("sg");};
   _sst("spin","Henter data...");
   var base="https://api.energidataservice.dk/dataset";
   var f=encodeURIComponent('{"PriceArea":"DK1"}');
   var q="start="+date+"T00:00&end="+date+"T23:59&filter="+f+"&limit=48";
+  function _sg(url){return fetch(url).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json();}).then(function(j){return j.records||[];});}
   Promise.all([_sg(base+"/AfrrReservesNordic?"+q),_sg(base+"/mFRRCapacityMarket?"+q),_sg(base+"/MfrrCapacityMarketExtra?"+q)])
-  .then(function(r){
-    SH=_build(r[0],r[1],r[2],mw);
-    if(!SH.length){_sst("idle","Ingen data - proev en tidligere dato");return;}
-    var nd=SH.filter(function(h){return h.a!==null||h.m!==null||h.e!==null;}).length;
-    _sst("ok",_fd(date)+" · "+nd+" timer med clearingpris");
-    _sw("sim-kpis");_sw("sim-cw");document.getElementById("sim-em").classList.add("sg");
-    _rend();_kpis();_chart();
-  }).catch(function(e){_sst("idle","Fejl: "+e.message);});
+  .then(function(res){
+    var map={};for(var i=0;i<24;i++)map[i]={h:i,a:null,m:null,e:null,mk:"m",mw:mw};
+    function fill(recs,key){recs.forEach(function(rec){var ts=rec.TimeDK||rec.TimeUTC||"";var x=ts.match(/T(\d{2}):/);if(!x)return;var hi=parseInt(x[1]);if(map[hi]!==undefined&&rec.UpPriceDKK!=null)map[hi][key]=parseFloat(rec.UpPriceDKK);});}
+    fill(res[0],"a");fill(res[1],"m");fill(res[2],"e");
+    window.__SH=Array.from({length:24},function(x,i){return map[i];});
+    var nd=window.__SH.filter(function(h){return h.a!==null||h.m!==null||h.e!==null;}).length;
+    if(!nd){_sst("idle","Ingen data - proev en tidligere dato");return;}
+    var dstr=new Date(date+"T12:00:00").toLocaleDateString("da-DK",{weekday:"short",day:"numeric",month:"long",year:"numeric"});
+    _sst("ok",dstr+" - "+nd+" timer med clearingpris");
+    _sw("sim-kpis");_sw("sim-cw");var em=document.getElementById("sim-em");if(em)em.classList.add("sg");
+    simRend();simKpis();simChart();
+  }).catch(function(e){var _sst2=function(st,msg){var el=document.getElementById("sim-stxt");if(el)el.textContent=msg;};_sst2("idle","Fejl: "+e.message);});
 };
-function _sg(url){return fetch(url).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json();}).then(function(j){return j.records||[];});}
-function _build(ra,rm,re,mw){
-  var map={};for(var i=0;i<24;i++)map[i]={h:i,a:null,m:null,e:null,mk:"m",mw:mw};
-  function fill(recs,key){recs.forEach(function(r){var ts=r.TimeDK||r.TimeUTC||"";var x=ts.match(/T(\d{2}):/);if(!x)return;var hi=parseInt(x[1]);if(map[hi]!==undefined&&r.UpPriceDKK!=null)map[hi][key]=parseFloat(r.UpPriceDKK);});}
-  fill(ra,"a");fill(rm,"m");fill(re,"e");
-  return Array.from({length:24},function(_,i){return map[i];});
-}
-function _rend(){
+window.simPick=function(i,mk){if(!window.__SH)return;window.__SH[i].mk=mk;simPr(i);simKpis();simChart();};
+window.simMW=function(i,v){if(!window.__SH)return;window.__SH[i].mw=Math.max(0,parseFloat(v)||0);simPr(i);simKpis();};
+window.simAll=function(mk){if(!window.__SH||!window.__SH.length)return;window.__SH.forEach(function(x,i){window.__SH[i].mk=mk;simPr(i);});simKpis();simChart();};
+window.simAuto=function(){if(!window.__SH||!window.__SH.length)return;window.__SH.forEach(function(row,i){var best="m",bv=-Infinity;["a","m","e"].forEach(function(k){if(row[k]!==null&&row[k]>bv){bv=row[k];best=k;}});window.__SH[i].mk=best;simPr(i);});simKpis();simChart();};
+function p2(n){return("0"+n).slice(-2);}
+function nf(v){return v.toLocaleString("da-DK",{minimumFractionDigits:2,maximumFractionDigits:2});}
+function dkk(v){return v.toLocaleString("da-DK",{minimumFractionDigits:0,maximumFractionDigits:0})+" kr.";}
+function simRend(){
   var ta=document.getElementById("sim-ta");ta.innerHTML="";
   var tw=document.createElement("div");tw.className="sim-tw";
   var tbl=document.createElement("table");
-  tbl.innerHTML='<thead><tr><th>Time</th><th>aFRR kr./MW</th><th>mFRR kr./MW</th><th>Extra kr./MW</th><th>Marked</th><th>MW</th><th>Rådighedsbetaling</th></tr></thead><tbody id="sim-tb"></tbody>';
+  tbl.innerHTML='<thead><tr><th>Time</th><th>aFRR kr./MW</th><th>mFRR kr./MW</th><th>Extra kr./MW</th><th>Marked</th><th>MW</th><th>R\u00e5dighedsbetaling</th></tr></thead><tbody id="sim-tb"></tbody>';
   tw.appendChild(tbl);ta.appendChild(tw);
   var tb=document.getElementById("sim-tb");
-  SH.forEach(function(row,i){
-    var tr=document.createElement("tr");tr.id="str"+i;
-    tr.innerHTML='<td class="sth">kl. '+_p2(row.h)+':00</td>'+
-      '<td class="spa">'+_pf(row.a)+'</td><td class="spm">'+_pf(row.m)+'</td><td class="spe">'+_pf(row.e)+'</td>'+
-      '<td><div class="sms" id="sms'+i+'">'+
-        '<button onclick="simPick('+i+','a')">aFRR</button>'+
-        '<button onclick="simPick('+i+','m')">mFRR</button>'+
-        '<button onclick="simPick('+i+','e')">Extra</button>'+
-      '</div></td>'+
+  window.__SH.forEach(function(row,i){
+    var tr=document.createElement("tr");
+    tr.innerHTML='<td class="sth">kl. '+p2(row.h)+':00</td>'+
+      '<td class="spa">'+(row.a!==null?nf(row.a):'-')+'</td>'+ 
+      '<td class="spm">'+(row.m!==null?nf(row.m):'-')+'</td>'+
+      '<td class="spe">'+(row.e!==null?nf(row.e):'-')+'</td>'+
+      '<td><div class="sms" id="sms'+i+'"><button onclick="simPick('+i+',\'a\')">aFRR</button><button onclick="simPick('+i+',\'m\')">mFRR</button><button onclick="simPick('+i+',\'e\')">Extra</button></div></td>'+
       '<td><input class="smw" type="number" id="smw'+i+'" value="'+row.mw+'" min="0" max="9999" oninput="simMW('+i+',this.value)"></td>'+
-      '<td id="srv'+i+'" class="srv rn">—</td>';
-    tb.appendChild(tr);_pr(i);
+      '<td id="srv'+i+'" class="srv rn">-</td>';
+    tb.appendChild(tr);simPr(i);
   });
 }
-function _pr(i){
-  var row=SH[i];var ms=document.getElementById("sms"+i);if(!ms)return;
+function simPr(i){
+  var row=window.__SH[i];var ms=document.getElementById("sms"+i);if(!ms)return;
   var ks=["a","m","e"],cs=["aa","am","ae"];
   ms.querySelectorAll("button").forEach(function(b,j){b.className=row.mk===ks[j]?cs[j]:"";});
   var p=row[row.mk];var rv=document.getElementById("srv"+i);
-  if(p!==null&&p!==undefined){rv.textContent=_dkk(p*row.mw);rv.className="srv r"+row.mk;}
-  else{rv.innerHTML="—";rv.className="srv rn";}
+  if(p!==null&&p!==undefined){rv.textContent=dkk(p*row.mw);rv.className="srv r"+row.mk;}
+  else{rv.textContent="-";rv.className="srv rn";}
 }
-window.simPick=function(i,mk){SH[i].mk=mk;_pr(i);_kpis();_chart();};
-window.simMW=function(i,v){SH[i].mw=Math.max(0,parseFloat(v)||0);_pr(i);_kpis();};
-window.simAll=function(mk){if(!SH.length)return;SH.forEach(function(_,i){SH[i].mk=mk;_pr(i);});_kpis();_chart();};
-window.simAuto=function(){
-  if(!SH.length)return;
-  SH.forEach(function(row,i){var best="m",bv=-Infinity;["a","m","e"].forEach(function(k){if(row[k]!==null&&row[k]>bv){bv=row[k];best=k;}});SH[i].mk=best;_pr(i);});
-  _kpis();_chart();
-};
-function _kpis(){
+function simKpis(){
   var tot=0,av=0,mv=0,ev=0,an=0,mn=0,en=0;
-  SH.forEach(function(row){var p=row[row.mk];if(p===null||p===undefined)return;var r=p*row.mw;tot+=r;if(row.mk==="a"){av+=r;an++;}if(row.mk==="m"){mv+=r;mn++;}if(row.mk==="e"){ev+=r;en++;}});
+  window.__SH.forEach(function(row){var p=row[row.mk];if(p===null||p===undefined)return;var rv=p*row.mw;tot+=rv;if(row.mk==="a"){av+=rv;an++;}if(row.mk==="m"){mv+=rv;mn++;}if(row.mk==="e"){ev+=rv;en++;}});
   function pct(v){return tot?Math.round(v/tot*100):0;}
-  _st("sk0",_dkk(tot));_st("sk0h",(an+mn+en)+" aktive timer");
-  _st("sk1",_dkk(av));_st("sk1h",an+" timer · "+pct(av)+"%");
-  _st("sk2",_dkk(mv));_st("sk2h",mn+" timer · "+pct(mv)+"%");
-  _st("sk3",_dkk(ev));_st("sk3h",en+" timer · "+pct(ev)+"%");
+  function st(id,t){var el=document.getElementById(id);if(el)el.textContent=t;}
+  st("sk0",dkk(tot));st("sk0h",(an+mn+en)+" aktive timer");
+  st("sk1",dkk(av));st("sk1h",an+" timer - "+pct(av)+"%");
+  st("sk2",dkk(mv));st("sk2h",mn+" timer - "+pct(mv)+"%");
+  st("sk3",dkk(ev));st("sk3h",en+" timer - "+pct(ev)+"%");
 }
-function _chart(){
+function simChart(){
   var ca=document.getElementById("sim-ca");ca.innerHTML="";
   var MAX=135,all=[];
-  SH.forEach(function(r){if(r.a>0)all.push(r.a);if(r.m>0)all.push(r.m);if(r.e>0)all.push(r.e);});
+  window.__SH.forEach(function(r){if(r.a>0)all.push(r.a);if(r.m>0)all.push(r.m);if(r.e>0)all.push(r.e);});
   var peak=all.length?Math.max.apply(null,all):1;
-  SH.forEach(function(row){
+  window.__SH.forEach(function(row){
     var col=document.createElement("div");col.className="sim-cc";
     [["a",row.a],["m",row.m],["e",row.e]].forEach(function(s){
       var bar=document.createElement("div");var active=row.mk===s[0];
@@ -455,20 +449,12 @@ function _chart(){
       else{bar.className="sim-bar "+s[0]+(active?" sel":"");bar.style.height=Math.max(2,(s[1]/peak)*MAX)+"px";}
       col.appendChild(bar);
     });
-    var lbl=document.createElement("div");lbl.className="sim-chl";lbl.textContent=_p2(row.h);
+    var lbl=document.createElement("div");lbl.className="sim-chl";lbl.textContent=p2(row.h);
     col.appendChild(lbl);ca.appendChild(col);
   });
 }
-function _sst(state,msg){_st("sim-stxt",msg);var sp=document.getElementById("sim-spin"),ok=document.getElementById("sim-dot");sp.classList.toggle("sg",state!=="spin");ok.classList.toggle("sg",state!=="ok");}
-function _st(id,t){var el=document.getElementById(id);if(el)el.textContent=t;}
-function _sw(id){var el=document.getElementById(id);if(el)el.classList.remove("sg");}
-function _p2(n){return("0"+n).slice(-2);}
-function _nf(v){return v.toLocaleString("da-DK",{minimumFractionDigits:2,maximumFractionDigits:2});}
-function _pf(v){return(v!==null&&v!==undefined)?_nf(v):'<span class="spn">—</span>';}
-function _dkk(v){return v.toLocaleString("da-DK",{minimumFractionDigits:0,maximumFractionDigits:0})+" kr.";}
-function _fd(s){return new Date(s+"T12:00:00").toLocaleDateString("da-DK",{weekday:"short",day:"numeric",month:"long",year:"numeric"});}
-})();
 </script>
+
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
