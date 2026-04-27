@@ -326,25 +326,23 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
 @media(max-width:700px){.sim-kpis{grid-template-columns:1fr 1fr}.sim-kc{border-right:none;border-bottom:1px solid #e5e7eb}.sim-kc:nth-child(odd){border-right:1px solid #e5e7eb}}
 </style>
 <div class="sim-hdr">
-  <h2>📅 Dagssimulator</h2>
+  <h2>Dagssimulator</h2>
   <span class="sim-hdr-sub">DK1 · Fordel dine MW per time og se faktisk rådighedsbetaling</span>
 </div>
 <div class="sim-ctrl">
-  <span class="sim-lbl">Dato</span>
-  <input type="date" id="sdp">
-  <span class="sim-lbl">Kapacitet (MW)</span>
-  <input type="number" id="smwdef" value="18" min="1" max="9999">
+  <span class="sim-lbl">Dato</span><input type="date" id="sdp">
+  <span class="sim-lbl">Kapacitet (MW)</span><input type="number" id="smwdef" value="18" min="1" max="9999">
   <button class="sim-btn sim-prim" onclick="simLoad()">Hent data</button>
   <div class="sim-vsep"></div>
   <button class="sim-btn sim-ba" onclick="simAll('a')">Alle → aFRR</button>
   <button class="sim-btn sim-bm" onclick="simAll('m')">Alle → mFRR</button>
   <button class="sim-btn sim-be" onclick="simAll('e')">Alle → Extra</button>
-  <button class="sim-btn sim-prim" onclick="simAuto()">⚡ Auto: bedste marked per time</button>
+  <button class="sim-btn sim-prim" onclick="simAuto()">Auto: bedste marked per time</button>
 </div>
 <div id="sim-sb">
   <div id="sim-spin" class="sim-spin sg"></div>
   <div id="sim-dot" class="sim-dot sg"></div>
-  <span id="sim-stxt">Vælg en dato og tryk "Hent data"</span>
+  <span id="sim-stxt">Vælg en dato og tryk Hent data</span>
 </div>
 <div class="sim-kpis sg" id="sim-kpis">
   <div class="sim-kc"><div class="sim-kl">Total rådighedsbetaling</div><div class="sim-kn" id="sk0">—</div><div class="sim-ks" id="sk0h"></div></div>
@@ -363,9 +361,9 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
 </div>
 <div id="sim-ta">
   <div class="sem" id="sim-em">
-    <div class="si">📊</div>
+    <div class="si">&#128202;</div>
     <h3>Ingen data endnu</h3>
-    <p>Vælg en historisk dato og tryk "Hent data"<br>for at hente clearingpriser fra Energinets API.</p>
+    <p>Vælg en historisk dato og tryk Hent data<br>for at hente clearingpriser fra Energinets API.</p>
   </div>
 </div>
 <script>
@@ -376,15 +374,15 @@ if(_dp){var _d=new Date();_d.setDate(_d.getDate()-1);var _ds=_d.toISOString().sp
 window.simLoad=function(){
   var date=document.getElementById("sdp").value;
   var mw=Math.max(1,parseInt(document.getElementById("smwdef").value)||18);
-  if(!date){alert("Vælg en dato");return;}
-  _sst("spin","Henter data fra Energidataservice...");
+  if(!date){alert("Vaelg en dato");return;}
+  _sst("spin","Henter data...");
   var base="https://api.energidataservice.dk/dataset";
   var f=encodeURIComponent('{"PriceArea":"DK1"}');
   var q="start="+date+"T00:00&end="+date+"T23:59&filter="+f+"&limit=48";
   Promise.all([_sg(base+"/AfrrReservesNordic?"+q),_sg(base+"/mFRRCapacityMarket?"+q),_sg(base+"/MfrrCapacityMarketExtra?"+q)])
   .then(function(r){
     SH=_build(r[0],r[1],r[2],mw);
-    if(!SH.length){_sst("idle","Ingen data - prøv en tidligere dato");return;}
+    if(!SH.length){_sst("idle","Ingen data - proev en tidligere dato");return;}
     var nd=SH.filter(function(h){return h.a!==null||h.m!==null||h.e!==null;}).length;
     _sst("ok",_fd(date)+" · "+nd+" timer med clearingpris");
     _sw("sim-kpis");_sw("sim-cw");document.getElementById("sim-em").classList.add("sg");
@@ -394,7 +392,7 @@ window.simLoad=function(){
 function _sg(url){return fetch(url).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json();}).then(function(j){return j.records||[];});}
 function _build(ra,rm,re,mw){
   var map={};for(var i=0;i<24;i++)map[i]={h:i,a:null,m:null,e:null,mk:"m",mw:mw};
-  function fill(recs,key){recs.forEach(function(r){var ts=r.TimeDK||r.TimeUTC||"";var x=ts.match(/T(d{2}):/);if(!x)return;var hi=parseInt(x[1]);if(map[hi]!==undefined&&r.UpPriceDKK!=null)map[hi][key]=parseFloat(r.UpPriceDKK);});}
+  function fill(recs,key){recs.forEach(function(r){var ts=r.TimeDK||r.TimeUTC||"";var x=ts.match(/T(\d{2}):/);if(!x)return;var hi=parseInt(x[1]);if(map[hi]!==undefined&&r.UpPriceDKK!=null)map[hi][key]=parseFloat(r.UpPriceDKK);});}
   fill(ra,"a");fill(rm,"m");fill(re,"e");
   return Array.from({length:24},function(_,i){return map[i];});
 }
