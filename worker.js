@@ -16,7 +16,8 @@ async function handleRequest(request) {
       const target = "https://api.energidataservice.dk/dataset/" + dataset + url.search;
       const resp = await fetch(target, { method: "GET", headers: { "Accept": "application/json", "User-Agent": "vojens-proxy/16" } });
       const text = await resp.text();
-      return new Response(text, { status: resp.status, headers: { ...CORS, "Content-Type": resp.headers.get("Content-Type") || "application/json", "X-Proxied-From": "energidataservice" } });
+            if (!resp.ok) return new Response(JSON.stringify({error: 'EDS HTTP '+resp.status, status: resp.status}), { status: resp.status, headers: { ...CORS, "Content-Type": "application/json" } });
+            return new Response(text, { status: resp.status, headers: { ...CORS, "Content-Type": "application/json", "X-Proxied-From": "energidataservice" } });
     } catch(e) {
       return new Response(JSON.stringify({error: e.message, source: "eds"}), { status: 502, headers: { ...CORS, "Content-Type": "application/json" } });
     }
