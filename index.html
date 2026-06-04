@@ -142,6 +142,7 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
       <th>Time</th>
       <th style="color:var(--afrr)">aFRR kr./MW</th>
       <th style="color:var(--mfrr)">mFRR kr./MW</th>
+      <th style="color:var(--extra);font-size:12px">mFRR Ekstra kr./MW</th>
       <th style="color:var(--text3);font-size:11px">aFRR MW</th>
       <th style="color:var(--text3);font-size:11px">mFRR MW</th>
     </tr></thead>
@@ -480,10 +481,12 @@ function fetchLiveMarked() {
 
   Promise.all([
     fetch(API+'/AfrrReservesNordic?limit=60&filter='+enc('{"PriceArea":"DK1"}')+'&start='+fmt(twoDaysAgo)+'&sort=TimeDK%20DESC').then(function(r){return r.json();}),
-    fetch(API+'/mFRRCapacityMarket?limit=60&filter='+enc('{"PriceArea":"DK1"}')+'&start='+fmt(twoDaysAgo)+'&sort=TimeDK%20DESC').then(function(r){return r.json();})
+    fetch(API+'/mFRRCapacityMarket?limit=60&filter='+enc('{"PriceArea":"DK1"}')+'&start='+fmt(twoDaysAgo)+'&sort=TimeDK%20DESC').then(function(r){return r.json();}),
+    fetch(API+'/MfrrCapacityMarketExtra?limit=60&filter='+enc('{"PriceArea":"DK1"}')+'&start='+fmt(twoDaysAgo)+'&sort=TimeDK%20DESC').then(function(r){return r.json();})
   ]).then(function(res) {
     var aRecs = res[0].records || [];
     var mRecs = res[1].records || [];
+    var xRecs = res[2].records || [];
 
     // Brug NYESTE dato i datasaettet - kapacitetsauktionen clearer D-1 kl. 08:10
     // saa "i morgen" er allerede clearet og mest relevant
@@ -497,9 +500,11 @@ function fetchLiveMarked() {
     var mTod = mRecs.filter(function(r){ return r.TimeDK.substring(0,10) === showDate; });
 
     // Lookup pr. time - hent time direkte fra string
-    var aByHour = {}, mByHour = {};
+    var aByHour = {}, mByHour = {}, xByHour = {};
     aTod.forEach(function(r){ aByHour[parseInt(r.TimeDK.substring(11,13))] = r; });
     mTod.forEach(function(r){ mByHour[parseInt(r.TimeDK.substring(11,13))] = r; });
+    var xTod = xRecs.filter(function(r){ return r.TimeDK.substring(0,10) === showDate; });
+    xTod.forEach(function(r){ xByHour[parseInt(r.TimeDK.substring(11,13))] = r; });
 
     // Opdater panel-titel med dato og kontekst
     var dagNavne = ['s','man','tirs','ons','tors','fre','l'];
@@ -549,10 +554,12 @@ function fetchLiveMarked() {
 
     var tbody = '';
     if (!hours.length) {
-      tbody = '<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--text3)">Ingen data endnu</td></tr>';
+      tbody = '<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--text3)">Ingen data endnu</td></tr>';
     } else {
       hours.forEach(function(h) {
-        var a = aByHour[h], m = mByHour[h];
+        var a = aByHour[h], m = mByHour[h], x = xByHour[h];
+var xUp = (x && x.UpPriceDKK != null) ? parseFloat(x.UpPriceDKK).toFixed(2) : '';
+var xStyle = xUp && parseFloat(xUp)>0 ? 'color:#d97706;font-weight:600' : 'color:var(--text3)';
         var isCurrent = (h === nuH);
         var aUp = a ? parseFloat(a.UpPriceDKK).toFixed(2) : '';
         var mUp = m ? parseFloat(m.UpPriceDKK).toFixed(2) : '';
@@ -566,6 +573,7 @@ function fetchLiveMarked() {
         tbody += '<td style="padding:6px 10px;font-weight:'+(isCurrent?'700':'400')+'">kl. '+String(h).padStart(2,'0')+':00'+badge+'</td>';
         tbody += '<td style="padding:6px 10px;'+aStyle+'">'+aUp+'</td>';
         tbody += '<td style="padding:6px 10px;'+mStyle+'">'+mUp+'</td>';
+        tbody += '<td style="padding:6px 10px;'+xStyle+'">'+xUp+'</td>';
         tbody += '<td style="padding:6px 10px;color:var(--text3);font-size:12px">'+aMW+'</td>';
         tbody += '<td style="padding:6px 10px;color:var(--text3);font-size:12px">'+mMW+'</td>';
         tbody += '</tr>';
@@ -573,7 +581,7 @@ function fetchLiveMarked() {
     }
     document.getElementById('live-tbody').innerHTML = tbody;
   }).catch(function(e){
-    document.getElementById('live-tbody').innerHTML = '<tr><td colspan="5" style="text-align:center;color:#dc2626;padding:12px">Fejl: '+e.message+'</td></tr>';
+    document.getElementById('live-tbody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#dc2626;padding:12px">Fejl: '+e.message+'</td></tr>';
   });
 }
 
