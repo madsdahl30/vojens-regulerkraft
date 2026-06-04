@@ -26,9 +26,9 @@ async function fetchAll() {
       fetch(`${API}/MfrrCapacityMarketExtra?limit=5000&filter=${enc('{"PriceArea":"DK1"}')}&start=${fmt(start)}&end=${fmt(today)}`).then(r=>r.json())
     ]);
     S = {
-      afrr: cStats(a.records),
-      mfrr: cStats(m.records),
-      extra: cStats(x.records),
+      afrr: cStats(a.records || []),
+      mfrr: cStats(m.records || []),
+      extra: cStats(x.records || []),
       afrrWD: cWD(a.records),
       mfrrWD: cWD(m.records),
       at: new Date().toLocaleString('da-DK')
