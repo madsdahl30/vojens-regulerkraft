@@ -371,7 +371,7 @@ window.simLoad=function(){
   var _sst=function(st,msg){var el=document.getElementById("sim-stxt");if(el)el.textContent=msg;var sp=document.getElementById("sim-spin"),ok=document.getElementById("sim-dot");if(sp)sp.classList.toggle("sg",st!=="spin");if(ok)ok.classList.toggle("sg",st!=="ok");};
   var _sw=function(id){var el=document.getElementById(id);if(el)el.classList.remove("sg");};
   _sst("spin","Henter data...");
-  var base="https://api.energidataservice.dk/dataset";
+  var base="https://vojens-regulerkraft.madsdahl30.workers.dev/eds";
   var f=encodeURIComponent('{"PriceArea":"DK1"}');
   var q="start="+date+"T00:00&end="+date+"T23:59&filter="+f+"&limit=48";
   function _sg(url){return fetch(url).then(function(r){if(!r.ok)throw new Error("HTTP "+r.status);return r.json();}).then(function(j){return j.records||[];});}
@@ -468,7 +468,7 @@ let plan = Array.from({length:24}, (_,h) => ({
 let selHour = 17; // default valgt time
 
 function fetchLiveMarked() {
-  var API = 'https://api.energidataservice.dk/dataset';
+  var API = 'https://vojens-regulerkraft.madsdahl30.workers.dev/eds';
   var now = new Date();
   var twoDaysAgo = new Date(now); twoDaysAgo.setDate(now.getDate()-2);
   var fmt = function(d){ return d.toISOString().split('T')[0]; };
@@ -1480,9 +1480,9 @@ function renderBudstrategi(data){
   var fmt2=function(d){return d.toISOString().split('T')[0];};
 
   Promise.all([
-    fetch('https://api.energidataservice.dk/dataset/AfrrReservesNordic?limit=5000&filter='+enc2('{"PriceArea":"DK1"}')+'&start='+fmt2(start90)+'&end='+fmt2(tomorrow)).then(function(r){return r.json();}),
-    fetch('https://api.energidataservice.dk/dataset/mFRRCapacityMarket?limit=5000&filter='+enc2('{"PriceArea":"DK1"}')+'&start='+fmt2(start90)+'&end='+fmt2(tomorrow)).then(function(r){return r.json();}),
-    fetch('https://api.energidataservice.dk/dataset/MfrrCapacityMarketExtra?limit=5000&filter='+enc2('{"PriceArea":"DK1"}')+'&start='+fmt2(start90)+'&end='+fmt2(tomorrow)).then(function(r){return r.json();})
+    fetch('https://vojens-regulerkraft.madsdahl30.workers.dev/eds/AfrrReservesNordic?limit=5000&filter='+enc2('{"PriceArea":"DK1"}')+'&start='+fmt2(start90)+'&end='+fmt2(tomorrow)).then(function(r){return r.json();}),
+    fetch('https://vojens-regulerkraft.madsdahl30.workers.dev/eds/mFRRCapacityMarket?limit=5000&filter='+enc2('{"PriceArea":"DK1"}')+'&start='+fmt2(start90)+'&end='+fmt2(tomorrow)).then(function(r){return r.json();}),
+    fetch('https://vojens-regulerkraft.madsdahl30.workers.dev/eds/MfrrCapacityMarketExtra?limit=5000&filter='+enc2('{"PriceArea":"DK1"}')+'&start='+fmt2(start90)+'&end='+fmt2(tomorrow)).then(function(r){return r.json();})
   ]).then(function(results){
     var afrrRecs=results[0].records, mfrrRecs=results[1].records, extraRecs=results[2].records;
     var cutoff90=new Date(today); cutoff90.setDate(cutoff90.getDate()-90);
@@ -2054,7 +2054,7 @@ if(emt&&lm.TimeDK)emt.textContent="kl. "+(lm.TimeDK||"").slice(11,16);
       var tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate()+1);
       var start = new Date(today); start.setDate(start.getDate()-90);
       var fmt = function(d){ return d.toISOString().split('T')[0]; };
-      var base = 'https://api.energidataservice.dk/dataset';
+      var base = 'https://vojens-regulerkraft.madsdahl30.workers.dev/eds';
       var qs = '?limit=5000&filter=' + enc('{"PriceArea":"DK1"}') +
                '&start=' + fmt(start) + '&end=' + fmt(tomorrow);
 

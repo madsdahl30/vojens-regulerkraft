@@ -1,5 +1,5 @@
 
-const API = 'https://api.energidataservice.dk/dataset';
+const API = 'https://vojens-regulerkraft.madsdahl30.workers.dev/eds';
 let S = null, fordelingC = null, extraC = null;
 
 // Standard time-plan: 12 MW aFRR alle timer, pris fra historik
@@ -930,9 +930,9 @@ function renderBudstrategi(data){
   var fmt2=function(d){return d.toISOString().split('T')[0];};
 
   Promise.all([
-    fetch('https://api.energidataservice.dk/dataset/AfrrReservesNordic?limit=5000&filter='+enc2('{"PriceArea":"DK1"}')+'&start='+fmt2(start90)+'&end='+fmt2(today)).then(function(r){return r.json();}),
-    fetch('https://api.energidataservice.dk/dataset/mFRRCapacityMarket?limit=5000&filter='+enc2('{"PriceArea":"DK1"}')+'&start='+fmt2(start90)+'&end='+fmt2(today)).then(function(r){return r.json();}),
-    fetch('https://api.energidataservice.dk/dataset/MfrrCapacityMarketExtra?limit=5000&filter='+enc2('{"PriceArea":"DK1"}')+'&start='+fmt2(start90)+'&end='+fmt2(today)).then(function(r){return r.json();})
+    fetch('https://vojens-regulerkraft.madsdahl30.workers.dev/eds/AfrrReservesNordic?limit=5000&filter='+enc2('{"PriceArea":"DK1"}')+'&start='+fmt2(start90)+'&end='+fmt2(today)).then(function(r){return r.json();}),
+    fetch('https://vojens-regulerkraft.madsdahl30.workers.dev/eds/mFRRCapacityMarket?limit=5000&filter='+enc2('{"PriceArea":"DK1"}')+'&start='+fmt2(start90)+'&end='+fmt2(today)).then(function(r){return r.json();}),
+    fetch('https://vojens-regulerkraft.madsdahl30.workers.dev/eds/MfrrCapacityMarketExtra?limit=5000&filter='+enc2('{"PriceArea":"DK1"}')+'&start='+fmt2(start90)+'&end='+fmt2(today)).then(function(r){return r.json();})
   ]).then(function(results){
     var afrrRecs=results[0].records, mfrrRecs=results[1].records, extraRecs=results[2].records;
     var cutoff90=new Date(today); cutoff90.setDate(cutoff90.getDate()-90);
