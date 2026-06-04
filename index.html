@@ -1222,7 +1222,7 @@ function renderStrategiSam(){
   var c2 = document.getElementById('sc-simp-total');
   var c3 = document.getElementById('sc-ugd-total');
   if(!el || !c1) return;
-  if(!window._allAfrr || !window._allExtra || !window._allMfrr){
+ if(!window._allAfrr.length || !window._allExtra.length || !window._allMfrr.length){
     setTimeout(renderStrategiSam, 800); return;
   }
   
