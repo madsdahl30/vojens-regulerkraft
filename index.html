@@ -2023,10 +2023,10 @@ window.renderRecTable=function(){
 if(window._overrideAfrr&&window._overrideAfrr.length>0){
 var af=window._overrideAfrr;
 var mf=window._overrideMfrr||[];
-  rows += "<tr><td>kl. "+time+"</td><td ...>"+aP+"</td><td ...>"+mP+"</td><td>"+(a.UpProcuredMW)+"</td><td>"+(m.UpProcuredMW)+"</td></tr>";
 var mfMap={};mf.forEach(function(r){mfMap[(r.TimeDK||"").slice(11,16)]=r;});
 var tbody=document.getElementById("live-tbody");if(!tbody)return;
 var rows="";
+  var ef=window._allExtra||[];var iso=(af[0].TimeDK||'').slice(0,10);var xfMap={};ef.filter(function(r){return(r.TimeDK||'').slice(0,10)===iso;}).forEach(function(r){xfMap[(r.TimeDK||'').slice(11,16)]=r;});
 for(var i=0;i<af.length;i++){
 var a=af[i];
 var time=(a.TimeDK||"").slice(11,16);
