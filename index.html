@@ -263,7 +263,7 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
   </div>
   <div id="tl-total" style="margin-top:14px;display:flex;gap:24px;font-size:13px;padding:10px 14px;background:var(--bg2);border-radius:8px;flex-wrap:wrap"></div>
 </div>
-<div id="panel-strategi-sam" class="panel"><div style="text-align:center;padding:20px 0 16px"><div style="font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">Strategi-sammenligning</div><div style="font-size:24px;font-weight:700;color:var(--text);line-height:1.2">Nuv&aelig;rende vs. anbefalet strategi</div><div style="font-size:13px;color:var(--text2);margin-top:6px">Live simulering på seneste <span id="sc-period-lbl">30</span> dages EDS-clearingpriser DK1</div><div style="display:inline-block;margin-top:8px;background:#fef3c7;color:#92400e;font-size:11px;padding:4px 10px;border-radius:12px;font-weight:600">&#9888; Backtest-resultater &mdash; ikke garanti for fremtidig gevinst</div></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px"><div style="background:var(--bg2);border-radius:12px;padding:16px;border:2px solid var(--border)"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:8px">Nuv&aelig;rende strategi (faktisk)</div><div style="font-size:22px;font-weight:700;margin-bottom:2px" id="sc-cur-total">beregner...</div><div id="sc-cur-dag" style="font-size:12px;color:var(--text3);margin-bottom:2px"></div><div style="font-size:11px;color:var(--text3);margin-bottom:10px">total <span class="sc-days-lbl">30</span> dage (EDS-sim.)</div><hr style="border:none;border-top:1px solid var(--border);margin:8px 0"><div style="font-size:12px;line-height:1.9"><div>aFRR: 3&times;4 MW &mdash; <strong>94/95/96 kr.</strong></div><div>mFRR r&aring;dighed: <strong>6.3 MW @ 4.99/9.99 kr.</strong></div><div>mFRR Extra: <strong>99.99 kr. fast</strong></div><div style="font-size:10px;color:var(--text3);margin-top:6px">Bud sat af kollega/forg&aelig;nger</div></div></div><div style="background:var(--bg2);border-radius:12px;padding:16px;border:2px solid #2563eb"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#2563eb;margin-bottom:8px">Alt 1: Simpel 250 kr.</div><div style="font-size:22px;font-weight:700;color:#2563eb;margin-bottom:2px" id="sc-simp-total">beregner...</div><div id="sc-simp-dag" style="font-size:12px;color:#2563eb;margin-bottom:2px"></div><div style="font-size:11px;color:var(--text3);margin-bottom:10px">total <span class="sc-days-lbl">30</span> dage (EDS-sim.)</div><hr style="border:none;border-top:1px solid var(--border);margin:8px 0"><div style="font-size:12px;line-height:1.9"><div>aFRR: 3&times;4 MW &mdash; <strong>250 kr. alle dage</strong></div><div>mFRR r&aring;dighed: <strong>6.3 MW</strong> (uændret)</div><div>mFRR Extra: <strong>99.99 kr. fast</strong></div><div style="font-size:10px;color:var(--text3);margin-top:6px">Naiv h&oslash;j-bud strategi</div></div></div><div style="background:var(--bg2);border-radius:12px;padding:16px;border:2px solid #7c3aed"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#7c3aed;margin-bottom:8px">Alt 2: aFRR Max (3Ã4 + 1Ã6 MW)</div><div style="font-size:22px;font-weight:700;color:#7c3aed;margin-bottom:2px" id="sc-ugd-total">beregner...</div><div id="sc-ugd-dag" style="font-size:12px;color:#7c3aed;margin-bottom:2px"></div><div style="font-size:11px;color:var(--text3);margin-bottom:10px">total <span class="sc-days-lbl">30</span> dage (EDS-sim.)</div><hr style="border:none;border-top:1px solid var(--border);margin:8px 0"><div style="font-size:12px;line-height:1.9"><div>3Ã4 MW aFRR: <strong>250 kr. alle dage</strong></div><div>1Ã6 MW aFRR: <strong>250 kr. alle dage</strong></div><div>mFRR: <strong>ingen</strong></div><div style="font-size:10px;color:var(--text3);margin-top:6px">Variant af din eksisterende anbefaling</div></div></div></div><div id="sc-konklusion" style="background:var(--bg2);border-radius:12px;padding:16px;margin-bottom:20px;border-left:4px solid var(--text3)"><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:6px">Resultat - bedste strategi på seneste <span id="sc-res-lbl">30</span> dage</div><div id="sc-konklusion-tekst" style="font-size:14px;color:var(--text);line-height:1.6">beregner...</div><div id="sc-gevinst-detalje" style="font-size:12px;line-height:1.7;margin-top:10px;color:var(--text2)"></div></div><div style="background:var(--bg2);border-radius:10px;padding:14px 16px;margin-bottom:20px;border-left:4px solid var(--text3)"><div style="font-weight:700;margin-bottom:6px;font-size:13px">Hvordan virker simulationen?</div><div style="font-size:12px;color:var(--text2);line-height:1.7">For hver time gennemg&aring;s aFRR-, mFRR Extra- og mFRR-clearingpriserne fra EDS. Pr. blok: hvis aFRR-clearing &geq; bud-pris vinder du r&aring;dighedsbetaling (clearing &times; 4 MW). Ellers tjekkes Extra-markedet: hvis aktivt og clearing &geq; <strong>99.99 kr.</strong> (Centrica fast) vinder du der. mFRR-r&aring;dighed (6 MW @ 4.99 kr.) er ens for alle strategier. <strong>Tabellen herunder viser dag-for-dag uden justering &mdash; positive tal betyder strategien sl&aring;r din nuv&aelig;rende, negative betyder den taber.</strong></div></div><div style="font-weight:700;font-size:13px;margin-bottom:10px">Seneste 7 dage ÃÂ¢ÃÂÃÂ simulering på faktiske EDS-clearingpriser</div>
+<div id="panel-strategi-sam" class="panel"><div style="text-align:center;padding:20px 0 16px"><div style="font-size:12px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">Strategi-sammenligning</div><div style="font-size:24px;font-weight:700;color:var(--text);line-height:1.2">Nuv&aelig;rende vs. anbefalet strategi</div><div style="font-size:13px;color:var(--text2);margin-top:6px">Live simulering pÃ¥ seneste <span id="sc-period-lbl">30</span> dages EDS-clearingpriser DK1</div><div style="display:inline-block;margin-top:8px;background:#fef3c7;color:#92400e;font-size:11px;padding:4px 10px;border-radius:12px;font-weight:600">&#9888; Backtest-resultater &mdash; ikke garanti for fremtidig gevinst</div></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px"><div style="background:var(--bg2);border-radius:12px;padding:16px;border:2px solid var(--border)"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:8px">Nuv&aelig;rende strategi (faktisk)</div><div style="font-size:22px;font-weight:700;margin-bottom:2px" id="sc-cur-total">beregner...</div><div id="sc-cur-dag" style="font-size:12px;color:var(--text3);margin-bottom:2px"></div><div style="font-size:11px;color:var(--text3);margin-bottom:10px">total <span class="sc-days-lbl">30</span> dage (EDS-sim.)</div><hr style="border:none;border-top:1px solid var(--border);margin:8px 0"><div style="font-size:12px;line-height:1.9"><div>aFRR: 3&times;4 MW &mdash; <strong>94/95/96 kr.</strong></div><div>mFRR r&aring;dighed: <strong>6.3 MW @ 4.99/9.99 kr.</strong></div><div>mFRR Extra: <strong>99.99 kr. fast</strong></div><div style="font-size:10px;color:var(--text3);margin-top:6px">Bud sat af kollega/forg&aelig;nger</div></div></div><div style="background:var(--bg2);border-radius:12px;padding:16px;border:2px solid #2563eb"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#2563eb;margin-bottom:8px">Alt 1: Simpel 250 kr.</div><div style="font-size:22px;font-weight:700;color:#2563eb;margin-bottom:2px" id="sc-simp-total">beregner...</div><div id="sc-simp-dag" style="font-size:12px;color:#2563eb;margin-bottom:2px"></div><div style="font-size:11px;color:var(--text3);margin-bottom:10px">total <span class="sc-days-lbl">30</span> dage (EDS-sim.)</div><hr style="border:none;border-top:1px solid var(--border);margin:8px 0"><div style="font-size:12px;line-height:1.9"><div>aFRR: 3&times;4 MW &mdash; <strong>250 kr. alle dage</strong></div><div>mFRR r&aring;dighed: <strong>6.3 MW</strong> (uÃ¦ndret)</div><div>mFRR Extra: <strong>99.99 kr. fast</strong></div><div style="font-size:10px;color:var(--text3);margin-top:6px">Naiv h&oslash;j-bud strategi</div></div></div><div style="background:var(--bg2);border-radius:12px;padding:16px;border:2px solid #7c3aed"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#7c3aed;margin-bottom:8px">Alt 2: aFRR Max (3ÃÂ4 + 1ÃÂ6 MW)</div><div style="font-size:22px;font-weight:700;color:#7c3aed;margin-bottom:2px" id="sc-ugd-total">beregner...</div><div id="sc-ugd-dag" style="font-size:12px;color:#7c3aed;margin-bottom:2px"></div><div style="font-size:11px;color:var(--text3);margin-bottom:10px">total <span class="sc-days-lbl">30</span> dage (EDS-sim.)</div><hr style="border:none;border-top:1px solid var(--border);margin:8px 0"><div style="font-size:12px;line-height:1.9"><div>aFRR 3×4 MW: <strong id="sc-ugd-optpris">søger...</strong></div><div>mFRR rådighed: <strong>6.3 MW (uændret)</strong></div><div>Tester 50–500 kr. (trin 25)</div><div style="font-size:10px;color:var(--text3);margin-top:6px">Variant af din eksisterende anbefaling</div></div></div></div><div id="sc-konklusion" style="background:var(--bg2);border-radius:12px;padding:16px;margin-bottom:20px;border-left:4px solid var(--text3)"><div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:6px">Resultat - bedste strategi pÃ¥ seneste <span id="sc-res-lbl">30</span> dage</div><div id="sc-konklusion-tekst" style="font-size:14px;color:var(--text);line-height:1.6">beregner...</div><div id="sc-gevinst-detalje" style="font-size:12px;line-height:1.7;margin-top:10px;color:var(--text2)"></div></div><div style="background:var(--bg2);border-radius:10px;padding:14px 16px;margin-bottom:20px;border-left:4px solid var(--text3)"><div style="font-weight:700;margin-bottom:6px;font-size:13px">Hvordan virker simulationen?</div><div style="font-size:12px;color:var(--text2);line-height:1.7">For hver time gennemg&aring;s aFRR-, mFRR Extra- og mFRR-clearingpriserne fra EDS. Pr. blok: hvis aFRR-clearing &geq; bud-pris vinder du r&aring;dighedsbetaling (clearing &times; 4 MW). Ellers tjekkes Extra-markedet: hvis aktivt og clearing &geq; <strong>99.99 kr.</strong> (Centrica fast) vinder du der. mFRR-r&aring;dighed (6 MW @ 4.99 kr.) er ens for alle strategier. <strong>Tabellen herunder viser dag-for-dag uden justering &mdash; positive tal betyder strategien sl&aring;r din nuv&aelig;rende, negative betyder den taber.</strong></div></div><div style="font-weight:700;font-size:13px;margin-bottom:10px">Seneste 7 dage ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ simulering pÃ¥ faktiske EDS-clearingpriser</div>
 <div style="display:flex;align-items:center;gap:8px;margin:12px 0 14px;flex-wrap:wrap"><span style="font-size:12px;color:var(--text3);font-weight:600">PERIODE:</span><button onclick="renderStrategiSam(1)" id="sc-btn-1" style="padding:4px 12px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;font-size:12px">1 dag</button><button onclick="renderStrategiSam(7)" id="sc-btn-7" style="padding:4px 12px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;font-size:12px">7 dage</button><button onclick="renderStrategiSam(30)" id="sc-btn-30" style="padding:4px 12px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;font-size:12px">30 dage</button><button onclick="renderStrategiSam(60)" id="sc-btn-60" style="padding:4px 12px;border-radius:20px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;font-size:12px">60 dage</button><button onclick="renderStrategiSam(90)" id="sc-btn-90" style="padding:4px 12px;border-radius:20px;border:2px solid #2563eb;background:#eff6ff;cursor:pointer;font-size:12px;font-weight:700;color:#2563eb">90 dage</button></div><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="border-bottom:2px solid var(--border)"><th style="text-align:left;padding:7px;color:var(--text3)" rowspan="2">Dato</th><th style="text-align:right;padding:7px;color:var(--text3)" colspan="2">Nuv&aelig;rende (94/95/96)</th><th style="text-align:right;padding:7px;color:#2563eb" colspan="2">Alt 1: Simpel 250 kr.</th><th style="text-align:right;padding:7px;color:#7c3aed" colspan="2">Alt 2: Ugedags-logik</th></tr><tr style="border-bottom:2px solid var(--border)"><th style="text-align:right;padding:7px;color:var(--text3);font-size:11px">Total</th><th style="text-align:right;padding:7px;color:var(--text3);font-size:11px">(baseline)</th><th style="text-align:right;padding:7px;color:#2563eb;font-size:11px">Total</th><th style="text-align:right;padding:7px;color:#2563eb;font-size:11px">vs. nuv.</th><th style="text-align:right;padding:7px;color:#7c3aed;font-size:11px">Total</th><th style="text-align:right;padding:7px;color:#7c3aed;font-size:11px">vs. nuv.</th></tr></thead><tbody id="sc-tbody"></tbody></table></div><div style="font-size:11px;color:var(--text3);margin-top:8px">* Ekskluderer EAM-aktiveringsindt&aelig;gt &mdash; konstant uanset strategi.</div></div><div id="panel-simulator" class="panel">
 <style>
 .sim-hdr{padding:20px 24px 14px;border-bottom:1px solid #e5e7eb;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
@@ -327,31 +327,31 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
 </style>
 <div class="sim-hdr">
   <h2>Dagssimulator</h2>
-  <span class="sim-hdr-sub">DK1 ÃÂÃÂ· Fordel dine MW per time og se faktisk rådighedsbetaling</span>
+  <span class="sim-hdr-sub">DK1 ÃÂÃÂÃÂÃÂ· Fordel dine MW per time og se faktisk rÃ¥dighedsbetaling</span>
 </div>
 <div class="sim-ctrl">
   <span class="sim-lbl">Dato</span><input type="date" id="sdp">
   <span class="sim-lbl">Kapacitet (MW)</span><input type="number" id="smwdef" value="18" min="1" max="9999">
   <button class="sim-btn sim-prim" onclick="simLoad()">Hent data</button>
   <div class="sim-vsep"></div>
-  <button class="sim-btn sim-ba" onclick="simAll('a')">Alle ÃÂ¢ÃÂÃÂ aFRR</button>
-  <button class="sim-btn sim-bm" onclick="simAll('m')">Alle ÃÂ¢ÃÂÃÂ mFRR</button>
-  <button class="sim-btn sim-be" onclick="simAll('e')">Alle ÃÂ¢ÃÂÃÂ Extra</button>
+  <button class="sim-btn sim-ba" onclick="simAll('a')">Alle ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ aFRR</button>
+  <button class="sim-btn sim-bm" onclick="simAll('m')">Alle ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ mFRR</button>
+  <button class="sim-btn sim-be" onclick="simAll('e')">Alle ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Extra</button>
   <button class="sim-btn sim-prim" onclick="simAuto()">Auto: bedste marked per time</button>
 </div>
 <div id="sim-sb">
   <div id="sim-spin" class="sim-spin sg"></div>
   <div id="sim-dot" class="sim-dot sg"></div>
-  <span id="sim-stxt">Vælg en dato og tryk Hent data</span>
+  <span id="sim-stxt">VÃ¦lg en dato og tryk Hent data</span>
 </div>
 <div class="sim-kpis sg" id="sim-kpis">
-  <div class="sim-kc"><div class="sim-kl">Total rådighedsbetaling</div><div class="sim-kn" id="sk0">ÃÂ¢ÃÂÃÂ</div><div class="sim-ks" id="sk0h"></div></div>
-  <div class="sim-kc"><div class="sim-kl">aFRR andel</div><div class="sim-kn sca" id="sk1">ÃÂ¢ÃÂÃÂ</div><div class="sim-ks" id="sk1h"></div></div>
-  <div class="sim-kc"><div class="sim-kl">mFRR andel</div><div class="sim-kn scm" id="sk2">ÃÂ¢ÃÂÃÂ</div><div class="sim-ks" id="sk2h"></div></div>
-  <div class="sim-kc"><div class="sim-kl">mFRR Extra andel</div><div class="sim-kn sce" id="sk3">ÃÂ¢ÃÂÃÂ</div><div class="sim-ks" id="sk3h"></div></div>
+  <div class="sim-kc"><div class="sim-kl">Total rÃ¥dighedsbetaling</div><div class="sim-kn" id="sk0">ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ</div><div class="sim-ks" id="sk0h"></div></div>
+  <div class="sim-kc"><div class="sim-kl">aFRR andel</div><div class="sim-kn sca" id="sk1">ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ</div><div class="sim-ks" id="sk1h"></div></div>
+  <div class="sim-kc"><div class="sim-kl">mFRR andel</div><div class="sim-kn scm" id="sk2">ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ</div><div class="sim-ks" id="sk2h"></div></div>
+  <div class="sim-kc"><div class="sim-kl">mFRR Extra andel</div><div class="sim-kn sce" id="sk3">ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ</div><div class="sim-ks" id="sk3h"></div></div>
 </div>
 <div class="sim-cw sg" id="sim-cw">
-  <div class="sim-ct">Clearingpris per time (kr./MW) ÃÂ¢ÃÂÃÂ valgt marked fuldt, øvrige dæmpet</div>
+  <div class="sim-ct">Clearingpris per time (kr./MW) ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ valgt marked fuldt, Ã¸vrige dÃ¦mpet</div>
   <div class="sim-ca" id="sim-ca"></div>
   <div class="sim-leg">
     <div class="sim-li"><div class="sim-ld" style="background:#16a34a"></div>aFRR</div>
@@ -363,7 +363,7 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
   <div class="sem" id="sim-em">
     <div class="si">&#128202;</div>
     <h3>Ingen data endnu</h3>
-    <p>Vælg en historisk dato og tryk Hent data<br>for at hente clearingpriser fra Energinets API.</p>
+    <p>VÃ¦lg en historisk dato og tryk Hent data<br>for at hente clearingpriser fra Energinets API.</p>
   </div>
 </div>
 <script>
@@ -390,7 +390,7 @@ window.simLoad=function(){
     _sst("ok",dstr+" - "+nd+" timer med clearingpris");
     _sw("sim-kpis");_sw("sim-cw");var em=document.getElementById("sim-em");if(em)em.classList.add("sg");
     simRend();simKpis();simChart();
-  }).catch(function(e){var _sst2=function(st,msg){var el=document.getElementById("sim-stxt");if(el)el.textContent=msg;};_sst2("idle", e.message && e.message.includes("429") ? "API rate-limit nået ÃÂ¢ÃÂÃÂ prøv igen om lidt" : "Fejl: "+e.message);});
+  }).catch(function(e){var _sst2=function(st,msg){var el=document.getElementById("sim-stxt");if(el)el.textContent=msg;};_sst2("idle", e.message && e.message.includes("429") ? "API rate-limit nÃ¥et ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ prÃ¸v igen om lidt" : "Fejl: "+e.message);});
 };
 window.simPick=function(i,mk){if(!window.__SH)return;window.__SH[i].mk=mk;simPr(i);simKpis();simChart();};
 window.simMW=function(i,v){if(!window.__SH)return;window.__SH[i].mw=Math.max(0,parseFloat(v)||0);simPr(i);simKpis();};
@@ -1225,6 +1225,10 @@ function renderStrategiSam(days){
   var el = document.getElementById('sc-tbody');
   var c1 = document.getElementById('sc-cur-total');
   var c2 = document.getElementById('sc-simp-total');
+  var bestIdx = 0;
+  for (var bi = 1; bi < window._a2trin.length; bi++) { if (window._a2trin[bi] > window._a2trin[bestIdx]) bestIdx = bi; }
+  totUgd = window._a2trin[bestIdx];
+  window._a2bestPris = window._a2triPris[bestIdx];
   var c3 = document.getElementById('sc-ugd-total');
   if(!el || !c1) return;
  if(!window._allAfrr.length || !window._allExtra.length || !window._allMfrr.length){
@@ -1257,6 +1261,9 @@ function renderStrategiSam(days){
   
   var rows = '';
   var totCur = 0, totSimp = 0, totUgd = 0;
+  window._a2triPris = [];
+  window._a2trin = [];
+  for (var tp = 50; tp <= 500; tp += 25) { window._a2triPris.push(tp); window._a2trin.push(0); }
   
   for(var o=-(SC_DAYS-1);o<=0;o++){
     var d = new Date(); d.setDate(d.getDate() + o);
@@ -1296,10 +1303,13 @@ function renderStrategiSam(days){
       var rSimp = simHour(SIMPEL_BIDS, aClear, xClear, xActive);
       daySimp += rSimp.aRev + rSimp.xRev + mfRev;
       
-      // Alt 2: aFRR Max - 3Ã4 MW + 1Ã6 MW alle dage, ingen mFRR
-      var rUgd = simHour([250, 250, 250], aClear, xClear, xActive);
-      var a2extra6 = (aClear >= 250) ? aClear * 6 : 0;
-      dayUgd += rUgd.aRev + rUgd.xRev + a2extra6;
+      // Alt 2: Optimal taerskel 50-500 kr (trin 25)
+      for (var ti = 0; ti < window._a2trin.length; ti++) {
+        var tbid = window._a2triPris[ti];
+        var rT = simHour([tbid, tbid, tbid], aClear, xClear, xActive);
+        window._a2trin[ti] += rT.aRev + rT.xRev + mfRev;
+      }
+      dayUgd = 0;
     }
     
     totCur += dayCur;
@@ -1351,6 +1361,8 @@ function renderStrategiSam(days){
   c2.textContent = Math.round(totSimp).toLocaleString('da-DK') + ' kr.';
   document.getElementById('sc-simp-dag').textContent = 'Dagsgns: ' + Math.round(totSimp/SC_DAYS).toLocaleString('da-DK') + ' kr./dag';
   c3.textContent = Math.round(totUgd).toLocaleString('da-DK') + ' kr.';
+  var optPrisEl = document.getElementById('sc-ugd-optpris');
+  if(optPrisEl) optPrisEl.textContent = (window._a2bestPris || '?') + ' kr. alle dage';
   document.getElementById('sc-ugd-dag').textContent = 'Dagsgns: ' + Math.round(totUgd/SC_DAYS).toLocaleString('da-DK') + ' kr./dag';
   var lbl=document.getElementById('sc-period-lbl');if(lbl)lbl.textContent=SC_DAYS;
   var res=document.getElementById('sc-res-lbl');if(res)res.textContent=SC_DAYS;
