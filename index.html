@@ -340,7 +340,7 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
 </style>
 <div class="sim-hdr">
   <h2>Dagssimulator</h2>
-  <span class="sim-hdr-sub">DK1 &middot; Defin\u00e9r blokke med marked og bud-pris, simuler dagsindt\u00e6gt</span>
+  <span class="sim-hdr-sub">DK1 &middot; Definér blokke med marked og bud-pris, simuler dagsindtægt</span>
 </div>
 <div class="sim-ctrl">
   <span class="sim-lbl">Dato</span><input type="date" id="sdp">
@@ -349,10 +349,10 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
 <div id="sim-sb">
   <div id="sim-spin" class="sim-spin sg"></div>
   <div id="sim-dot" class="sim-dot sg"></div>
-  <span id="sim-stxt">V\u00e6lg en dato og tryk Hent data</span>
+  <span id="sim-stxt">Vælg en dato og tryk Hent data</span>
 </div>
 <div class="blk-wrap">
-  <div class="blk-title">Blok-konfiguration &mdash; \u00e9n r\u00e6kke per blok</div>
+  <div class="blk-title">Blok-konfiguration &mdash; én række per blok</div>
   <table class="blk-table">
     <thead><tr>
       <th style="width:28px">#</th>
@@ -364,19 +364,19 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
     <tbody id="blk-body"></tbody>
   </table>
   <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-    <button class="blk-add" onclick="blkAdd()">+ Tilf\u00f8j blok</button>
-    <button class="sim-btn sim-prim" style="padding:6px 18px" onclick="simRun()">&#9654; Simul\u00e9r</button>
+    <button class="blk-add" onclick="blkAdd()">+ Tilføj blok</button>
+    <button class="sim-btn sim-prim" style="padding:6px 18px" onclick="simRun()">&#9654; Simulér</button>
     <span id="sim-blk-sum" style="font-size:12px;color:#6b7280"></span>
   </div>
 </div>
 <div class="sim-kpis sg" id="sim-kpis">
-  <div class="sim-kc"><div class="sim-kl">Total r\u00e5dighedsbetaling</div><div class="sim-kn" id="sk0">&mdash;</div><div class="sim-ks" id="sk0h"></div></div>
+  <div class="sim-kc"><div class="sim-kl">Total rådighedsbetaling</div><div class="sim-kn" id="sk0">&mdash;</div><div class="sim-ks" id="sk0h"></div></div>
   <div class="sim-kc"><div class="sim-kl">aFRR andel</div><div class="sim-kn sca" id="sk1">&mdash;</div><div class="sim-ks" id="sk1h"></div></div>
   <div class="sim-kc"><div class="sim-kl">mFRR andel</div><div class="sim-kn scm" id="sk2">&mdash;</div><div class="sim-ks" id="sk2h"></div></div>
   <div class="sim-kc"><div class="sim-kl">mFRR Extra andel</div><div class="sim-kn sce" id="sk3">&mdash;</div><div class="sim-ks" id="sk3h"></div></div>
 </div>
 <div class="sim-cw sg" id="sim-cw">
-  <div class="sim-ct">Clearingpris per time (kr./MW) &mdash; aFRR gr\u00f8n, mFRR orange, Extra lilla</div>
+  <div class="sim-ct">Clearingpris per time (kr./MW) &mdash; aFRR grøn, mFRR orange, Extra lilla</div>
   <div class="sim-ca" id="sim-ca"></div>
   <div class="sim-leg">
     <div class="sim-li"><div class="sim-ld" style="background:#16a34a"></div>aFRR</div>
@@ -388,7 +388,7 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
   <div class="sem" id="sim-em">
     <div class="si">&#128202;</div>
     <h3>Ingen data endnu</h3>
-    <p>V\u00e6lg en historisk dato, konfigur\u00e9r blokke, og tryk Simul\u00e9r.</p>
+    <p>Vælg en historisk dato, konfigurér blokke, og tryk Simulér.</p>
   </div>
 </div>
 <script>
@@ -412,7 +412,7 @@ function mkbadge(mk){return '<span class="blk-badge b'+mk+'">'+mklabel(mk)+'</sp
 function blkUpdateSum(){
   var el=document.getElementById('sim-blk-sum');if(!el)return;
   var tot=BLK.reduce(function(s,b){return s+b.mw;},0);
-  el.textContent='Samlet: '+tot+' MW fordelt p\u00e5 '+BLK.length+' blok'+(BLK.length!==1?'ke':'');
+  el.textContent='Samlet: '+tot+' MW fordelt på '+BLK.length+' blok'+(BLK.length!==1?'ke':'');
 }
 
 function blkRender(){
@@ -449,13 +449,13 @@ function blkRender(){
 window._blkMW=function(i,v){BLK[i].mw=Math.max(0.1,parseFloat(v)||0);blkUpdateSum();};
 window._blkMK=function(i,v){BLK[i].mk=v;blkRender();};
 window._blkPR=function(i,v){BLK[i].price=parseFloat(v)||0;};
-window._blkDel=function(i){if(BLK.length<=1){alert('Mindst \u00e9n blok kr\u00e6ves');return;}BLK.splice(i,1);blkRender();};
+window._blkDel=function(i){if(BLK.length<=1){alert('Mindst én blok kræves');return;}BLK.splice(i,1);blkRender();};
 window.blkAdd=function(){BLK.push({mw:4,mk:'a',price:100});blkRender();};
 
 // Load data
 window.simLoad=function(){
   var date=document.getElementById('sdp').value;
-  if(!date){alert('V\u00e6lg en dato');return;}
+  if(!date){alert('Vælg en dato');return;}
   var _sst=function(st,msg){
     var el=document.getElementById('sim-stxt');if(el)el.textContent=msg;
     var sp=document.getElementById('sim-spin'),ok=document.getElementById('sim-dot');
@@ -474,14 +474,14 @@ window.simLoad=function(){
     fill(res[0],'a');fill(res[1],'m');fill(res[2],'e');
     HD=Array.from({length:24},function(x,i){return map[i];});
     var nd=HD.filter(function(h){return h.a!==null||h.m!==null||h.e!==null;}).length;
-    if(!nd){_sst('idle','Ingen data \u2014 pr\u00f8v en tidligere dato');return;}
+    if(!nd){_sst('idle','Ingen data — prøv en tidligere dato');return;}
     var dstr=new Date(date+'T12:00:00').toLocaleDateString('da-DK',{weekday:'short',day:'numeric',month:'long',year:'numeric'});
-    _sst('ok',dstr+' \u2014 '+nd+' timer med clearingpris \u2014 klik Simul\u00e9r');
+    _sst('ok',dstr+' — '+nd+' timer med clearingpris — klik Simulér');
     var cw=document.getElementById('sim-cw');if(cw)cw.classList.remove('sg');
     simChart();
   }).catch(function(e){
     var el=document.getElementById('sim-stxt');
-    if(el)el.textContent=e.message&&e.message.includes('429')?'API rate-limit n\u00e5et \u2014 pr\u00f8v igen om lidt':'Fejl: '+e.message;
+    if(el)el.textContent=e.message&&e.message.includes('429')?'API rate-limit nået — prøv igen om lidt':'Fejl: '+e.message;
     var sp=document.getElementById('sim-spin'),ok=document.getElementById('sim-dot');
     if(sp)sp.classList.add('sg');if(ok)ok.classList.add('sg');
   });
@@ -489,7 +489,7 @@ window.simLoad=function(){
 
 // Run simulation
 window.simRun=function(){
-  if(!HD){alert('Hent data f\u00f8rst');return;}
+  if(!HD){alert('Hent data først');return;}
   var em=document.getElementById('sim-em');if(em)em.classList.add('sg');
   var kpi=document.getElementById('sim-kpis');if(kpi)kpi.classList.remove('sg');
 
@@ -504,7 +504,7 @@ window.simRun=function(){
   hdr1+='<th rowspan="2" class="tha">aFRR<br><span style="font-size:9px;font-weight:400">kr./MW</span></th>';
   hdr1+='<th rowspan="2" class="thm">mFRR<br><span style="font-size:9px;font-weight:400">kr./MW</span></th>';
   hdr1+='<th rowspan="2" class="the">Extra<br><span style="font-size:9px;font-weight:400">kr./MW</span></th>';
-  hdr1+='<th colspan="'+BLK.length+'" style="text-align:center;border-left:2px solid #e5e7eb">R\u00e5dighedsbetaling per blok (kr.)</th>';
+  hdr1+='<th colspan="'+BLK.length+'" style="text-align:center;border-left:2px solid #e5e7eb">Rådighedsbetaling per blok (kr.)</th>';
   hdr1+='<th rowspan="2" style="border-left:2px solid #e5e7eb">Total</th>';
   hdr1+='</tr>';
   var hdr2='<tr>';
