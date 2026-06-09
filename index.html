@@ -467,7 +467,8 @@ window.simLoad=function(){
   var f=encodeURIComponent('{"PriceArea":"DK1"}');
   var q='start='+date+'T00:00&end='+date+'T23:59&filter='+f+'&limit=48';
   function _sg(url){return fetch(url).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(function(j){return j.records||[];});}
-  Promise.all([_sg(base+'/AfrrReservesNordic?'+q),_sg(base+'/mFRRCapacityMarket?'+q),_sg(base+'/MfrrCapacityMarketExtra?'+q)])
+  var _seq=function(){return _sg(base+'/AfrrReservesNordic?'+q).then(function(a){return new Promise(function(ok){setTimeout(function(){ok(a);},120);})}).then(function(a){return _sg(base+'/mFRRCapacityMarket?'+q).then(function(m){return new Promise(function(ok){setTimeout(function(){ok([a,m]);},120);})});}).then(function(am){return _sg(base+'/MfrrCapacityMarketExtra?'+q).then(function(e){return[am[0],am[1],e];});});};
+  _seq()
   .then(function(res){
     var map={};for(var i=0;i<24;i++)map[i]={h:i,a:null,m:null,e:null};
     function fill(recs,key){recs.forEach(function(rec){var ts=rec.TimeDK||rec.TimeUTC||'';var x=ts.match(/T(\d{2}):/);if(!x)return;var hi=parseInt(x[1]);if(map[hi]!==undefined&&rec.UpPriceDKK!=null)map[hi][key]=parseFloat(rec.UpPriceDKK);});}
