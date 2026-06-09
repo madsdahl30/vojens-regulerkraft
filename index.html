@@ -1463,13 +1463,18 @@ function renderStrategiSam(days){
       daySimp += rSimp.aRev + rSimp.xRev + mfRev;
       
       // Alt 2: 3x4 MW mFRR @ 4/5/6 kr. + 6.3 MW aFRR @ 250 kr.
+      // mFRR raadighed altid: max(mClear, bud) * 4 MW per blok
       var mfrrBids = [4, 5, 6];
       var alt2mfrrRev = mfrrBids.reduce(function(s, bid) {
-        return s + Math.max(mClear, bid) * 4;
+        return s + Math.max(mClear > 0 ? mClear : bid, bid) * 4;
       }, 0);
-      var alt2afrRev = (aClear >= 250) ? aClear * 6.3 : 0;
-      var alt2xRev = (xActive && xClear >= EXTRA_BID) ? xClear * 6.3 : 0;
-      if (aClear < 250) alt2xRev = (xActive && xClear >= EXTRA_BID) ? xClear * 6.3 : 0;
+      // aFRR 6.3 MW @ 250: vinder hvis aClear >= 250, ellers Extra (ikke begge)
+      var alt2afrRev = 0, alt2xRev = 0;
+      if (aClear >= 250) {
+        alt2afrRev = aClear * 6.3;
+      } else if (xActive && xClear >= EXTRA_BID) {
+        alt2xRev = xClear * 6.3;
+      }
       dayUgd += alt2mfrrRev + alt2afrRev + alt2xRev;
     }
     
