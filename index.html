@@ -393,7 +393,7 @@ input[type=range]{width:100%;accent-color:var(--afrr);}
 </div>
 <script>
 (function(){
-var EXTRA_BID=99.99,MFRR_FALLBACK=4.99*6;
+var EXTRA_BID=99.0,MFRR_FALLBACK=4.99*6.3;
 
 // Blok state: [{mw,mk,price}]
 var BLK=[
@@ -1382,11 +1382,11 @@ function renderStrategiSam(days){
   //   - mFRR raadighed = 6 MW * max(mClearing, 4.99) - same for all strategies
   // ==========================================================================
   
-  var CURRENT_BIDS = [94, 95, 96];     // Your actual bids
-  var SIMPEL_BIDS  = [201, 202, 203];  // Alt 1: 201/202/203 kr.
-  var EXTRA_BID    = 99.99;            // Centrica fast Extra-bud
+  var GAMMEL_BIDS  = [94, 95, 96];     // Gammel strategi (foer 7/6)
+  var NUVAR_BIDS   = [201, 202, 203];  // Nuvaerende strategi (fra 7/6)
+  var EXTRA_BIDS   = [99.0, 99.5, 99.7]; // mFRR Extra fallback-bud
   var BLOCK_MW     = 4;                // MW per aFRR-blok
-  var MFRR_MW      = 6;                // mFRR raadighed
+  var MFRR_MW      = 6.3;              // mFRR raadighed
   var MFRR_FALLBACK = 29.94;           // 6 MW * 4.99 kr if no mFRR data
   
   var el = document.getElementById('sc-tbody');
@@ -1401,14 +1401,16 @@ function renderStrategiSam(days){
   // Helper: simulate one hour for one strategy
   // Returns {aRev, xRev} for the 3 aFRR blocks
   function simHour(bids, aClear, xClear, xActive){
+    // Hver blok: vinder aFRR hvis aClear >= aFRR-bud (marginal betaling).
+    // Taber aFRR -> proev Extra-markedet med blokkkens Extra-bud (99.0/99.5/99.7).
     var aRev = 0, xRev = 0;
-    bids.forEach(function(bid){
+    bids.forEach(function(bid, i){
       if(aClear >= bid){
         aRev += aClear * BLOCK_MW;
-      } else if(xActive && xClear >= EXTRA_BID){
+      } else if(xActive && xClear >= (EXTRA_BIDS[i] || 99.0)){
         xRev += xClear * BLOCK_MW;
       }
-      // else: 0 (lost both)
+      // else: 0 (tabte begge)
     });
     return {aRev: aRev, xRev: xRev};
   }
@@ -1452,22 +1454,21 @@ function renderStrategiSam(days){
       var xClear = xH[h] || 0;
       var xActive = !!xActiveH[h];
       var mClear = mH[h] || 0;
-      var mfRev = mClear > 0 ? mClear * MFRR_MW : MFRR_FALLBACK;
+      // mFRR raadighed = marginalpris (clearing) x 6.3 MW. Byder 4.99/9.99 men afregnes marginalt.
+      var mfRev = mClear * MFRR_MW;
       
-      // Current strategy
-      var rCur = simHour(CURRENT_BIDS, aClear, xClear, xActive);
-      dayCur += rCur.aRev + rCur.xRev + mfRev;
+      // Gammel strategi (94/95/96)
+      var rGam = simHour(GAMMEL_BIDS, aClear, xClear, xActive);
+      dayCur += rGam.aRev + rGam.xRev + mfRev;
       
-      // Simpel strategy
-      var rSimp = simHour(SIMPEL_BIDS, aClear, xClear, xActive);
-      daySimp += rSimp.aRev + rSimp.xRev + mfRev;
+      // Nuvaerende strategi (201/202/203)
+      var rNuv = simHour(NUVAR_BIDS, aClear, xClear, xActive);
+      daySimp += rNuv.aRev + rNuv.xRev + mfRev;
       
       // Alt 2: 3x4 MW mFRR @ 4/5/6 kr. + 6.3 MW aFRR @ 250 kr.
       // mFRR raadighed altid: max(mClear, bud) * 4 MW per blok
-      var mfrrBids = [4, 5, 6];
-      var alt2mfrrRev = mfrrBids.reduce(function(s, bid) {
-        return s + Math.max(mClear > 0 ? mClear : bid, bid) * 4;
-      }, 0);
+      // Alt 2 mFRR: 3x4 MW = 12 MW, afregnes marginalt (mClear x 12)
+      var alt2mfrrRev = mClear * 12;
       // aFRR 6.3 MW @ 250: vinder hvis aClear >= 250, ellers Extra (ikke begge)
       var alt2afrRev = 0, alt2xRev = 0;
       if (aClear >= 250) {
