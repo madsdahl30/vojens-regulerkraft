@@ -1497,7 +1497,7 @@ function renderStrategiSam(days){
       var alt2afrRev = 0, alt2xRev = 0;
       if (aClear >= 250) {
         alt2afrRev = aClear * 6.3;
-      } else if (xActive && xClear >= EXTRA_BID) {
+      } else if (xActive && xClear >= EXTRA_BIDS[0]) {
         alt2xRev = xClear * 6.3;
       }
       dayUgd += alt2mfrrRev + alt2afrRev + alt2xRev;
