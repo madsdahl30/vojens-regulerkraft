@@ -1416,9 +1416,11 @@ function renderStrategiSam(days){
   var c2 = document.getElementById('sc-simp-total');
   var c3 = document.getElementById('sc-ugd-total');
   if(!el || !c1) return;
- if(!window._allAfrr.length || !window._allMfrr.length){
-    setTimeout(renderStrategiSam, 800); return;
+  if(!window._allAfrr || !window._allAfrr.length || !window._allMfrr || !window._allMfrr.length){
+    setTimeout(function(){renderStrategiSam(SC_DAYS);}, 800); return;
   }
+  if(!window._allExtra) window._allExtra = [];
+  try {
   
   // Helper: simulate one hour for one strategy
   // Returns {aRev, xRev} for the 3 aFRR blocks
@@ -1609,8 +1611,8 @@ function renderStrategiSam(days){
       + 'Brug aldrig '+SC_DAYS+'-dages backtest til kontrakt&aelig;ndring uden l&aelig;ngere validering.'
       + '</div>';
   }
+  } catch(_scErr){ console.error('SC_RENDER_ERROR:', _scErr.message, _scErr.stack); }
 }
-
 function renderSammenligning(){_tlOffset=-1;renderTidsline();}
 
 
