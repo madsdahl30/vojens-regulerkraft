@@ -760,15 +760,18 @@ async function fetchAll() {
     // Sekventielle fetches med pause for at undgaa Cloudflare 429 rate-limit
     const _delay = ms => new Promise(res=>setTimeout(res,ms));
     const _fetchEDS = async (ds) => {
-      for(let attempt=0; attempt<4; attempt++){
-        const r = await fetch(`${API}/${ds}?limit=5000&filter=${enc('{"PriceArea":"DK1"}')}&start=${fmt(start)}&end=${fmt(tomorrow)}`);
-        if(r.status===429){ await _delay(800*(attempt+1)); continue; }
-        return r.json();
+      for(let attempt=0; attempt<6; attempt++){
+        try{
+          const r = await fetch(`${API}/${ds}?limit=5000&filter=${enc('{"PriceArea":"DK1"}')}&start=${fmt(start)}&end=${fmt(tomorrow)}`);
+          if(r.status===429){ await _delay(1500*(attempt+1)); continue; }
+          if(!r.ok){ await _delay(1000); continue; }
+          return r.json();
+        }catch(e){ await _delay(1000); }
       }
       return {records:[]};
     };
-    const a = await _fetchEDS('AfrrReservesNordic'); await _delay(250);
-    const m = await _fetchEDS('mFRRCapacityMarket'); await _delay(250);
+    const a = await _fetchEDS('AfrrReservesNordic'); await _delay(700);
+    const m = await _fetchEDS('mFRRCapacityMarket'); await _delay(700);
     const x = await _fetchEDS('MfrrCapacityMarketExtra');
     S = {
       afrr: cStats(a.records || []),
