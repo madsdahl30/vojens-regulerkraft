@@ -1391,6 +1391,46 @@ function renderTidsline(){
     +'<div style="border-left:3px solid var(--accent);padding-left:12px"><span style="color:var(--text3)">Total dag (250 kr. strategi):</span> <strong style="font-size:15px">'+Math.round(total).toLocaleString('da-DK')+' kr.</strong></div>';
 }
 
+// Henter FAKTISKE Centrica revenue-tal per dag (ekskl. EAM-aktivering) til sammenligning
+window._centricaByDay = window._centricaByDay || null;
+window.fetchCentricaForSammenligning = async function(days){
+  try{
+    if(typeof ensureValidToken==='function') await ensureValidToken();
+    var token=localStorage.getItem('centrica_token');
+    if(!token) return null;
+    var PROXY='https://vojens-regulerkraft.madsdahl30.workers.dev';
+    var now=new Date();
+    var todayUtcMidnat=Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate(),0,0,0);
+    var toUtc=new Date(todayUtcMidnat+22*3600000);
+    var fromUtc=new Date(toUtc.getTime()-(days+2)*24*3600000);
+    var fmt=function(d){return d.toISOString();};
+    var resp=await fetch(PROXY+'/v1/Chp/siteReport/revenue?siteId=844439ef-b88a-4859-9752-5f680c6d7317&from='+encodeURIComponent(fmt(fromUtc))+'&to='+encodeURIComponent(fmt(toUtc)),{headers:{'Authorization':'Bearer '+token}});
+    if(!resp.ok) return null;
+    var xml=await resp.text();
+    var doc=new DOMParser().parseFromString(xml,'text/xml');
+    var items=doc.querySelectorAll('RevenueReportData');
+    var byDay={};
+    Array.from(items).forEach(function(el){
+      var bidtype=el.querySelector('Bidtype')?el.querySelector('Bidtype').textContent:'';
+      var mwh=parseFloat((el.querySelector('BidMWh')?el.querySelector('BidMWh').textContent:0)||0);
+      var price=parseFloat((el.querySelector('BidActivationPricePrMWh')?el.querySelector('BidActivationPricePrMWh').textContent:0)||0);
+      var fromU=el.querySelector('FromUtc')?el.querySelector('FromUtc').textContent:'';
+      if(!fromU) return;
+      // FromUtc -> dansk dato (UTC+2 sommertid; midnat DK = 22 UTC). Brug +2t for at ramme dansk kalenderdag.
+      var dt=new Date(fromU);
+      var dkDate=new Date(dt.getTime()+2*3600000);
+      var ds=dkDate.getUTCFullYear()+'-'+String(dkDate.getUTCMonth()+1).padStart(2,'0')+'-'+String(dkDate.getUTCDate()).padStart(2,'0');
+      // KUN raadigheds-typer (ekskl. EAM-aktivering AFRREnergy15/MFRREnergy15)
+      if(bidtype==='AFRRCapacity15'||bidtype==='ManualReserveAvailable'||bidtype==='ManualReserveExtra'){
+        if(!byDay[ds]) byDay[ds]=0;
+        byDay[ds]+=Math.abs(mwh)*price;
+      }
+    });
+    window._centricaByDay=byDay;
+    return byDay;
+  }catch(e){ console.log('Centrica sammenligning fejl:', e.message); return null; }
+};
+
 function renderStrategiSam(days){
   var SC_DAYS=days||window._scDays||90; window._scDays=SC_DAYS;
   // ==========================================================================
@@ -1420,6 +1460,15 @@ function renderStrategiSam(days){
     setTimeout(function(){renderStrategiSam(SC_DAYS);}, 800); return;
   }
   if(!window._allExtra) window._allExtra = [];
+  // Hent FAKTISKE Centrica-tal til Nuvaerende-kolonnen (engang), re-render naar klar
+  if(window._centricaByDay === null && !window._centricaFetching){
+    window._centricaFetching = true;
+    window.fetchCentricaForSammenligning(95).then(function(res){
+      window._centricaByDay = res || {};
+      window._centricaFetching = false;
+      renderStrategiSam(window._scDays||90); // re-render med faktiske tal
+    });
+  }
   try {
   
   // Helper: simulate one hour for one strategy
@@ -1485,7 +1534,7 @@ function renderStrategiSam(days){
       var rGam = simHour(GAMMEL_BIDS, aClear, xClear, xActive);
       dayCur += rGam.aRev + rGam.xRev + mfRev;
       
-      // Nuvaerende strategi (201/202/203)
+      // Nuvaerende strategi (201/202/203) - simuleret (bruges hvis Centrica-tal mangler)
       var rNuv = simHour(NUVAR_BIDS, aClear, xClear, xActive);
       daySimp += rNuv.aRev + rNuv.xRev + mfRev;
       
@@ -1503,6 +1552,11 @@ function renderStrategiSam(days){
       dayUgd += alt2mfrrRev + alt2afrRev + alt2xRev;
     }
     
+    // FAKTISKE Centrica-tal for Nuvaerende strategi (overskriver simulering hvis tilgaengeligt)
+    var _simDaySimp = daySimp;
+    if(window._centricaByDay && window._centricaByDay[ds] !== undefined){
+      daySimp = window._centricaByDay[ds];
+    }
     totCur += dayCur;
     totSimp += daySimp;
     totUgd += dayUgd;
@@ -1551,6 +1605,25 @@ function renderStrategiSam(days){
   document.getElementById('sc-cur-dag').textContent = 'Dagsgns: ' + Math.round(totCur/SC_DAYS).toLocaleString('da-DK') + ' kr./dag';
   c2.textContent = Math.round(totSimp).toLocaleString('da-DK') + ' kr.';
   document.getElementById('sc-simp-dag').textContent = 'Dagsgns: ' + Math.round(totSimp/SC_DAYS).toLocaleString('da-DK') + ' kr./dag';
+  // Status: faktiske Centrica-tal vs simulering
+  var _hasCentrica = window._centricaByDay && Object.keys(window._centricaByDay).length > 0;
+  var _simpDagEl = document.getElementById('sc-simp-dag');
+  if(_simpDagEl){
+    var _existing = document.getElementById('sc-simp-kilde');
+    if(!_existing){
+      _existing = document.createElement('div');
+      _existing.id = 'sc-simp-kilde';
+      _existing.style.cssText = 'font-size:10px;margin-top:3px;font-weight:600;';
+      _simpDagEl.parentNode.insertBefore(_existing, _simpDagEl.nextSibling);
+    }
+    if(_hasCentrica){
+      _existing.textContent = '✓ Faktiske Centrica-tal';
+      _existing.style.color = '#15803d';
+    } else {
+      _existing.textContent = '⚠ Simuleret (log ind for faktiske tal)';
+      _existing.style.color = '#92400e';
+    }
+  }
   c3.textContent = Math.round(totUgd).toLocaleString('da-DK') + ' kr.';
   document.getElementById('sc-ugd-dag').textContent = 'Dagsgns: ' + Math.round(totUgd/SC_DAYS).toLocaleString('da-DK') + ' kr./dag';
   var lbl=document.getElementById('sc-period-lbl');if(lbl)lbl.textContent=SC_DAYS;
