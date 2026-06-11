@@ -757,11 +757,19 @@ async function fetchAll() {
     const start = new Date(today); start.setDate(start.getDate()-90);
     const fmt = d => d.toISOString().split('T')[0];
     const enc = encodeURIComponent;
-    const [a,m,x] = await Promise.all([
-      fetch(`${API}/AfrrReservesNordic?limit=5000&filter=${enc('{"PriceArea":"DK1"}')}&start=${fmt(start)}&end=${fmt(tomorrow)}`).then(r=>r.json()),
-      fetch(`${API}/mFRRCapacityMarket?limit=5000&filter=${enc('{"PriceArea":"DK1"}')}&start=${fmt(start)}&end=${fmt(tomorrow)}`).then(r=>r.json()),
-      fetch(`${API}/MfrrCapacityMarketExtra?limit=5000&filter=${enc('{"PriceArea":"DK1"}')}&start=${fmt(start)}&end=${fmt(tomorrow)}`).then(r=>r.json())
-    ]);
+    // Sekventielle fetches med pause for at undgaa Cloudflare 429 rate-limit
+    const _delay = ms => new Promise(res=>setTimeout(res,ms));
+    const _fetchEDS = async (ds) => {
+      for(let attempt=0; attempt<4; attempt++){
+        const r = await fetch(`${API}/${ds}?limit=5000&filter=${enc('{"PriceArea":"DK1"}')}&start=${fmt(start)}&end=${fmt(tomorrow)}`);
+        if(r.status===429){ await _delay(800*(attempt+1)); continue; }
+        return r.json();
+      }
+      return {records:[]};
+    };
+    const a = await _fetchEDS('AfrrReservesNordic'); await _delay(250);
+    const m = await _fetchEDS('mFRRCapacityMarket'); await _delay(250);
+    const x = await _fetchEDS('MfrrCapacityMarketExtra');
     S = {
       afrr: cStats(a.records || []),
 mfrr: cStats(m.records || []),
