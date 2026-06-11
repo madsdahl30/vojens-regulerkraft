@@ -757,22 +757,33 @@ async function fetchAll() {
     const start = new Date(today); start.setDate(start.getDate()-90);
     const fmt = d => d.toISOString().split('T')[0];
     const enc = encodeURIComponent;
-    // Sekventielle fetches med pause for at undgaa Cloudflare 429 rate-limit
+    // Sekventielle fetches med pause + per-datasaet cache-fallback (mod Cloudflare 429)
     const _delay = ms => new Promise(res=>setTimeout(res,ms));
-    const _fetchEDS = async (ds) => {
-      for(let attempt=0; attempt<6; attempt++){
+    const _fetchEDS = async (ds, cacheKey) => {
+      for(let attempt=0; attempt<3; attempt++){
         try{
           const r = await fetch(`${API}/${ds}?limit=5000&filter=${enc('{"PriceArea":"DK1"}')}&start=${fmt(start)}&end=${fmt(tomorrow)}`);
-          if(r.status===429){ await _delay(1500*(attempt+1)); continue; }
-          if(!r.ok){ await _delay(1000); continue; }
-          return r.json();
-        }catch(e){ await _delay(1000); }
+          if(r.status===429){ await _delay(1200*(attempt+1)); continue; }
+          if(!r.ok){ await _delay(600); continue; }
+          const j = await r.json();
+          if(j.records && j.records.length){
+            try{ localStorage.setItem(cacheKey, JSON.stringify(j.records)); }catch(e){}
+            return j;
+          }
+        }catch(e){ await _delay(600); }
       }
+      // Fallback: brug cached raa data hvis fetch fejlede
+      try{ const c=localStorage.getItem(cacheKey); if(c) return {records:JSON.parse(c), _cached:true}; }catch(e){}
       return {records:[]};
     };
-    const a = await _fetchEDS('AfrrReservesNordic'); await _delay(700);
-    const m = await _fetchEDS('mFRRCapacityMarket'); await _delay(700);
-    const x = await _fetchEDS('MfrrCapacityMarketExtra');
+    const a = await _fetchEDS('AfrrReservesNordic','eds_afrr'); await _delay(500);
+    const m = await _fetchEDS('mFRRCapacityMarket','eds_mfrr'); await _delay(500);
+    let x = await _fetchEDS('MfrrCapacityMarketExtra','eds_extra');
+    // Extra fejler ofte i samlet load; et isoleret retry efter laengere pause virker typisk
+    if(!x.records || !x.records.length){
+      await _delay(2000);
+      x = await _fetchEDS('MfrrCapacityMarketExtra','eds_extra');
+    }
     S = {
       afrr: cStats(a.records || []),
 mfrr: cStats(m.records || []),
