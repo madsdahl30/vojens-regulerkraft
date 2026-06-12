@@ -1391,6 +1391,20 @@ function renderTidsline(){
     +'<div style="border-left:3px solid var(--accent);padding-left:12px"><span style="color:var(--text3)">Total dag (250 kr. strategi):</span> <strong style="font-size:15px">'+Math.round(total).toLocaleString('da-DK')+' kr.</strong></div>';
 }
 
+// Lader brugeren indsaette et Centrica access-token manuelt (gyldigt ~20 min)
+window.indsaetCentricaToken = function(){
+  var t = prompt('Inds\u00e6t Centrica access-token.\n\nHent det fra direct.neasenergy.com:\n1. \u00c5bn direct.neasenergy.com (v\u00e6r logget ind)\n2. Tryk F12 \u2192 Console\n3. Inds\u00e6t: copy(localStorage.getItem("access_token"))\n4. S\u00e6t ind her:');
+  if(!t) return;
+  t = t.trim().replace(/^["']|["']$/g,'');
+  if(t.length < 100){ alert('Det ligner ikke et gyldigt token (for kort).'); return; }
+  localStorage.setItem('centrica_token', t);
+  localStorage.setItem('centrica_token_expiry', Date.now() + (20*60*1000));
+  window._centricaByDay = null;
+  window._centricaFetching = false;
+  alert('Token gemt. Henter faktiske tal...');
+  renderStrategiSam(window._scDays || 90);
+};
+
 // Henter FAKTISKE Centrica revenue-tal per dag (ekskl. EAM-aktivering) til sammenligning
 window._centricaByDay = window._centricaByDay || null;
 window.fetchCentricaForSammenligning = async function(days){
@@ -1620,7 +1634,7 @@ function renderStrategiSam(days){
       _existing.textContent = '✓ Faktiske Centrica-tal';
       _existing.style.color = '#15803d';
     } else {
-      _existing.textContent = '⚠ Simuleret (log ind for faktiske tal)';
+      _existing.innerHTML = '⚠ Simuleret — <a href="#" onclick="window.indsaetCentricaToken();return false;" style="color:#2563eb;text-decoration:underline;cursor:pointer">indsæt Centrica-token for faktiske tal</a>';
       _existing.style.color = '#92400e';
     }
   }
