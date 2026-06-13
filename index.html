@@ -1393,16 +1393,40 @@ function renderTidsline(){
 
 // Lader brugeren indsaette et Centrica access-token manuelt (gyldigt ~20 min)
 window.indsaetCentricaToken = function(){
-  var t = prompt('Inds\u00e6t Centrica access-token.\n\nHent det fra direct.neasenergy.com:\n1. \u00c5bn direct.neasenergy.com (v\u00e6r logget ind)\n2. Tryk F12 \u2192 Console\n3. Inds\u00e6t: copy(localStorage.getItem("access_token"))\n4. S\u00e6t ind her:');
-  if(!t) return;
-  t = t.trim().replace(/^["']|["']$/g,'');
-  if(t.length < 100){ alert('Det ligner ikke et gyldigt token (for kort).'); return; }
-  localStorage.setItem('centrica_token', t);
-  localStorage.setItem('centrica_token_expiry', Date.now() + (20*60*1000));
-  window._centricaByDay = null;
-  window._centricaFetching = false;
-  alert('Token gemt. Henter faktiske tal...');
-  renderStrategiSam(window._scDays || 90);
+  var appUrl = location.origin + location.pathname;
+  // Bookmarklet der koerer PAA direct.neasenergy.com: gemmer token i window.name og sender til app
+  var bm = "javascript:(function(){var t=localStorage.getItem('access_token');if(!t){alert('Log ind paa Centrica foerst');return;}window.name='CENTRICA_TOKEN:'+t;location.href='" + appUrl + "?fromcentrica=1';})();";
+  var ov = document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
+  ov.innerHTML =
+    '<div style="background:#fff;border-radius:14px;max-width:520px;padding:24px;font-family:system-ui,sans-serif;box-shadow:0 10px 40px rgba(0,0,0,.3)">'
+    + '<div style="font-size:18px;font-weight:700;margin-bottom:4px;color:#111">Hent faktiske Centrica-tal</div>'
+    + '<div style="font-size:13px;color:#666;margin-bottom:16px">V&aelig;lg den nemmeste metode for dig:</div>'
+    + '<div style="border:2px solid #2563eb;border-radius:10px;padding:14px;margin-bottom:14px">'
+    +   '<div style="font-weight:700;font-size:13px;color:#2563eb;margin-bottom:8px">\u2728 Nemmest: Bogm&aelig;rke (g\u00f8r det \u00e9n gang)</div>'
+    +   '<div style="font-size:12px;color:#444;line-height:1.6;margin-bottom:10px">Tr\u00e6k denne knap op til din bogm&aelig;rkelinje. Derefter: \u00e5bn Centrica (logget ind) og klik bogm&aelig;rket \u2014 s\u00e5 hentes tallene automatisk.</div>'
+    +   '<a href="' + bm.replace(/"/g,'&quot;') + '" onclick="return false" style="display:inline-block;background:#2563eb;color:#fff;padding:8px 16px;border-radius:8px;text-decoration:none;font-weight:700;font-size:13px;cursor:grab">\u2b07 Hent Centrica-tal</a>'
+    + '</div>'
+    + '<div style="border:1px solid #ddd;border-radius:10px;padding:14px;margin-bottom:16px">'
+    +   '<div style="font-weight:700;font-size:13px;color:#555;margin-bottom:8px">Alternativ: Inds&aelig;t token manuelt</div>'
+    +   '<div style="font-size:12px;color:#444;line-height:1.6;margin-bottom:10px">P\u00e5 direct.neasenergy.com: F12 \u2192 Console \u2192 skriv <code style="background:#f3f4f6;padding:1px 5px;border-radius:4px">copy(localStorage.getItem("access_token"))</code> \u2192 inds\u00e6t nedenfor.</div>'
+    +   '<textarea id="ct-paste" placeholder="Inds\u00e6t token her..." style="width:100%;height:60px;border:1px solid #ccc;border-radius:6px;padding:8px;font-size:11px;font-family:monospace;box-sizing:border-box"></textarea>'
+    +   '<button id="ct-save" style="margin-top:8px;background:#059669;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer">Gem token</button>'
+    + '</div>'
+    + '<button id="ct-close" style="background:#eee;color:#333;border:none;padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;width:100%">Luk</button>'
+    + '</div>';
+  document.body.appendChild(ov);
+  ov.querySelector('#ct-close').onclick=function(){document.body.removeChild(ov);};
+  ov.onclick=function(e){if(e.target===ov)document.body.removeChild(ov);};
+  ov.querySelector('#ct-save').onclick=function(){
+    var t=ov.querySelector('#ct-paste').value.trim().replace(/^["']|["']$/g,'');
+    if(t.length<100){alert('Det ligner ikke et gyldigt token (for kort).');return;}
+    localStorage.setItem('centrica_token', t);
+    localStorage.setItem('centrica_token_expiry', Date.now()+(20*60*1000));
+    window._centricaByDay=null; window._centricaFetching=false;
+    document.body.removeChild(ov);
+    renderStrategiSam(window._scDays || 90);
+  };
 };
 
 // Henter FAKTISKE Centrica revenue-tal per dag (ekskl. EAM-aktivering) til sammenligning
@@ -2113,6 +2137,26 @@ window.renderCentrica=function(data,days){
 
 // Gem token + refresh_token fra URL hash ved load
 document.addEventListener('DOMContentLoaded',()=>{
+  // window.name-overfoersel: hvis token kom med fra Centrica-fanen
+  try{
+    if(window.name && window.name.indexOf('CENTRICA_TOKEN:')===0){
+      var _wt = window.name.substring('CENTRICA_TOKEN:'.length);
+      if(_wt && _wt.length>100){
+        localStorage.setItem('centrica_token', _wt);
+        localStorage.setItem('centrica_token_expiry', Date.now() + (20*60*1000));
+      }
+      window.name='';
+      if(window._centricaByDay!==undefined){ window._centricaByDay=null; window._centricaFetching=false; }
+      // Hvis vi kom fra Centrica-bookmarklet, aabn sammenligning automatisk
+      if(location.search.indexOf('fromcentrica')>-1){
+        setTimeout(function(){
+          var tabs=[].slice.call(document.querySelectorAll('button')).filter(function(e){return e.textContent.trim()==='Sammenligning';});
+          if(tabs[0]) tabs[0].click();
+          history.replaceState(null,'',location.pathname);
+        }, 1200);
+      }
+    }
+  }catch(e){}
   const hash=window.location.hash;
   if(hash.startsWith('#token=')){
     const parts = hash.slice(7).split('&refresh=');
