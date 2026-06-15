@@ -1499,6 +1499,15 @@ function renderStrategiSam(days){
     setTimeout(function(){renderStrategiSam(SC_DAYS);}, 800); return;
   }
   if(!window._allExtra) window._allExtra = [];
+  // Hent FAKTISKE Centrica-tal til Nuvaerende-kolonnen hvis token findes
+  if(window._centricaByDay === null && !window._centricaFetching && localStorage.getItem('centrica_token')){
+    window._centricaFetching = true;
+    window.fetchCentricaForSammenligning(95).then(function(res){
+      window._centricaByDay = res || {};
+      window._centricaFetching = false;
+      renderStrategiSam(window._scDays||7);
+    });
+  }
   try {
   
   // Helper: simulate one hour for one strategy
@@ -1573,6 +1582,10 @@ function renderStrategiSam(days){
       var rAlt2 = simHour(ALT2_BIDS, aClear, xClear, xActive);
       dayUgd += rAlt2.aRev + rAlt2.xRev + mfRev;
     }
+    // FAKTISKE Centrica-tal for Nuvaerende (overskriver simulering hvis token aktivt)
+    if(window._centricaByDay && window._centricaByDay[ds] !== undefined){
+      daySimp = window._centricaByDay[ds];
+    }
     totCur += dayCur;
     totSimp += daySimp;
     totUgd += dayUgd;
@@ -1621,6 +1634,20 @@ function renderStrategiSam(days){
   document.getElementById('sc-cur-dag').textContent = 'Dagsgns: ' + Math.round(totCur/SC_DAYS).toLocaleString('da-DK') + ' kr./dag';
   c2.textContent = Math.round(totSimp).toLocaleString('da-DK') + ' kr.';
   document.getElementById('sc-simp-dag').textContent = 'Dagsgns: ' + Math.round(totSimp/SC_DAYS).toLocaleString('da-DK') + ' kr./dag';
+  // Kilde-indikator: faktiske Centrica-tal vs simulering
+  var _hasCentrica = window._centricaByDay && Object.keys(window._centricaByDay).length > 0;
+  var _simpDagEl = document.getElementById('sc-simp-dag');
+  if(_simpDagEl){
+    var _ex = document.getElementById('sc-simp-kilde');
+    if(!_ex){ _ex=document.createElement('div'); _ex.id='sc-simp-kilde'; _ex.style.cssText='font-size:10px;margin-top:3px;font-weight:600;'; _simpDagEl.parentNode.insertBefore(_ex,_simpDagEl.nextSibling); }
+    if(_hasCentrica){
+      _ex.innerHTML = '\u2713 Faktiske Centrica-tal \u2014 <a href="#" onclick="window._centricaByDay=null;window.indsaetCentricaToken();return false;" style="color:#2563eb;text-decoration:underline;cursor:pointer">opdater</a>';
+      _ex.style.color = '#15803d';
+    } else {
+      _ex.innerHTML = '\u26a0 Simuleret \u2014 <a href="#" onclick="window.indsaetCentricaToken();return false;" style="color:#2563eb;text-decoration:underline;cursor:pointer">inds\u00e6t Centrica-token for faktiske tal</a>';
+      _ex.style.color = '#92400e';
+    }
+  }
   c3.textContent = Math.round(totUgd).toLocaleString('da-DK') + ' kr.';
   document.getElementById('sc-ugd-dag').textContent = 'Dagsgns: ' + Math.round(totUgd/SC_DAYS).toLocaleString('da-DK') + ' kr./dag';
   var lbl=document.getElementById('sc-period-lbl');if(lbl)lbl.textContent=SC_DAYS;
